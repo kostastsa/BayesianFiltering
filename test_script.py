@@ -1,6 +1,7 @@
 from generator_classes import StateSpaceModel
 from generator_classes import LinearModelParameters
 from generator_classes import SLDS
+from generator_classes import Simulation
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,9 +14,8 @@ r = 0.01
 
 params = LinearModelParameters(a, h, q, r)
 model1.set_as_LG(params)
-model1.simulate(T=100, init_state=100)
-# print(model1.states)
 
+sim1 = Simulation(model1, T = 10, init_state=0)
 
 ## 2 dimensional model
 dx = 2
@@ -26,11 +26,12 @@ Q = 0.1 * np.eye(dx)
 R = 10 * np.eye(dy)
 
 init_state = np.zeros([dx])
-model = StateSpaceModel(dx, dy)
+model2 = StateSpaceModel(dx, dy)
 params2 = LinearModelParameters(A, H, Q, R)
-model.set_as_LG(params2)
+model2.set_as_LG(params2)
 
-model.simulate(T=100, init_state=init_state)
+sim2 = Simulation(model2, T = 10, init_state=init_state)
+print(sim2.all_data)
 
 ## Regime Switching Model
 M = 10
@@ -53,26 +54,27 @@ SLDS1 = SLDS(dx, dy, model_parameter_array)
 alpha = np.random.choice(range(50), M)
 mat = np.random.dirichlet(alpha, M)
 SLDS1.set_transition_matrix(mat)
-SLDS1.generate_model_history(T=100, init_model=0)
 
-SLDS1.simulate(np.zeros(dx))
+sim3 = Simulation(SLDS1, T = 10, init_state=[0, init_state])
+print(sim3.all_data)
+
 
 ## Plots
 #
-fig1, axes1 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
-axes1.scatter(SLDS1.states[:, 0], SLDS1.states[:, 1], alpha=0.6)
-axes1.set_ylabel("X2")
-axes1.set_xlabel("X1")
+# fig1, axes1 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
+# axes1.scatter(SLDS1.states[:, 0], SLDS1.states[:, 1], alpha=0.6)
+# axes1.set_ylabel("X2")
+# axes1.set_xlabel("X1")
 #
-fig2, axes2 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
-axes2.scatter(SLDS1.observs[:, 0], SLDS1.observs[:, 1], alpha=0.6)
-axes2.set_ylabel("Y2")
-axes2.set_xlabel("Y1")
+# fig2, axes2 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
+# axes2.scatter(SLDS1.observs[:, 0], SLDS1.observs[:, 1], alpha=0.6)
+# axes2.set_ylabel("Y2")
+# axes2.set_xlabel("Y1")
 #
-fig3, axes3 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
-axes3.plot(SLDS1.model_history)
-axes3.set_ylabel("t")
-axes3.set_xlabel("Index")
+# fig3, axes3 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
+# axes3.plot(SLDS1.model_history)
+# axes3.set_ylabel("t")
+# axes3.set_xlabel("Index")
 
 # axes[1,0].plot(model1.states[:,0])
 # axes[1,0].plot(model1.observs[:,0])
@@ -83,4 +85,4 @@ axes3.set_xlabel("Index")
 # axes[1,1].set_xlabel("t");
 # axes[1,1].set_ylabel("Y1,Y2");
 #
-plt.show()
+# plt.show()
