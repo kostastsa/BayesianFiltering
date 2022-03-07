@@ -46,21 +46,22 @@ class StateSpaceModel:
 
     def simulate(self, T, init_state):
         self.T = T
-        self.states = np.zeros([T+1, self.dx])
-        self.observs = np.zeros([T, self.dy])
-        self.states[0, :] = init_state
+        states = np.zeros([T, self.dx])
+        observs = np.zeros([T, self.dy])
         prev_state = init_state
         for t in range(T):
             new_state = self.f(prev_state)
             new_obs = self.g(new_state)
-            self.states[t+1, :] = new_state
-            self.observs[t, :] = new_obs
+            states[t, :] = new_state
+            observs[t, :] = new_obs
             prev_state = new_state
+        return states, observs
 
     def propagate(self, prev_state):
         new_state = self.f(prev_state)
         new_obs = self.g(new_state)
         return new_state, new_obs
+
 
 class SLDS:
     """
@@ -84,32 +85,24 @@ class SLDS:
     def set_transition_matrix(self, mat):
         self.transition_matrix = mat
 
-    def generate_model_history(self, T, init_model):
+    def simulate(self, T, init_state):
         self.T = T
-        self.model_history = np.zeros([T], dtype = int)
-        self.model_history[0] = init_model
-        prev_model = init_model
-        if self.transition_matrix.any():
-            for t in range(T-1):
-                new_model = np.random.choice(range(self.num_models), p=self.transition_matrix[prev_model, :])
-                self.model_history[t + 1] = new_model
-                prev_model = new_model
+        model_history = np.zeros([T], dtype = int)
+        states = np.zeros([T, self.dx], dtype=float)
+        observs = np.zeros([T, self.dy], dtype=float)
 
-    def simulate(self, init_state):
-        self.states = np.zeros([self.T + 1, self.dx])
-        self.observs = np.zeros([self.T, self.dy])
-        self.states[0, :] = init_state
-        prev_state = init_state
-        for t in range(self.T):
-            curr_mod_ind = self.model_history[t]
-            new_state, new_obs = self.models[curr_mod_ind].propagate(prev_state)
-            self.states[t + 1, :] = new_state
-            self.observs[t, :] = new_obs
+        prev_model = init_state[0]
+        prev_state = init_state[1]
+
+        for t in range(T):
+            new_model = np.random.choice(range(self.num_models), p=self.transition_matrix[prev_model, :])
+            model_history[t] = new_model
+            prev_model = new_model
+            new_state, new_obs = self.models[new_model].propagate(prev_state)
+            states[t, :] = new_state
+            observs[t, :] = new_obs
             prev_state = new_state
-
-
-        
-
+        return model_history, states, observs
 
 class LinearModelParameters:
 
@@ -122,3 +115,10 @@ class LinearModelParameters:
     def __str__(self):
 
         return 'A : \n' + str(self.A) + '\n' + 'H : \n' + str(self.H) + '\n' + 'Q : \n' + str(self.Q) + '\n' + 'R : \n' + str(self.R)
+
+
+class Simulation:
+
+    def __init__(self, model, T, init_state):
+        self.model = model # StateSpaceModel or SLDS
+        self.all_data = model.simulate(T, init_state)
