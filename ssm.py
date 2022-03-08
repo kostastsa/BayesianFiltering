@@ -97,62 +97,43 @@ class LGSSM(StateSpaceModel):
         global mean_new, cov_new, lf
         m_ = np.matmul(mean_prev, self.params.A.T)
         P_ = np.matmul(np.matmul(self.params.A, cov_prev), self.params.A.T) + self.params.Q
-        v = new_obs - matmul(m_, self.params.H.T)
+        v = new_obs - np.matmul(m_, self.params.H.T)
         S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
         K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
 
         mean_new = m_ + np.matmul(K, v)
         cov_new = P_ - np.matmul(np.matmul(K, S), K)
-        if dy == 1:
+        if self.dy == 1:
             lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
         else:
             lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
 
         return mean_new, cov_new, lf
 
+    def kalman_filter(self, observs, init):
+        mean_array = np.zeros([self.T, self.dx])
+        cov_array = np.zeros([self.T, self.dx, self.dx])
+        lf_array = np.zeros([self.T-1])
+        mean_array[0, :] = init[0]
+        cov_array[0, :, :] = init[1]
+        for t in range(self.T-1):
+            m_ = np.matmul(mean_array[t, :], self.params.A.T)
+            P_ = np.matmul(np.matmul(self.params.A, cov_array[t, :]), self.params.A.T) + self.params.Q
 
-class SLDS:
-    """
-    Regime Switching State Space Model class.
+            v = observs[t] - np.matmul(m_, self.params.H.T)
+            S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
+            K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
 
-    Attributes
-    ----------
-    """
-
-    def __init__(self, dx, dy, model_parameter_array):
-        """Initialization method."""
-        self.dx = dx
-        self.dy = dy
-        self.num_models = len(model_parameter_array)
-        self.transition_matrix = np.zeros([self.num_models, self.num_models])
-        self.models = np.empty([self.num_models], dtype=StateSpaceModel)
-        for m in range(self.num_models):
-            self.models[m] = LGSSM(dx, dy, model_parameter_array[m])
-
-    def set_transition_matrix(self, mat):
-        self.transition_matrix = mat
-
-    def simulate(self, T, init_state):
-        model_history = np.zeros([T], dtype=int)
-        states = np.zeros([T, self.dx], dtype=float)
-        observs = np.zeros([T, self.dy], dtype=float)
-
-        prev_model = init_state[0]
-        prev_state = init_state[1]
-
-        for t in range(T):
-            new_model = np.random.choice(range(self.num_models), p=self.transition_matrix[prev_model, :])
-            model_history[t] = new_model
-            prev_model = new_model
-            new_state, new_obs = self.models[new_model].propagate(prev_state)
-            states[t, :] = new_state
-            observs[t, :] = new_obs
-            prev_state = new_state
-        return model_history, states, observs
+            mean_array[t+1, :] = m_ + np.matmul(K, v)
+            cov_array[t+1, :] = P_ - np.matmul(np.matmul(K, S), K)
+            if self.dy == 1:
+                lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
+            else:
+                lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
+            lf_array[t] = lf
+            return mean_array, cov_array, lf_array
 
 
-class Simulation:
 
-    def __init__(self, model, T, init_state):
-        self.model = model  # StateSpaceModel or SLDS
-        self.all_data = model.simulate(T, init_state)
+
+
