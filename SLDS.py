@@ -1,4 +1,7 @@
-from SSM import LGSSM
+from ssm import LGSSM
+from ssm import StateSpaceModel
+import numpy as np
+
 
 class SLDS:
     """
@@ -37,4 +40,18 @@ class SLDS:
             states[t, :] = new_state
             observs[t, :] = new_obs
             prev_state = new_state
-        return model_history, states, observs
+        return [model_history, states], observs
+
+    def conditional_kalman_filter(self, model_history, observs, init):
+        # TODO: include functionality for 1D
+        t_final = len(model_history)
+        mean_array = np.zeros([t_final, self.dx])
+        cov_array = np.zeros([t_final, self.dx, self.dx])
+        lf_array = np.zeros([t_final-1])
+        mean_array[0, :] = init[0]
+        cov_array[0, :, :] = init[1]
+        for t in range(t_final-2):
+            current_model_ind = model_history[t+1]
+            model = self.models[current_model_ind]
+            mean_array[t+1], cov_array[t+1], lf_array[t+1] = model.kalman_step(observs[t], mean_array[t], cov_array[t])
+        return mean_array, cov_array, lf_array
