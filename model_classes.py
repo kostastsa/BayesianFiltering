@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import stats as st
 
 class LinearModelParameters:
 
@@ -74,7 +75,22 @@ class LGSSM(StateSpaceModel):
             self.g = lambda state: np.matmul(state, self.params.H.T) + \
                                    np.random.multivariate_normal(np.zeros([self.dy]), self.params.R)
 
+    def kalman_step(self, new_obs, mean_prev, cov_prev):
+        global mean_new, cov_new, lf
+        m_ = np.matmul(mean_prev, self.params.A.T)
+        P_ = np.matmul(np.matmul(self.params.A, cov_prev), self.params.A.T) + self.params.Q
+        v = new_obs - matmul(m_, self.params.H.T)
+        S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
+        K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
 
+        mean_new = m_ + np.matmul(K, v)
+        cov_new = P_ - np.matmul(np.matmul(K, S), K)
+        if dy==1:
+            lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
+        else:
+            lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
+
+        return mean_new, cov_new, lf
 
 class SLDS:
     """
