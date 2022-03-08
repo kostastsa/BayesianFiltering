@@ -100,8 +100,8 @@ class LGSSM(StateSpaceModel):
         v = new_obs - np.matmul(m_, self.params.H.T)
         S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
         K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
-
-        mean_new = m_ + np.matmul(K, v)
+        print(S)
+        mean_new = m_ + np.matmul(v, K.T)
         cov_new = P_ - np.matmul(np.matmul(K, S), K)
         if self.dy == 1:
             lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
@@ -111,6 +111,7 @@ class LGSSM(StateSpaceModel):
         return mean_new, cov_new, lf
 
     def kalman_filter(self, observs, init):
+        # TODO: include functionality for 1D
         mean_array = np.zeros([self.T, self.dx])
         cov_array = np.zeros([self.T, self.dx, self.dx])
         lf_array = np.zeros([self.T-1])
@@ -124,15 +125,14 @@ class LGSSM(StateSpaceModel):
             S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
             K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
 
-            mean_array[t+1, :] = m_ + np.matmul(K, v)
+            mean_array[t+1, :] = m_ + np.matmul(v, K.T)
             cov_array[t+1, :] = P_ - np.matmul(np.matmul(K, S), K)
             if self.dy == 1:
                 lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
             else:
                 lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
             lf_array[t] = lf
-            return mean_array, cov_array, lf_array
-
+        return mean_array, cov_array, lf_array
 
 
 
