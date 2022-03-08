@@ -1,21 +1,23 @@
-from generator_classes import StateSpaceModel
-from generator_classes import LinearModelParameters
-from generator_classes import SLDS
-from generator_classes import Simulation
+from model_classes import StateSpaceModel
+from model_classes import LinearModelParameters
+from slds import SLDS
+from simulation import Simulation
+from SSM import LGSSM
 import numpy as np
+
 import matplotlib.pyplot as plt
 
 ## 1 dimensional model
-model1 = StateSpaceModel(1, 1)
-a = 0.1
-h = 1
-q = 0.01
-r = 0.01
+a = np.array([0.1])
+h = np.array([1])
+q = np.array([0.01])
+r = np.array([0.01])
 
 params = LinearModelParameters(a, h, q, r)
-model1.set_as_LG(params)
+model1 = LGSSM(1,1,params)
+sim1 = Simulation(model1, T = 10, init_state=np.array([0]))
 
-sim1 = Simulation(model1, T = 10, init_state=0)
+#print(sim1.all_data)
 
 ## 2 dimensional model
 dx = 2
@@ -26,14 +28,13 @@ Q = 0.1 * np.eye(dx)
 R = 10 * np.eye(dy)
 
 init_state = np.zeros([dx])
-model2 = StateSpaceModel(dx, dy)
 params2 = LinearModelParameters(A, H, Q, R)
-model2.set_as_LG(params2)
-
+model2 = LGSSM(dx, dy, params2)
 sim2 = Simulation(model2, T = 10, init_state=init_state)
-print(sim2.all_data)
 
-## Regime Switching Model
+#print(sim2.all_data)
+
+## SLDS
 M = 10
 dx = 2
 dy = 2
@@ -51,7 +52,7 @@ for m in range(M):
 
 SLDS1 = SLDS(dx, dy, model_parameter_array)
 
-alpha = np.random.choice(range(50), M)
+alpha = np.random.choice(range(1, 50), M)
 mat = np.random.dirichlet(alpha, M)
 SLDS1.set_transition_matrix(mat)
 
