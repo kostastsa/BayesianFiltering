@@ -6,5 +6,7 @@ from generator_classes import SLDS
 class KalmanFilter:
 
     def __init__(self, model_set):
-        if len(model_set)==1:
-            self.model = model_set
+        self.model_set = model_set
+
+
+    def run(self, T, model_history = None):
