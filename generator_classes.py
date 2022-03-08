@@ -1,12 +1,16 @@
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
-
 import numpy as np
 
+class LinearModelParameters:
+
+    def __init__(self, A ,H, Q, R):
+        self.A = A
+        self.H = H
+        self.Q = Q
+        self.R = R
+
+    def __str__(self):
+
+        return 'A : \n' + str(self.A) + '\n' + 'H : \n' + str(self.H) + '\n' + 'Q : \n' + str(self.Q) + '\n' + 'R : \n' + str(self.R)
 
 class StateSpaceModel:
     """
@@ -28,22 +32,6 @@ class StateSpaceModel:
         if self.descr == "LG":
             return str(self.params)
 
-    def set_as_LG(self, lin_mod_params):
-        self.descr = "LG"
-        self.params = lin_mod_params
-        if self.dx == 1:
-            self.f = lambda prev_state: self.params.A * prev_state + \
-                                        np.random.normal(np.zeros(1), self.params.Q)
-        else:
-            self.f = lambda prev_state: np.matmul(prev_state, self.params.A.T) + \
-                                        np.random.multivariate_normal(np.zeros([self.dx]), self.params.Q)
-        if self.dy == 1:
-            self.g = lambda prev_state: self.params.H * prev_state + \
-                                        np.random.normal(np.zeros(1), self.params.R)
-        else:
-            self.g = lambda state: np.matmul(state, self.params.H.T) + \
-                               np.random.multivariate_normal(np.zeros([self.dy]), self.params.R)
-
     def simulate(self, T, init_state):
         self.T = T
         states = np.zeros([T, self.dx])
@@ -63,6 +51,31 @@ class StateSpaceModel:
         return new_state, new_obs
 
 
+
+class LGSSM(StateSpaceModel):
+
+    def __init__(self, dx, dy, parameters: LinearModelParameters):
+        # TODO: fix case where dy == 1 but dx > 1
+        # TODO: separate functions f and g from noises
+        self.dx = dx
+        self.dy = dy
+        self.descr = "LG"
+        self.params = parameters
+        if self.dx == 1:
+            self.f = lambda prev_state: self.params.A * prev_state + \
+                                        np.random.normal(np.zeros(1), self.params.Q)
+        else:
+            self.f = lambda prev_state: np.matmul(prev_state, self.params.A.T) + \
+                                        np.random.multivariate_normal(np.zeros([self.dx]), self.params.Q)
+        if self.dy == 1:
+            self.g = lambda prev_state: self.params.H * prev_state + \
+                                        np.random.normal(np.zeros(1), self.params.R)
+        else:
+            self.g = lambda state: np.matmul(state, self.params.H.T) + \
+                                   np.random.multivariate_normal(np.zeros([self.dy]), self.params.R)
+
+
+
 class SLDS:
     """
     Regime Switching State Space Model class.
@@ -79,14 +92,12 @@ class SLDS:
         self.transition_matrix = np.zeros([self.num_models, self.num_models])
         self.models = np.empty([self.num_models], dtype = StateSpaceModel)
         for m in range(self.num_models):
-            self.models[m] = StateSpaceModel(dx,dy)
-            self.models[m].set_as_LG(model_parameter_array[m])
+            self.models[m] = LGSSM(dx,dy,model_parameter_array[m])
 
     def set_transition_matrix(self, mat):
         self.transition_matrix = mat
 
     def simulate(self, T, init_state):
-        self.T = T
         model_history = np.zeros([T], dtype = int)
         states = np.zeros([T, self.dx], dtype=float)
         observs = np.zeros([T, self.dy], dtype=float)
@@ -104,17 +115,7 @@ class SLDS:
             prev_state = new_state
         return model_history, states, observs
 
-class LinearModelParameters:
 
-    def __init__(self, A ,H, Q, R):
-        self.A = A
-        self.H = H
-        self.Q = Q
-        self.R = R
-
-    def __str__(self):
-
-        return 'A : \n' + str(self.A) + '\n' + 'H : \n' + str(self.H) + '\n' + 'Q : \n' + str(self.Q) + '\n' + 'R : \n' + str(self.R)
 
 
 class Simulation:
