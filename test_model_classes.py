@@ -4,6 +4,7 @@ from generator_classes import SLDS
 from generator_classes import Simulation
 from generator_classes import LGSSM
 import numpy as np
+
 import matplotlib.pyplot as plt
 
 ## 1 dimensional model
