@@ -100,7 +100,6 @@ class LGSSM(StateSpaceModel):
         v = new_obs - np.matmul(m_, self.params.H.T)
         S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
         K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
-        print(S)
         mean_new = m_ + np.matmul(v, K.T)
         cov_new = P_ - np.matmul(np.matmul(K, S), K)
         if self.dy == 1:

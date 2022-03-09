@@ -1,11 +1,11 @@
 from ssm import StateSpaceModel
 from ssm import LinearModelParameters
-from slds import SLDS
+from SLDS import SLDS
 from simulation import Simulation
 from ssm import LGSSM
 import numpy as np
 import copy
-
+from utils import Utils as u
 import matplotlib.pyplot as plt
 
 # Data Generation
@@ -38,7 +38,7 @@ sim2 = Simulation(model2, T = 100, init_state=init_state)
 #print(sim2.states)
 
 ## SLDS
-M = 10
+M = 5
 dx = 2
 dy = 2
 var_max = 10
@@ -48,10 +48,10 @@ for m in range(M):
     A = np.eye(dx)
     H = 1 * np.eye(dy, dx)
     Q_nonsym = var_max * np.multiply(np.random.random([dx, dx]), np.eye(dx)) + \
-               np.multiply(np.random.random([dx, dx]), correl_mask_dx)
-    Q = 10 * (Q_nonsym + Q_nonsym.T)
-    Q = (1+np.random.rand()) * np.eye(dx)
-    R = 0.1 * np.eye(dy)
+              np.multiply(np.random.random([dx, dx]), correl_mask_dx)
+    Q = 1 * (Q_nonsym + Q_nonsym.T)
+    #Q = 10 * np.random.rand() * np.eye(dx)
+    R = 1 * np.random.rand() * np.eye(dy)
     model_parameter_array[m] = LinearModelParameters(A, H, Q, R)
 
 
@@ -76,17 +76,20 @@ out = filt_model.kalman_filter(sim2.observs, init)
 mean_pred = out[0]
 
 
+
 ## SLDS
 filt_slds_model = copy.deepcopy(SLDS1)
 dx_slds = filt_slds_model.dx
 init_slds = [np.zeros(dx_slds), np.eye(dx_slds)]
-out_slds = filt_slds_model.conditional_kalman_filter(sim3.states[0], sim3.observs, init_slds)
-mean_pred_slds = out_slds[0]
+#out_slds = filt_slds_model.conditional_kalman_filter(sim3.states[0], sim3.observs, init_slds)
+mean_out_IMM,cov_out_IMM = filt_slds_model.IMM(sim3.observs, init_slds)
+
+
 # Plots
 #
 fig1, axes1 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
 axes1.scatter(sim3.states[1][:, 0], sim3.states[1][:, 1], alpha=0.6)
-axes1.scatter(mean_pred_slds[:, 0], mean_pred_slds[:, 1], alpha=0.6)
+axes1.scatter(mean_out_IMM[:, 0], mean_out_IMM[:, 1], alpha=0.6)
 axes1.set_ylabel("X2")
 axes1.set_xlabel("X1")
 #
@@ -95,10 +98,10 @@ axes1.set_xlabel("X1")
 # axes2.set_ylabel("X_est_2")
 # axes2.set_xlabel("X_est_1")
 #
-# fig3, axes3 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
-# axes3.plot(SLDS1.model_history)
-# axes3.set_ylabel("t")
-# axes3.set_xlabel("Index")
+fig3, axes3 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
+axes3.plot(sim3.states[0])
+axes3.set_ylabel("t")
+axes3.set_xlabel("Index")
 
 # axes[1,0].plot(model1.states[:,0])
 # axes[1,0].plot(model1.observs[:,0])
@@ -109,4 +112,5 @@ axes1.set_xlabel("X1")
 # axes[1,1].set_xlabel("t");
 # axes[1,1].set_ylabel("Y1,Y2");
 #
+
 plt.show()
