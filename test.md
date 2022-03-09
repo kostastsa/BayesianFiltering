@@ -62,8 +62,7 @@ for m in range(M):
     Q = Q_nonsym + Q_nonsym.T
     R = 1 * np.eye(dy)
     model_parameter_array[m] = LinearModelParameters(A, H, Q, R)
-
-    
+   
 # Define SLDS and create a random transition matrix (Dirichlet rows)
 SLDS1 = SLDS(dx, dy, model_parameter_array)
 alpha = np.random.choice(range(1, 50), M)
