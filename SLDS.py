@@ -148,23 +148,24 @@ class SLDS:
         :return:
         """
         t_final = np.shape(observs)[0]
-        tailShape = self.num_models * np.ones([1, r])
-        redTailShape = self.num_models * np.ones([1, r - 1])
+        tailShape = self.num_models * np.ones([1, r], dtype=int)
+        redTailShape = self.num_models * np.ones([1, r - 1], dtype=int)
         _mean_tens = np.zeros(np.concatenate([tailShape[0], np.array([self.dx])], axis=0))
         _cov_tens = np.zeros(np.concatenate([tailShape[0], np.array([self.dx]), np.array([self.dx])], axis=0))
         _lik_tens = np.zeros(tailShape[0])
         _norm = np.zeros(redTailShape[0])
         _red_mean_tens = np.zeros(np.concatenate([redTailShape[0], np.array([self.dx])], axis=0))
         _red_cov_tens = np.zeros(np.concatenate([redTailShape[0], np.array([self.dx]), np.array([self.dx])], axis=0))
-        _weight_tens = np.ones(tailShape) / self.num_models ** r
+        _weight_tens = np.ones(tailShape[0]) / (self.num_models ** r)
 
         mean_out_array = np.zeros([t_final, self.dx])
         cov_out_array = np.zeros([t_final, self.dx, self.dx])
 
         # Initialize means and covariances
-        for m in range(self.num_models):
-            mean_mat_array[0, m] = init[0]
-            cov_tens_array[0, m] = init[1]
+        for idx in range(self.num_models ** r):
+            tail_list = list(map(int, list(dec_to_base(idx, self.num_models).zfill(r))))
+            _mean_tens[tail_list] = init[0]
+            _cov_tens[tail_list] = init[1]
 
         for t in range(1, t_final):
             # Mixing + collapse
@@ -178,10 +179,10 @@ class SLDS:
                     tail_list.insert(0, i_0)
                     _mean_list[i_0, :] = _mean_tens[tuple(tail_list)]
                     _cov_list[i_0, :, :] = _cov_tens[tuple(tail_list)]
-                    _weight_list[i_0] = _weight_tens[tail_list]
+                    _weight_list[i_0] = _weight_tens[tuple(tail_list)]
 
-                _norm[red_tail_list] = sum(_weight_list)
-                _weight_list = _weight_list / _norm[red_tail_list]
+                _norm[tuple(red_tail_list)] = sum(_weight_list)
+                _weight_list = _weight_list / _norm[tuple(red_tail_list)]
                 _red_mean_tens[tuple(red_tail_list)], _red_cov_tens[tuple(red_tail_list)] \
                     = collapse(_mean_list, _cov_list, _weight_list)
 
@@ -197,9 +198,14 @@ class SLDS:
                                                        _red_cov_tens[tuple(red_tail_list)])
                     # Update Weights
                     i = red_tail_list[r-2]
-                    _weight_tens[tail_list] = _lik_tens[tail_list] * self.transition_matrix[i, i_r] * _norm[red_tail_list]
-
-
+                    _weight_tens[tuple(tail_list)] = _lik_tens[tuple(tail_list)] * \
+                                                     self.transition_matrix[i, i_r] * \
+                                                     _norm[tuple(red_tail_list)]
+            _weight_tens = _weight_tens / np.sum(_weight_tens)
             # Output
+            _mean_list_out = np.reshape(_mean_tens, (self.num_models ** r, self.dx))
+            _cov_list_out = np.reshape(_cov_tens, (self.num_models ** r, self.dx, self.dx))
+            _weight_list_out = np.reshape(_weight_tens, (self.num_models ** r, 1)).T[0]
+            mean_out_array[t, :], cov_out_array[t, :, :] = collapse(_mean_list_out, _cov_list_out, _weight_list_out)
 
         return mean_out_array, cov_out_array
