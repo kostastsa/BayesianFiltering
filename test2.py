@@ -1,13 +1,33 @@
-from utils import Utils as u
+from ssm import StateSpaceModel
+from ssm import LinearModelParameters
+#from SLDS import SLDS
+from simulation import Simulation
+from ssm import LGSSM
 import numpy as np
+import copy
+from utils import dec_to_base
+import matplotlib.pyplot as plt
 
-mean1 = np.array([1,1,1])
-mean2 = np.array([3,7,2])
-mean_mat = np.array([mean1, mean2])
-w1 = 0.01
-w2 = 0.99
-weights_vec = np.array([w1,w2])
-cov1 = np.eye(3)
-cov2 = 10 * np.eye(3)
-cov_tens = np.array([cov1, cov2])
-m, P = u.collapse(mean_mat, cov_tens, weights_vec)
+tens = np.random.rand(2,2,2,2)
+print(tens)
+red_tail_idx = 10
+num_models = 5
+r = 3
+i_r = 0
+li = list(map(int, list(dec_to_base(red_tail_idx, num_models).zfill(r-1))))#.append(10)
+newli = copy.copy(li)
+newli.append(3)
+print("li=",li)
+print("newli=", newli)
+newli = copy.copy(li)
+newli.insert(0,4)
+print("li=",li)
+print("newli=", newli)
+tail_list = tuple(newli)
+#print(np.shape(tail_list))
+#tail_list = np.reshape(tail_list, (r, 1))
+#print(np.shape(tail_list))
+print(tens[tail_list])
+
+ind = (1, 1)
+print(tens[0])
