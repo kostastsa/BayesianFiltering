@@ -147,7 +147,7 @@ class LGSSM(StateSpaceModel):
         S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
         K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
         mean_new = m_ + np.matmul(v, K.T)
-        cov_new = P_ - np.matmul(np.matmul(K, S), K)
+        cov_new = P_ - np.matmul(np.matmul(K, S), K.T)
         if self.dy == 1:
             lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
         else:
