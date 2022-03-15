@@ -5,7 +5,6 @@ from simulation import Simulation
 from ssm import LGSSM
 import numpy as np
 import copy
-from utils import Utils as u
 import matplotlib.pyplot as plt
 
 # Data Generation
@@ -58,7 +57,7 @@ for m in range(M):
 SLDS1 = SLDS(dx, dy, model_parameter_array)
 
 alpha = np.random.choice(range(1, 50), M)
-mat = np.random.dirichlet(alpha, M)
+mat = np.random.dirichlet(alpha, M) # Random tranisiton matrix with Dirichlet(alpha) rows
 SLDS1.set_transition_matrix(mat)
 
 sim3 = Simulation(SLDS1, T = 100, init_state=[0, init_state])

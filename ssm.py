@@ -3,8 +3,18 @@ from scipy import stats as st
 
 
 class LinearModelParameters:
+    """
+
+    """
 
     def __init__(self, A, H, Q, R):
+        """
+
+        :param A:
+        :param H:
+        :param Q:
+        :param R:
+        """
         self.A = A
         self.H = H
         self.Q = Q
@@ -24,7 +34,14 @@ class StateSpaceModel:
     """
 
     def __init__(self, dx, dy, f=None, g=None, descr=None):
-        """Initialization method."""
+        """Initialization method.
+
+        :param dx:
+        :param dy:
+        :param f:
+        :param g:
+        :param descr:
+        """
         self.dx = dx
         self.dy = dy
         self.f = f
@@ -36,6 +53,11 @@ class StateSpaceModel:
             return str(self.params)
 
     def simulate(self, T, init_state):
+        """
+        :param T:
+        :param init_state:
+        :return:
+        """
         self.T = T
         states = np.zeros([T, self.dx])
         observs = np.zeros([T, self.dy])
@@ -49,6 +71,10 @@ class StateSpaceModel:
         return states, observs
 
     def propagate(self, prev_state):
+        """
+        :param prev_state:
+        :return:
+        """
         if self.dx == 1:
             Q = np.array([self.params.Q])
         else:
@@ -64,7 +90,14 @@ class StateSpaceModel:
 
 class LGSSM(StateSpaceModel):
 
+
     def __init__(self, dx, dy, parameters: LinearModelParameters):
+        """
+
+        :param dx:
+        :param dy:
+        :param parameters:
+        """
         self.dx = dx
         self.dy = dy
         self.descr = "LG"
@@ -73,6 +106,12 @@ class LGSSM(StateSpaceModel):
         self.g = lambda state: np.matmul(state, self.params.H.T)
 
     def simulate(self, T, init_state):
+        """
+
+        :param T:
+        :param init_state:
+        :return:
+        """
         self.T = T
         states = np.zeros([T, self.dx])
         observs = np.zeros([T, self.dy])
@@ -94,6 +133,13 @@ class LGSSM(StateSpaceModel):
         return states, observs
 
     def kalman_step(self, new_obs, mean_prev, cov_prev):
+        """
+
+        :param new_obs:
+        :param mean_prev:
+        :param cov_prev:
+        :return:
+        """
         global mean_new, cov_new, lf
         m_ = np.matmul(mean_prev, self.params.A.T)
         P_ = np.matmul(np.matmul(self.params.A, cov_prev), self.params.A.T) + self.params.Q
@@ -110,6 +156,12 @@ class LGSSM(StateSpaceModel):
         return mean_new, cov_new, lf
 
     def kalman_filter(self, observs, init):
+        """
+
+        :param observs:
+        :param init:
+        :return:
+        """
         # TODO: include functionality for 1D
         mean_array = np.zeros([self.T, self.dx])
         cov_array = np.zeros([self.T, self.dx, self.dx])
