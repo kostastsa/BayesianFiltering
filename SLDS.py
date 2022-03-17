@@ -137,7 +137,7 @@ class SLDS:
             mean_out_array[t], cov_out_array[t] = collapse(mean_mat_array[t],
                                                            cov_tens_array[t],
                                                            weight_vec_array[t])
-        return mean_out_array, cov_out_array
+        return mean_out_array, cov_out_array, weight_vec_array
 
     def GPB(self, r, observs, init):
         """
@@ -160,6 +160,7 @@ class SLDS:
 
         mean_out_array = np.zeros([t_final, self.dx])
         cov_out_array = np.zeros([t_final, self.dx, self.dx])
+        weights_out = np.zeros([t_final, self.num_models ** r])
 
         # Initialize means and covariances
         for idx in range(self.num_models ** r):
@@ -202,10 +203,11 @@ class SLDS:
                                                      self.transition_matrix[i, i_r] * \
                                                      _norm[tuple(red_tail_list)]
             _weight_tens = _weight_tens / np.sum(_weight_tens)
+            weights_out[t, :] = np.reshape(_weight_tens, [1, self.num_models ** r])
             # Output
             _mean_list_out = np.reshape(_mean_tens, (self.num_models ** r, self.dx))
             _cov_list_out = np.reshape(_cov_tens, (self.num_models ** r, self.dx, self.dx))
             _weight_list_out = np.reshape(_weight_tens, (self.num_models ** r, 1)).T[0]
             mean_out_array[t, :], cov_out_array[t, :, :] = collapse(_mean_list_out, _cov_list_out, _weight_list_out)
 
-        return mean_out_array, cov_out_array
+        return mean_out_array, cov_out_array, weights_out
