@@ -38,8 +38,8 @@ sim2 = Simulation(model2, T = 100, init_state=init_state)
 
 ## SLDS
 T = 100
-M = 5
-dx = 15
+M = 2
+dx = 5
 dy = 2
 var_max = 10
 init_state = np.zeros([dx])
@@ -84,14 +84,14 @@ filt_slds_model = copy.deepcopy(SLDS1)
 dx_slds = filt_slds_model.dx
 init_slds = [np.zeros(dx_slds), np.eye(dx_slds)]
 out_exact_cond = filt_slds_model.conditional_kalman_filter(sim3.states[0], sim3.observs, init_slds)
-mean_out_IMM,cov_out_IMM = filt_slds_model.IMM(sim3.observs, init_slds)
+mean_out_IMM,cov_out_IMM, weights_out_IMM = filt_slds_model.IMM(sim3.observs, init_slds)
 
 ### GPB
 filt_slds_model2 = copy.deepcopy(SLDS1)
 dx_slds = filt_slds_model2.dx
 init_slds = [np.zeros(dx_slds), np.eye(dx_slds)]
 #out_slds = filt_slds_model.conditional_kalman_filter(sim3.states[0], sim3.observs, init_slds)
-mean_out_GPB, cov_out_GPB = filt_slds_model2.GPB(2, sim3.observs, init_slds)
+mean_out_GPB, cov_out_GPB, weights_out_GPB = filt_slds_model2.GPB(2, sim3.observs, init_slds)
 #print(mean_out_GPB)
 
 # Error Calculations
@@ -130,30 +130,31 @@ for t in range(T):
 # axes3.set_ylabel("t")
 # axes3.set_xlabel("Index")
 #
-fig3, axes3 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
-plot1 = axes3.plot(errGPB_trueStates, label="GPB")
-plot2 = axes3.plot(errIMM_trueStates, label="IMM")
-axes3.set_ylabel("Error")
-axes3.set_xlabel("time")
-axes3.set_title("Error comp to True States")
+fig3, axes3 = plt.subplots(2, 1, sharex=True, figsize=(10, 4))
+plot11 = axes3[0].plot(errGPB_trueStates, label="GPB")
+plot21 = axes3[0].plot(errIMM_trueStates, label="IMM")
+axes3[0].set_ylabel("Error")
+axes3[0].set_xlabel("time")
+axes3[0].set_title("Error comp to True States")
 #axes3.legend(handles=[plot1, plot2])
 
-fig4, axes4 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
-plot1 = axes4.plot(errGPB_ExCond, label="GPB")
-plot2 = axes4.plot(errIMM_ExCond, label="IMM")
-axes4.set_ylabel("Error")
-axes4.set_xlabel("time")
-axes4.set_title("Error comp to Ex Cond")
+plot21 = axes3[1].plot(errGPB_ExCond, label="GPB")
+plot22 = axes3[1].plot(errIMM_ExCond, label="IMM")
+axes3[1].set_ylabel("Error")
+axes3[1].set_xlabel("time")
+axes3[1].set_title("Error comp to Ex Cond")
 #axes4.legend(handles=[plot1, plot2])
 
-# axes[1,0].plot(model1.states[:,0])
-# axes[1,0].plot(model1.observs[:,0])
-# axes[1,0].set_xlabel("t");
-# axes[1,0].set_ylabel("X1,X2");
-# axes[1,1].plot(model.observs[:,0])
-# axes[1,1].plot(model.observs[:,1])
-# axes[1,1].set_xlabel("t");
-# axes[1,1].set_ylabel("Y1,Y2");
-#
+fig4, axes4 = plt.subplots(2, 1, sharex=True, figsize=(10, 4))
+plot1 = axes4[0].plot(weights_out_GPB)
+axes4[0].set_ylabel("Weight")
+axes4[0].set_xlabel("time")
+axes4[0].set_title("Weights GPB")
+
+plot = axes4[1].plot(weights_out_IMM)
+axes4[1].set_ylabel("Weight")
+axes4[1].set_xlabel("time")
+axes4[1].set_title("Weights IMM")
+
 
 plt.show()

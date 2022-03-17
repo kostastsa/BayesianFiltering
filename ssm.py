@@ -3,9 +3,6 @@ from scipy import stats as st
 
 
 class LinearModelParameters:
-    """
-
-    """
 
     def __init__(self, A, H, Q, R):
         """
@@ -90,10 +87,8 @@ class StateSpaceModel:
 
 class LGSSM(StateSpaceModel):
 
-
     def __init__(self, dx, dy, parameters: LinearModelParameters):
         """
-
         :param dx:
         :param dy:
         :param parameters:
@@ -134,7 +129,6 @@ class LGSSM(StateSpaceModel):
 
     def kalman_step(self, new_obs, mean_prev, cov_prev):
         """
-
         :param new_obs:
         :param mean_prev:
         :param cov_prev:
@@ -165,10 +159,10 @@ class LGSSM(StateSpaceModel):
         # TODO: include functionality for 1D
         mean_array = np.zeros([self.T, self.dx])
         cov_array = np.zeros([self.T, self.dx, self.dx])
-        lf_array = np.zeros([self.T-1])
+        lf_array = np.zeros([self.T - 1])
         mean_array[0, :] = init[0]
         cov_array[0, :, :] = init[1]
-        for t in range(self.T-1):
+        for t in range(self.T - 1):
             m_ = np.matmul(mean_array[t, :], self.params.A.T)
             P_ = np.matmul(np.matmul(self.params.A, cov_array[t, :]), self.params.A.T) + self.params.Q
 
@@ -176,15 +170,11 @@ class LGSSM(StateSpaceModel):
             S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
             K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
 
-            mean_array[t+1, :] = m_ + np.matmul(v, K.T)
-            cov_array[t+1, :] = P_ - np.matmul(np.matmul(K, S), K)
+            mean_array[t + 1, :] = m_ + np.matmul(v, K.T)
+            cov_array[t + 1, :] = P_ - np.matmul(np.matmul(K, S), K)
             if self.dy == 1:
                 lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
             else:
                 lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
             lf_array[t] = lf
         return mean_array, cov_array, lf_array
-
-
-
-
