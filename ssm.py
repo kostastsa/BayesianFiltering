@@ -112,17 +112,15 @@ class LGSSM(StateSpaceModel):
         states = np.zeros([T, self.dx])
         observs = np.zeros([T, self.dy])
         prev_state = init_state
-        if self.dx == 1:
-            Q = np.array([self.params.Q])
-        else:
-            Q = self.params.Q
-        if self.dy == 1:
-            R = np.array([self.params.R])
-        else:
-            R = self.params.R
         for t in range(T):
-            new_state = self.f(prev_state) + np.random.multivariate_normal(np.zeros([self.dx]), Q)
-            new_obs = self.g(new_state) + np.random.multivariate_normal(np.zeros([self.dy]), R)
+            if self.dx == 1:
+                new_state = self.f(prev_state) + np.random.normal(0, self.params.Q)
+            else:
+                new_state = self.f(prev_state) + np.random.multivariate_normal(np.zeros([self.dx]), self.params.Q)
+            if self.dy == 1:
+                new_obs = self.g(new_state) + np.random.normal(0, self.params.R)
+            else:
+                new_obs = self.g(new_state) + np.random.multivariate_normal(np.zeros([self.dy]), self.params.R)
             states[t, :] = new_state
             observs[t, :] = new_obs
             prev_state = new_state

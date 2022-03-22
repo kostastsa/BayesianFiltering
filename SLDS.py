@@ -80,14 +80,14 @@ class SLDS:
         t_final = len(model_history)
         mean_array = np.zeros([t_final, self.dx])
         cov_array = np.zeros([t_final, self.dx, self.dx])
-        lf_array = np.zeros([t_final - 1])
+        lf_array = np.zeros([t_final])
         mean_array[0, :] = init[0]
         cov_array[0, :, :] = init[1]
-        for t in range(t_final - 2):
-            current_model_ind = model_history[t + 1]
+        for t in range(1, t_final):
+            current_model_ind = model_history[t]
             model = self.models[current_model_ind]
-            mean_array[t + 1], cov_array[t + 1], lf_array[t + 1] = model.kalman_step(observs[t], mean_array[t],
-                                                                                     cov_array[t])
+            mean_array[t], cov_array[t], lf_array[t] = model.kalman_step(observs[t-1], mean_array[t-1],
+                                                                                     cov_array[t-1])
         return mean_array, cov_array, lf_array
 
     def IMM(self, observs, init):
