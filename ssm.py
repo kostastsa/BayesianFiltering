@@ -154,9 +154,9 @@ class LGSSM(StateSpaceModel):
                 S = P_ * np.matmul(self.params.H, self.params.H.T) + self.params.R
                 K = P_ * np.matmul(self.params.H.T, np.linalg.inv(S))
 
-                mean_new = m_ + np.matmul(K, v)
+                mean_new = m_ + np.dot(K, v.T)
                 cov_new = P_ - np.dot(np.matmul(K, S), K.T)
-                lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
+                lf = st.multivariate_normal(np.squeeze(self.params.H.T * m_), S).pdf(new_obs)
         else:
             m_ = np.matmul(mean_prev, self.params.A.T)
             P_ = np.matmul(np.matmul(self.params.A, cov_prev), self.params.A.T) + self.params.Q

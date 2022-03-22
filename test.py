@@ -39,7 +39,7 @@ import matplotlib.pyplot as plt
 T = 100
 M = 2
 dx = 1
-dy = 1
+dy = 2
 var_max = 10
 init_state = np.zeros([dx])
 correl_mask_dx = np.ones([dx, dx]) - np.eye(dx)
