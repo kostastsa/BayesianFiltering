@@ -77,7 +77,6 @@ class SLDS:
         :param init:
         :return:
         """
-        # TODO: include functionality for 1D
         t_final = len(model_history)
         mean_array = np.zeros([t_final, self.dx])
         cov_array = np.zeros([t_final, self.dx, self.dx])
