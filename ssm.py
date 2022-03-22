@@ -3,6 +3,9 @@ from scipy import stats as st
 
 
 class LinearModelParameters:
+    """
+
+    """
 
     def __init__(self, A, H, Q, R):
         """
@@ -73,15 +76,13 @@ class StateSpaceModel:
         :return:
         """
         if self.dx == 1:
-            Q = np.array([self.params.Q])
+            new_state = self.f(prev_state) + np.random.normal(0, self.params.Q)
         else:
-            Q = self.params.Q
+            new_state = self.f(prev_state) + np.random.multivariate_normal(np.zeros([self.dx]), self.params.Q)
         if self.dy == 1:
-            R = np.array([self.params.R])
+            new_obs = self.g(new_state) + np.random.normal(0, self.params.R)
         else:
-            R = self.params.R
-        new_state = self.f(prev_state) + np.random.multivariate_normal(np.zeros([self.dx]), Q)
-        new_obs = self.g(new_state) + np.random.multivariate_normal(np.zeros([self.dy]), R)
+            new_obs = self.g(new_state) + np.random.multivariate_normal(np.zeros([self.dy]), self.params.R)
         return new_state, new_obs
 
 
@@ -129,24 +130,47 @@ class LGSSM(StateSpaceModel):
 
     def kalman_step(self, new_obs, mean_prev, cov_prev):
         """
+
         :param new_obs:
         :param mean_prev:
         :param cov_prev:
         :return:
         """
         global mean_new, cov_new, lf
-        m_ = np.matmul(mean_prev, self.params.A.T)
-        P_ = np.matmul(np.matmul(self.params.A, cov_prev), self.params.A.T) + self.params.Q
-        v = new_obs - np.matmul(m_, self.params.H.T)
-        S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
-        K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
-        mean_new = m_ + np.matmul(v, K.T)
-        cov_new = P_ - np.matmul(np.matmul(K, S), K.T)
-        if self.dy == 1:
-            lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
-        else:
-            lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
+        if self.dx == 1:
+            m_ = mean_prev * self.params.A
+            P_ = self.params.A * cov_prev * self.params.A.T + self.params.Q
 
+            if self.dy == 1:
+                v = new_obs - m_ * self.params.H
+                S = self.params.H * P_ * self.params.H + self.params.R
+                K = P_ * self.params.H / S
+
+                mean_new = m_ + K * v
+                cov_new = P_ - K * S * K
+                lf = st.norm(m_ * self.params.H, S).pdf(new_obs)
+            else:
+                v = new_obs - np.matmul(m_, self.params.H.T)
+                S = P_ * np.matmul(self.params.H, self.params.H.T) + self.params.R
+                K = P_ * np.matmul(self.params.H.T, np.linalg.inv(S))
+
+                mean_new = m_ + np.matmul(K, v)
+                cov_new = P_ - np.dot(np.matmul(K, S), K.T)
+                lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
+        else:
+            m_ = np.matmul(mean_prev, self.params.A.T)
+            P_ = np.matmul(np.matmul(self.params.A, cov_prev), self.params.A.T) + self.params.Q
+
+            v = new_obs - np.matmul(m_, self.params.H.T)
+            S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
+            K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
+
+            mean_new = m_ + np.matmul(v, K.T)
+            cov_new = P_ - np.matmul(np.matmul(K, S), K)
+            if self.dy == 1:
+                lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
+            else:
+                lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(new_obs)
         return mean_new, cov_new, lf
 
     def kalman_filter(self, observs, init):
@@ -156,25 +180,47 @@ class LGSSM(StateSpaceModel):
         :param init:
         :return:
         """
-        # TODO: include functionality for 1D
         mean_array = np.zeros([self.T, self.dx])
         cov_array = np.zeros([self.T, self.dx, self.dx])
         lf_array = np.zeros([self.T - 1])
         mean_array[0, :] = init[0]
         cov_array[0, :, :] = init[1]
-        for t in range(self.T - 1):
-            m_ = np.matmul(mean_array[t, :], self.params.A.T)
-            P_ = np.matmul(np.matmul(self.params.A, cov_array[t, :]), self.params.A.T) + self.params.Q
+        if self.dx == 1:
+            for t in range(self.T - 1):
+                m_ = mean_array[t, :] * self.params.A
+                P_ = self.params.A * cov_array[t, :] * self.params.A.T + self.params.Q
 
-            v = observs[t] - np.matmul(m_, self.params.H.T)
-            S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
-            K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
+                if self.dy == 1:
+                    v = observs[t] - m_ * self.params.H
+                    S = self.params.H * P_ * self.params.H + self.params.R
+                    K = P_ * self.params.H / S
 
-            mean_array[t + 1, :] = m_ + np.matmul(v, K.T)
-            cov_array[t + 1, :] = P_ - np.matmul(np.matmul(K, S), K)
-            if self.dy == 1:
-                lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
-            else:
-                lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
-            lf_array[t] = lf
+                    mean_array[t + 1, :] = m_ + K * v
+                    cov_array[t + 1, :] = P_ - K * S * K
+                    lf = st.norm(m_ * self.params.H, S).pdf(observs[t])
+                else:
+                    v = observs[t] - np.matmul(m_, self.params.H.T)
+                    S = P_ * np.matmul(self.params.H, self.params.H.T) + self.params.R
+                    K = P_ * np.matmul(self.params.H.T, np.linalg.inv(S))
+
+                    mean_array[t + 1, :] = m_ + np.matmul(K, v)
+                    cov_array[t + 1, :] = P_ - np.dot(np.matmul(K, S), K.T)
+                    lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
+                lf_array[t] = lf
+        else:
+            for t in range(self.T - 1):
+                m_ = np.matmul(mean_array[t, :], self.params.A.T)
+                P_ = np.matmul(np.matmul(self.params.A, cov_array[t, :]), self.params.A.T) + self.params.Q
+
+                v = observs[t] - np.matmul(m_, self.params.H.T)
+                S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
+                K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))
+
+                mean_array[t + 1, :] = m_ + np.matmul(v, K.T)
+                cov_array[t + 1, :] = P_ - np.matmul(np.matmul(K, S), K)
+                if self.dy == 1:
+                    lf = st.norm(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
+                else:
+                    lf = st.multivariate_normal(np.matmul(m_, self.params.H.T), S).pdf(observs[t])
+                lf_array[t] = lf
         return mean_array, cov_array, lf_array

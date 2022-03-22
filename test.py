@@ -10,37 +10,36 @@ import matplotlib.pyplot as plt
 # Data Generation
 
 ## 1 dimensional model
-a = np.array([0.1])
-h = np.array([1])
-q = np.array([0.01])
-r = np.array([0.01])
-
-params = LinearModelParameters(a, h, q, r)
-model1 = LGSSM(1,1,params)
-sim1 = Simulation(model1, T = 10, init_state=np.array([0]))
-
-#print(sim1.states)
+# a = np.array([0.1])
+# h = np.array([[1],[1]])
+# q = np.array([0.01])
+# r = np.eye(2)
+# T = 100
+#
+# params = LinearModelParameters(a, h, q, r)
+# model1 = LGSSM(1, 2, params)
+# sim1 = Simulation(model1, T, init_state=np.array([0]))
 
 ## 2 dimensional model
-dx = 2
-dy = 2
-A = np.eye(dx)
-H = 1 * np.eye(dy, dx)
-Q = 1 * np.eye(dx)
-R = 0.1 * np.eye(dy)
-
-init_state = np.zeros([dx])
-params2 = LinearModelParameters(A, H, Q, R)
-model2 = LGSSM(dx, dy, params2)
-sim2 = Simulation(model2, T = 100, init_state=init_state)
+# dx = 2
+# dy = 2
+# A = np.eye(dx)
+# H = 1 * np.eye(dy, dx)
+# Q = 1 * np.eye(dx)
+# R = 0.1 * np.eye(dy)
+#
+# init_state = np.zeros([dx])
+# params2 = LinearModelParameters(A, H, Q, R)
+# model2 = LGSSM(dx, dy, params2)
+# sim2 = Simulation(model2, T = 100, init_state=init_state)
 
 #print(sim2.states)
 
 ## SLDS
 T = 100
 M = 2
-dx = 5
-dy = 2
+dx = 1
+dy = 1
 var_max = 10
 init_state = np.zeros([dx])
 correl_mask_dx = np.ones([dx, dx]) - np.eye(dx)
@@ -63,9 +62,16 @@ mat = np.random.dirichlet(alpha, M) # Random tranisiton matrix with Dirichlet(al
 SLDS1.set_transition_matrix(mat)
 
 sim3 = Simulation(SLDS1, T, init_state=[0, init_state])
-#print(sim3.states)
+
 
 # Filtering
+## LGSSM 1D
+# filt_model = copy.deepcopy(model1)
+# dx = filt_model.dx
+# dy = filt_model.dy
+# init = [np.zeros(dx), np.eye(dx)]
+# out = filt_model.kalman_filter(sim1.observs, init)
+# mean_pred = out[0]
 
 ## LGSSM 2D
 # TODO: functionality for 1D
@@ -110,12 +116,13 @@ for t in range(T):
 #
 # fig1, axes1 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
 # scatter1 = axes1.scatter(sim3.states[1][:, 0], sim3.states[1][:, 1], alpha=0.6, label="States")
-# scatter2 = axes1.scatter(mean_out_GPB[:, 0], mean_out_GPB[:, 1], alpha=0.6, label="GPB")
+# scatter2 = axes1.scatter(mean_out_GPB[:, 0], mean_out_GPB[:, 1], alpha=0.6, marker = "v", label="GPB")
+# scatter3 = axes1.scatter(mean_out_IMM[:, 0], mean_out_IMM[:, 1], alpha=0.6, label="IMM")
 # axes1.set_ylabel("X2")
 # axes1.set_xlabel("X1")
 # axes1.set_title("True States VS Est")
-# axes1.legend(handles=[scatter1, scatter2])
-#
+# axes1.legend(handles=[scatter1, scatter2, scatter3])
+
 # fig2, axes2 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
 # scatter1 = axes2.scatter(out_exact_cond[0][:, 0], out_exact_cond[0][:, 1], alpha=0.6, marker="v", label="exact cond")
 # scatter2 = axes2.scatter(mean_out_GPB[:, 0], mean_out_GPB[:, 1], alpha=0.6, marker="v", label="GPB")
@@ -134,7 +141,7 @@ fig3, axes3 = plt.subplots(2, 1, sharex=True, figsize=(10, 4))
 plot11 = axes3[0].plot(errGPB_trueStates, label="GPB")
 plot21 = axes3[0].plot(errIMM_trueStates, label="IMM")
 axes3[0].set_ylabel("Error")
-axes3[0].set_xlabel("time")
+#axes3[0].set_xlabel("time")
 axes3[0].set_title("Error comp to True States")
 #axes3.legend(handles=[plot1, plot2])
 
@@ -148,7 +155,7 @@ axes3[1].set_title("Error comp to Ex Cond")
 fig4, axes4 = plt.subplots(2, 1, sharex=True, figsize=(10, 4))
 plot1 = axes4[0].plot(weights_out_GPB)
 axes4[0].set_ylabel("Weight")
-axes4[0].set_xlabel("time")
+#axes4[0].set_xlabel("time")
 axes4[0].set_title("Weights GPB")
 
 plot = axes4[1].plot(weights_out_IMM)
@@ -156,5 +163,10 @@ axes4[1].set_ylabel("Weight")
 axes4[1].set_xlabel("time")
 axes4[1].set_title("Weights IMM")
 
+fig5, axes5 = plt.subplots(2, 1, sharex=True, figsize=(10, 4))
+axes5[0].plot(sim3.states[0])
+axes5[0].set_ylabel("model")
+axes5[0].set_xlabel("time")
+axes5[0].set_title("True Model History")
 
 plt.show()
