@@ -166,7 +166,9 @@ class LGSSM(StateSpaceModel):
         else:
             m_ = np.matmul(mean_prev, self.params.A.T)
             P_ = np.matmul(np.matmul(self.params.A, cov_prev), self.params.A.T) + self.params.Q
-
+            if np.isnan(new_obs).any():
+                lf = np.nan
+                return m_, P_, lf
             v = new_obs - np.matmul(m_, self.params.H.T)
             S = np.matmul(np.matmul(self.params.H, P_), self.params.H.T) + self.params.R
             K = np.matmul(np.matmul(P_, self.params.H.T), np.linalg.inv(S))

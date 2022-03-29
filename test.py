@@ -37,8 +37,8 @@ import matplotlib.pyplot as plt
 
 ## SLDS
 M = 2
-dx = 1
-dy = 1
+dx = 2
+dy = 2
 T = 100
 model_parameter_array = np.empty([M], dtype=LinearModelParameters)
 init_state = np.zeros([dx])
