@@ -144,7 +144,9 @@ class LGSSM(StateSpaceModel):
         if self.dx == 1:
             m_ = mean_prev * self.params.A
             P_ = self.params.A * cov_prev * self.params.A + self.params.Q
-
+            if np.isnan(new_obs).any():
+                lf = np.nan
+                return m_, P_, lf
             if self.dy == 1:
                 v = new_obs - m_ * self.params.H
                 S = self.params.H * P_ * self.params.H + self.params.R
