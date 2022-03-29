@@ -5,7 +5,8 @@ from numpy import ndarray
 from ssm import LGSSM
 from ssm import StateSpaceModel
 import numpy as np
-from utils import collapse, dec_to_base
+from itertools import chain
+from utils import collapse, dec_to_base, normal_KL_div
 
 
 class SLDS:
@@ -78,17 +79,17 @@ class SLDS:
         :return:
         """
         t_final = len(model_history)
-        mean_array = np.zeros([t_final+1, self.dx])
-        cov_array = np.zeros([t_final+1, self.dx, self.dx])
-        lf_array = np.zeros([t_final+1])
+        mean_array = np.zeros([t_final + 1, self.dx])
+        cov_array = np.zeros([t_final + 1, self.dx, self.dx])
+        lf_array = np.zeros([t_final + 1])
         mean_array[0, :] = init[0]
         cov_array[0, :, :] = init[1]
-        for t in range(1, t_final+1):
-            current_model_ind = model_history[t-1]
+        for t in range(1, t_final + 1):
+            current_model_ind = model_history[t - 1]
             model = self.models[current_model_ind]
-            mean_array[t], cov_array[t], lf_array[t] = model.kalman_step(observs[t-1], 
-                                                                         mean_array[t-1],
-                                                                         cov_array[t-1])
+            mean_array[t], cov_array[t], lf_array[t] = model.kalman_step(observs[t - 1],
+                                                                         mean_array[t - 1],
+                                                                         cov_array[t - 1])
         return mean_array[1:], cov_array[1:], lf_array[1:]
 
     def IMM(self, observs, init):
@@ -201,14 +202,14 @@ class SLDS:
                                                        _red_mean_tens[tuple(red_tail_list)],
                                                        _red_cov_tens[tuple(red_tail_list)])
                     # Update Weights
-                    i = red_tail_list[r-2]
+                    i = red_tail_list[r - 2]
                     if np.isnan(observs[t]).any():
                         _weight_tens[tuple(tail_list)] = self.transition_matrix[i, i_r] * \
                                                          _norm[tuple(red_tail_list)]
                     else:
                         _weight_tens[tuple(tail_list)] = _lik_tens[tuple(tail_list)] * \
-                                                     self.transition_matrix[i, i_r] * \
-                                                     _norm[tuple(red_tail_list)]
+                                                         self.transition_matrix[i, i_r] * \
+                                                         _norm[tuple(red_tail_list)]
             _weight_tens = _weight_tens / np.sum(_weight_tens)
             weights_out[t, :] = np.reshape(_weight_tens, [1, self.num_models ** r])
             # Output
@@ -218,3 +219,54 @@ class SLDS:
             mean_out_array[t, :], cov_out_array[t, :, :] = collapse(_mean_list_out, _cov_list_out, _weight_list_out)
 
         return mean_out_array, cov_out_array, weights_out
+
+    def AdaMerge(self, observs, init, eps):
+        t_final = np.shape(observs)[0]
+        C = 1  # Initialize number of mixture components
+        weights = np.ones(C) / C
+        means = np.zeros([C, self.dx])
+        covs = np.zeros([C, self.dx, self.dx])
+        covs[0] = np.eye(self.dx)
+        mean_out_array = np.zeros([t_final, self.dx])
+        cov_out_array = np.zeros([t_final, self.dx, self.dx])
+        num_comp = np.ones(t_final)
+        for t in range(t_final):
+            num_comp[t] = C
+            means_temp = np.zeros([C, self.num_models, self.dx])
+            covs_temp = np.zeros([C, self.num_models, self.dx, self.dx])
+            weights_temp = np.zeros([C, self.num_models])
+            # Propagate
+            for c in range(C):
+                for m in range(self.num_models):
+                    means_temp[c, m], covs_temp[c, m], lf = self.models[m].kalman_step(observs[t], means[c], covs[c])
+                    if not np.isnan(lf):
+                        weights_temp[c, m] = lf * weights[c]
+                    else:
+                        weights_temp[c, m] = weights[c]
+            weights_temp = weights_temp / np.sum(weights_temp)
+
+            # Merge
+            mean_temp_reshape = np.reshape(means_temp, [C * self.num_models, self.dx])
+            covs_temp_reshape = np.reshape(covs_temp, [C * self.num_models, self.dx, self.dx])
+            weights_temp_reshape = np.reshape(weights_temp, C * self.num_models)
+            removed = []
+            for i in range(C * self.num_models):
+                for j in range(i + 1, C * self.num_models):
+                    if i not in removed and j not in removed:
+                        mean1 = mean_temp_reshape[i]
+                        mean2 = mean_temp_reshape[j]
+                        cov1 = covs_temp_reshape[i]
+                        cov2 = covs_temp_reshape[j]
+                        div = normal_KL_div(mean1, mean2, cov1, cov2)
+                        if div < eps:
+                            removed.append(j)
+                            weights_temp_reshape[i] = weights_temp_reshape[i] + weights_temp_reshape[j]
+
+            new_index_array = list(set([i for i in range(C * self.num_models)]) - set(removed))
+            C = len(new_index_array)
+            means = mean_temp_reshape[new_index_array]
+            covs = covs_temp_reshape[new_index_array]
+            weights = weights_temp_reshape[new_index_array]
+            print(sum(weights))
+            mean_out_array[t, :], cov_out_array[t, :, :] = collapse(means, covs, weights)
+        return mean_out_array, cov_out_array, num_comp

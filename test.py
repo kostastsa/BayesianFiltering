@@ -82,7 +82,7 @@ sim3 = Simulation(SLDS1, T, init_state=[0, init_state])
 for t in range(T):
     if t%10:
         sim3.observs[t] = None
-print(sim3.observs)
+
 # Filtering
 ## LGSSM 1D
 # filt_model = copy.deepcopy(model1)
@@ -122,6 +122,13 @@ dx_slds = filt_slds_model2.dx
 #out_slds = filt_slds_model.conditional_kalman_filter(sim3.states[0], sim3.observs, init_slds)
 mean_out_GPB, cov_out_GPB, weights_out_GPB = filt_slds_model2.GPB(5, sim3.observs, init_slds)
 #print(mean_out_GPB)
+
+### AdaMerge
+filt_slds_model2 = copy.deepcopy(SLDS1)
+dx_slds = filt_slds_model2.dx
+mean_out_AM, cov_out_AM, num_comp_AM = filt_slds_model2.AdaMerge(sim3.observs, init_slds, 1)
+print(mean_out_AM)
+print(num_comp_AM)
 
 # Error Calculations
 errGPB_trueStates = np.zeros(T)
