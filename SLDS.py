@@ -267,6 +267,5 @@ class SLDS:
             means = mean_temp_reshape[new_index_array]
             covs = covs_temp_reshape[new_index_array]
             weights = weights_temp_reshape[new_index_array]
-            print(sum(weights))
             mean_out_array[t, :], cov_out_array[t, :, :] = collapse(means, covs, weights)
         return mean_out_array, cov_out_array, num_comp
