@@ -98,8 +98,14 @@ class LGSSM(StateSpaceModel):
         self.dy = dy
         self.descr = "LG"
         self.params = parameters
-        self.f = lambda prev_state: np.matmul(prev_state, self.params.A.T)
-        self.g = lambda state: np.matmul(state, self.params.H.T)
+        if self.dx == 1:
+          self.f = lambda prev_state: prev_state * self.params.A
+        else:
+          self.f = lambda prev_state: np.matmul(prev_state, self.params.A.T)
+        if self.dy == 1:
+          self.g = lambda state: np.dot(state, self.params.H.T)
+        else:
+          self.g = lambda state: np.matmul(state, self.params.H.T)
 
     def simulate(self, T, init_state):
         """
@@ -137,7 +143,7 @@ class LGSSM(StateSpaceModel):
         global mean_new, cov_new, lf
         if self.dx == 1:
             m_ = mean_prev * self.params.A
-            P_ = self.params.A * cov_prev * self.params.A.T + self.params.Q
+            P_ = self.params.A * cov_prev * self.params.A + self.params.Q
 
             if self.dy == 1:
                 v = new_obs - m_ * self.params.H
@@ -149,7 +155,7 @@ class LGSSM(StateSpaceModel):
                 lf = st.norm(m_ * self.params.H, S).pdf(new_obs)
             else:
                 v = new_obs - np.matmul(m_, self.params.H.T)
-                S = P_ * np.matmul(self.params.H, self.params.H.T) + self.params.R
+                S = P_ * np.outer(self.params.H, self.params.H.T) + self.params.R
                 K = P_ * np.matmul(self.params.H.T, np.linalg.inv(S))
 
                 mean_new = m_ + np.dot(K, v.T)
