@@ -131,7 +131,10 @@ class SLDS:
                     _interm_cov_tens[m])
 
                 # Weight update
-                weight_vec_array[t, m] = lik_fac_vec_array[t, m] * norm
+                if np.isnan(observs[t]).any():
+                    weight_vec_array[t, m] = norm
+                else:
+                    weight_vec_array[t, m] = lik_fac_vec_array[t, m] * norm
 
             weight_vec_array[t] = weight_vec_array[t] / np.sum(weight_vec_array[t])
             mean_out_array[t], cov_out_array[t] = collapse(mean_mat_array[t],
@@ -199,7 +202,11 @@ class SLDS:
                                                        _red_cov_tens[tuple(red_tail_list)])
                     # Update Weights
                     i = red_tail_list[r-2]
-                    _weight_tens[tuple(tail_list)] = _lik_tens[tuple(tail_list)] * \
+                    if np.isnan(observs[t]).any():
+                        _weight_tens[tuple(tail_list)] = self.transition_matrix[i, i_r] * \
+                                                         _norm[tuple(red_tail_list)]
+                    else:
+                        _weight_tens[tuple(tail_list)] = _lik_tens[tuple(tail_list)] * \
                                                      self.transition_matrix[i, i_r] * \
                                                      _norm[tuple(red_tail_list)]
             _weight_tens = _weight_tens / np.sum(_weight_tens)

@@ -79,8 +79,10 @@ mat = np.array([[0.01, 0.99] , [0.99, 0.01]])
 SLDS1.set_transition_matrix(mat)
 
 sim3 = Simulation(SLDS1, T, init_state=[0, init_state])
-print(sim3.states[1])
-
+for t in range(T):
+    if t%10:
+        sim3.observs[t] = None
+print(sim3.observs)
 # Filtering
 ## LGSSM 1D
 # filt_model = copy.deepcopy(model1)
