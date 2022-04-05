@@ -24,7 +24,6 @@ class LinearModelParameters:
         return 'A : \n' + str(self.A) + '\n' + 'H : \n' + str(self.H) + '\n' + 'Q : \n' + str(
             self.Q) + '\n' + 'R : \n' + str(self.R)
 
-
 class StateSpaceModel:
     """
     Generative Model class.
@@ -85,6 +84,69 @@ class StateSpaceModel:
             new_obs = self.g(new_state) + np.random.multivariate_normal(np.zeros([self.dy]), self.params.R)
         return new_state, new_obs
 
+    def extended_kalman_step(self, jacob_dyn, jacob_obs, new_obs, mean_prev, cov_prev, params):
+        """
+
+         :param new_obs:
+         :param mean_prev:
+         :param cov_prev:
+         :return:
+         """
+        global mean_new, cov_new, lf
+        params.A = jacob_dyn(mean_prev)
+        if self.dx == 1:
+            m_ = self.f(mean_prev)
+            P_ = params.A * cov_prev * params.A + params.Q
+            params.H = jacob_obs(m_)
+            if np.isnan(new_obs).any():
+                lf = np.nan
+                return m_, P_, lf
+            if self.dy == 1:
+                v = new_obs - self.g(m_)
+                S = params.H * P_ * params.H + params.R
+                K = P_ * params.H / S
+
+                mean_new = m_ + K * v
+                cov_new = P_ - K * S * K
+                lf = st.norm(m_ * params.H, S).pdf(new_obs)
+            else:
+                v = new_obs - self.g(m_)
+                S = P_ * np.outer(params.H, params.H.T) + params.R
+                K = P_ * np.matmul(params.H.T, np.linalg.inv(S))
+
+                mean_new = m_ + np.dot(K, v.T)
+                cov_new = P_ - np.dot(np.matmul(K, S), K.T)
+                lf = st.multivariate_normal(np.squeeze(params.H.T * m_), S).pdf(new_obs)
+        else:
+            m_ = self.f(mean_prev)
+            P_ = np.matmul(np.matmul(params.A, cov_prev), params.A.T) + params.Q
+            params.H = jacob_obs(m_)
+            if np.isnan(new_obs).any():
+                lf = np.nan
+                return m_, P_, lf
+            v = new_obs - np.matmul(m_, params.H.T)
+            S = np.matmul(np.matmul(params.H, P_), params.H.T) + params.R
+            K = np.matmul(np.matmul(P_, params.H.T), np.linalg.inv(S))
+
+            mean_new = m_ + np.matmul(v, K.T)
+            cov_new = P_ - np.matmul(np.matmul(K, S), K)
+            if self.dy == 1:
+                lf = st.norm(np.matmul(m_, params.H.T), S).pdf(new_obs)
+            else:
+                lf = st.multivariate_normal(np.matmul(m_, params.H.T), S).pdf(new_obs)
+        return mean_new, cov_new, lf
+
+    def extended_kalman_filter(self, observs, jacob_dyn, jacob_obs, params, init):
+        T = np.shape(observs)[0]
+        means = np.zeros([T, self.dx])
+        covs = np.zeros([T, self.dx])
+        means[0] = init[0]
+        covs[0] = init[1]
+        for t in range(T - 1):
+            means[t + 1], covs[t + 1], lf = self.extended_kalman_step(jacob_dyn, jacob_obs, observs[t], means[t],
+                                                                     covs[t], params)
+        return means, covs
+
 
 class LGSSM(StateSpaceModel):
 
@@ -135,11 +197,11 @@ class LGSSM(StateSpaceModel):
     def kalman_step(self, new_obs, mean_prev, cov_prev):
         """
 
-        :param new_obs:
-        :param mean_prev:
-        :param cov_prev:
-        :return:
-        """
+         :param new_obs:
+         :param mean_prev:
+         :param cov_prev:
+         :return:
+         """
         global mean_new, cov_new, lf
         if self.dx == 1:
             m_ = mean_prev * self.params.A
