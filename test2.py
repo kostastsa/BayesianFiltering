@@ -14,6 +14,7 @@ a = np.array([1])
 h = np.array([1])
 q = np.array([0.01])
 r = np.eye(1)
+
 T = 100
 
 params = LinearModelParameters(a, h, q, r)
