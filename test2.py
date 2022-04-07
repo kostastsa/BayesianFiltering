@@ -68,6 +68,9 @@ mean_pred = out[0]
 filt_slds_model = copy.deepcopy(SLDS1)
 dx_slds = filt_slds_model.dx
 mean_out_IMM,cov_out_IMM, weights_out_IMM = filt_slds_model.IMM(sim1.observs, init)
+
+##
+
 # Plots
 
 fig1, axes1 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))

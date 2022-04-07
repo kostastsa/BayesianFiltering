@@ -10,7 +10,7 @@ class LinearModelParameters:
 
     """
 
-    def __init__(self, A, H, Q, R):
+    def __init__(self, A, b, H, Q, R):
         """
 
         :param A:
@@ -19,6 +19,7 @@ class LinearModelParameters:
         :param R:
         """
         self.A = A
+        self.b = b
         self.H = H
         self.Q = Q
         self.R = R
@@ -79,9 +80,9 @@ class StateSpaceModel:
         :return:
         """
         if self.dx == 1:
-            new_state = self.f(prev_state) + np.random.normal(0, self.params.Q)
+            new_state = self.f(prev_state) + np.random.normal(self.params.b, self.params.Q)
         else:
-            new_state = self.f(prev_state) + np.random.multivariate_normal(np.zeros([self.dx]), self.params.Q)
+            new_state = self.f(prev_state) + np.random.multivariate_normal(self.params.b, self.params.Q)
         if self.dy == 1:
             new_obs = self.g(new_state) + np.random.normal(0, self.params.R)
         else:
@@ -266,9 +267,9 @@ class LGSSM(StateSpaceModel):
         prev_state = init_state
         for t in range(T):
             if self.dx == 1:
-                new_state = self.f(prev_state) + np.random.normal(0, self.params.Q)
+                new_state = self.f(prev_state) + np.random.normal(self.params.b, self.params.Q)
             else:
-                new_state = self.f(prev_state) + np.random.multivariate_normal(np.zeros([self.dx]), self.params.Q)
+                new_state = self.f(prev_state) + np.random.multivariate_normal(self.params.b, self.params.Q)
             if self.dy == 1:
                 new_obs = self.g(new_state) + np.random.normal(0, self.params.R)
             else:
@@ -288,7 +289,7 @@ class LGSSM(StateSpaceModel):
          """
         global mean_new, cov_new, lf
         if self.dx == 1:
-            m_ = mean_prev * self.params.A
+            m_ = mean_prev * self.params.A + self.params.b
             P_ = self.params.A * cov_prev * self.params.A + self.params.Q
             if np.isnan(new_obs).any():
                 lf = np.nan
@@ -310,7 +311,7 @@ class LGSSM(StateSpaceModel):
                 cov_new = P_ - np.dot(np.matmul(K, S), K.T)
                 lf = st.multivariate_normal(np.squeeze(self.params.H.T * m_), S).pdf(new_obs)
         else:
-            m_ = np.matmul(mean_prev, self.params.A.T)
+            m_ = np.matmul(mean_prev, self.params.A.T) + self.params.b
             P_ = np.matmul(np.matmul(self.params.A, cov_prev), self.params.A.T) + self.params.Q
             if np.isnan(new_obs).any():
                 lf = np.nan
@@ -341,7 +342,7 @@ class LGSSM(StateSpaceModel):
         cov_array[0, :, :] = init[1]
         if self.dx == 1:
             for t in range(self.T - 1):
-                m_ = mean_array[t, :] * self.params.A
+                m_ = mean_array[t, :] * self.params.A + self.params.b
                 P_ = self.params.A * cov_array[t, :] * self.params.A.T + self.params.Q
 
                 if self.dy == 1:
@@ -363,7 +364,7 @@ class LGSSM(StateSpaceModel):
                 lf_array[t] = lf
         else:
             for t in range(self.T - 1):
-                m_ = np.matmul(mean_array[t, :], self.params.A.T)
+                m_ = np.matmul(mean_array[t, :], self.params.A.T) + self.params.b
                 P_ = np.matmul(np.matmul(self.params.A, cov_array[t, :]), self.params.A.T) + self.params.Q
 
                 v = observs[t] - np.matmul(m_, self.params.H.T)

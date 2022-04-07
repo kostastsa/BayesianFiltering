@@ -2,6 +2,7 @@ import copy
 
 from numpy import ndarray
 
+import utils
 from ssm import LGSSM
 from ssm import StateSpaceModel
 import numpy as np
@@ -91,6 +92,37 @@ class SLDS:
                                                                          mean_array[t - 1],
                                                                          cov_array[t - 1])
         return mean_array[1:], cov_array[1:], lf_array[1:]
+
+    def PMM(self, observs, init):
+        """
+        Piecewise Multiple Model algorithm
+        :param observs:
+        :param init:
+        :return:
+        """
+        t_final = np.shape(observs)[0]
+        mean_out = np.zeros([t_final, self.dx])
+        cov_out = np.zeros([t_final, self.dx, self.dx])
+        mean_mat_array = np.zeros([t_final, self.num_models, self.dx])
+        cov_tens_array = np.zeros([t_final, self.num_models, self.dx, self.dx])
+        weight_vec_array = np.ones([t_final, self.num_models]) / self.num_models
+        lf = np.zeros(self.num_models)
+        mean_mat_array[0] = init[0]
+        cov_tens_array[0] = init[1]
+        for t in range(t_final - 1):
+            for mode in range(self.num_models):
+                mean_mat_array[t + 1, mode], cov_tens_array[t + 1, mode], lf[mode] = self.models[mode].kalman_step(
+                    observs[t],
+                    mean_mat_array[t, mode],
+                    cov_tens_array[t, mode])
+            if np.isnan(observs[t]).any():
+                weight_vec_array[t + 1] = np.matmul(self.transition_matrix, weight_vec_array[t])
+            else:
+                weight_vec_array[t + 1] = np.multiply(lf, np.matmul(self.transition_matrix, weight_vec_array[t]))
+            weight_vec_array[t + 1] = weight_vec_array[t + 1] / np.sum(weight_vec_array[t + 1])
+            mean_out[t + 1], cov_out[t + 1] = utils.collapse(mean_mat_array[t + 1], cov_tens_array[t + 1],
+                                                             weight_vec_array[t + 1])
+        return mean_out, cov_out
 
     def IMM(self, observs, init):
         """

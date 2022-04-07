@@ -37,8 +37,8 @@ import matplotlib.pyplot as plt
 
 ## SLDS
 M = 2
-dx = 2
-dy = 2
+dx = 1
+dy = 1
 T = 100
 model_parameter_array = np.empty([M], dtype=LinearModelParameters)
 init_state = np.zeros([dx])
@@ -54,33 +54,35 @@ init_state = np.zeros([dx])
 #     R = 1000 * np.random.rand() * np.eye(dy)
 #     model_parameter_array[m] = LinearModelParameters(A, H, Q, R)
 
-# Fast forgetting
+# Slow forgetting
 A0 = 1 * np.eye(dx)
+b0 = 0
 H0 = 1 * np.eye(dy, dx)
 Q0 = 0.01 * np.eye(dx) #np.array([[10, 0] , [ 0, 0.1]])
 R0 = 1 * np.eye(dy)
 
-# Slow forgetting
+# Fast forgetting
 theta = np.pi*5/360
-A1 = -A0 # 1 * np.array([[np.cos(theta), -np.sin(theta)] , [ np.sin(theta), np.cos(theta)]])
+A1 = 0.1 # 1 * np.array([[np.cos(theta), -np.sin(theta)] , [ np.sin(theta), np.cos(theta)]])
+b1 = 1
 H1 = 1 * np.eye(dy, dx)
 Q1 = 1 * np.eye(dx) # np.array([[0.1, 0] , [ 0, 10]])
-R1 = 1 * np.random.rand() * np.eye(dy)
+R1 = 5 * np.random.rand() * np.eye(dy)
 
-model_parameter_array[0] = LinearModelParameters(A0, H0, Q0, R0)
-model_parameter_array[1] = LinearModelParameters(A1, H1, Q1, R1)
+model_parameter_array[0] = LinearModelParameters(A0, b0, H0, Q0, R0)
+model_parameter_array[1] = LinearModelParameters(A1, b1, H1, Q1, R1)
 
 SLDS1 = SLDS(dx, dy, model_parameter_array)
 
 # alpha = np.random.choice(range(1, 50), M)
 # mat = np.random.dirichlet(alpha, M) # Random tranisiton matrix with Dirichlet(alpha) rows
-mat = np.array([[0.01, 0.99] , [0.99, 0.01]])
+mat = np.array([[0.9, 0.1], [0.1, 0.9]])
 
 SLDS1.set_transition_matrix(mat)
 
 sim3 = Simulation(SLDS1, T, init_state=[0, init_state])
 for t in range(T):
-    if t%10:
+    if t%1:
         sim3.observs[t] = None
 
 # Filtering
@@ -127,8 +129,12 @@ mean_out_GPB, cov_out_GPB, weights_out_GPB = filt_slds_model2.GPB(5, sim3.observ
 filt_slds_model2 = copy.deepcopy(SLDS1)
 dx_slds = filt_slds_model2.dx
 mean_out_AM, cov_out_AM, num_comp_AM = filt_slds_model2.AdaMerge(sim3.observs, init_slds, 1)
-print(mean_out_AM)
-print(num_comp_AM)
+
+#PMM
+filt_slds_model2 = copy.deepcopy(SLDS1)
+dx_slds = filt_slds_model2.dx
+mean_out_PMM, cov_out_PMM = filt_slds_model2.PMM(sim3.observs, init_slds)
+
 
 # Error Calculations
 errGPB_trueStates = np.zeros(T)
@@ -149,10 +155,11 @@ fig1, axes1 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
 p1 = axes1.plot(sim3.states[1], alpha=0.6, label="States")
 p2 = axes1.plot(mean_out_GPB, alpha=0.6, label="GPB")
 p3 = axes1.plot(mean_out_IMM, alpha=0.6, label="IMM")
+p4 = axes1.plot(mean_out_PMM[1:], alpha=0.6, label="IMM")
 axes1.set_ylabel("X")
 axes1.set_xlabel("time")
 axes1.set_title("True States VS Est")
-axes1.legend(['true', 'GPB', 'IMM'])
+axes1.legend(['true', 'GPB', 'IMM', 'PMM'])
 
 fig2, axes2 = plt.subplots(1, 1, sharex=True, figsize=(10, 4))
 p1 = axes2.plot(out_exact_cond[0], alpha=0.6, label="States")
