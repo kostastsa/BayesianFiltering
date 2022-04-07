@@ -1,5 +1,8 @@
 import numpy as np
 from scipy import stats as st
+import time
+
+import utils
 
 
 class LinearModelParameters:
@@ -24,6 +27,7 @@ class LinearModelParameters:
         return 'A : \n' + str(self.A) + '\n' + 'H : \n' + str(self.H) + '\n' + 'Q : \n' + str(
             self.Q) + '\n' + 'R : \n' + str(self.R)
 
+
 class StateSpaceModel:
     """
     Generative Model class.
@@ -32,7 +36,7 @@ class StateSpaceModel:
     ----------
     """
 
-    def __init__(self, dx, dy, f=None, g=None, descr=None):
+    def __init__(self, dx, dy, f=None, g=None, params=None, descr=None):
         """Initialization method.
 
         :param dx:
@@ -137,14 +141,94 @@ class StateSpaceModel:
         return mean_new, cov_new, lf
 
     def extended_kalman_filter(self, observs, jacob_dyn, jacob_obs, params, init):
+        tin = time.time()
         T = np.shape(observs)[0]
         means = np.zeros([T, self.dx])
-        covs = np.zeros([T, self.dx])
+        covs = np.zeros([T, self.dx, self.dx])
         means[0] = init[0]
         covs[0] = init[1]
         for t in range(T - 1):
             means[t + 1], covs[t + 1], lf = self.extended_kalman_step(jacob_dyn, jacob_obs, observs[t], means[t],
-                                                                     covs[t], params)
+                                                                      covs[t], params)
+        print('EKF:',time.time() - tin)
+        return means, covs
+
+    def latent_ekf(self, observs, num_comp, latent_cov, jacob_dyn, jacob_obs, params, init):
+        tin = time.time()
+        T = np.shape(observs)[0]
+        means = np.zeros([T, self.dx])
+        covs = np.zeros([T, self.dx, self.dx])
+        prop_means = np.zeros((num_comp, self.dx))
+        prop_covs = np.zeros((num_comp, self.dx, self.dx))
+        means[0] = init[0]
+        covs[0] = init[1]
+        for t in range(T - 1):
+            split_means = utils.split_by_sampling(means[t], covs[t], latent_cov, num_comp)
+            for i in range(num_comp):
+                prop_means[i], prop_covs[i], lf = self.extended_kalman_step(jacob_dyn, jacob_obs, observs[t],
+                                                                            split_means[i],
+                                                                            latent_cov, params)
+            means[t+1], covs[t+1] = utils.collapse(prop_means, prop_covs, np.ones(num_comp)/num_comp)
+        print('LEKF:', time.time() - tin)
+        return means, covs
+
+    def unscented_kalman_filter(self, observs, init, params, alpha, beta, kappa):
+        tin = time.time()
+        T = np.shape(observs)[0]
+        lam = alpha**2 * (self.dx + kappa) - self.dx
+        means = np.zeros((T, self.dx))
+        covs = np.zeros((T, self.dx, self.dx))
+        pred_sigma_points = np.zeros((2 * self.dx + 1, self.dx))
+        upd_sigma_points = np.zeros((2 * self.dx + 1, self.dy))
+        means[0] = init[0]
+        covs[0] = init[1]
+        for t in range(1, T):
+            #Prediction
+            sigma_points = utils.split_to_sigma_points(means[t-1], covs[t-1], alpha, kappa)
+            i = 0
+            for point in sigma_points:
+                pred_sigma_points[i] = self.f(point)
+                i += 1
+            W0m = (lam / (lam + self.dx))
+            Wi = 1 / (2 * (lam + self.dx))
+            W0c = W0m + 1 - alpha**2 + beta
+            pred_mean = W0m * pred_sigma_points[0]
+            pred_mean += Wi * np.mean(pred_sigma_points[1:], axis=0)
+            if self.dx == 1:
+                pred_cov = W0c * (pred_sigma_points[0] - pred_mean) ** 2 + params.Q
+                for i in range(1, 2 * self.dx):
+                    pred_cov += Wi * (pred_sigma_points[i] - pred_mean) ** 2
+            else:
+                pred_cov = W0c * np.outer(pred_sigma_points[0] - pred_mean, pred_sigma_points[0] - pred_mean) + params.Q
+                for i in range(1, 2*self.dx):
+                    pred_cov += Wi * np.outer(pred_sigma_points[i] - pred_mean, pred_sigma_points[i] - pred_mean)
+            # Update
+            i = 0
+            for point in pred_sigma_points:
+                upd_sigma_points[i] = self.g(point)
+                i += 1
+            obs_mean = W0m * upd_sigma_points[0]
+            obs_mean += Wi * np.mean(upd_sigma_points[1:], axis=0)
+            if self.dx == 1:
+                S_matrix = W0c * (upd_sigma_points[0] - obs_mean) ** 2 + params.R
+                C_matrix = W0c * (upd_sigma_points[0] - obs_mean) ** 2
+                for i in range(1, 2 * self.dx):
+                    S_matrix += Wi * (upd_sigma_points[i] - obs_mean) ** 2
+                    C_matrix += Wi * (upd_sigma_points[i] - obs_mean) ** 2
+
+                K_gain = C_matrix / S_matrix
+                means[t] = pred_mean + K_gain * (observs[t] - obs_mean)
+                covs[t] = pred_cov - K_gain * S_matrix * K_gain.T
+            else:
+                S_matrix = W0c * np.outer(upd_sigma_points[0] - obs_mean, upd_sigma_points[0] - obs_mean) + params.R
+                C_matrix = W0c * np.outer(pred_sigma_points[0] - pred_mean, upd_sigma_points[0] - obs_mean)
+                for i in range(1, 2 * self.dx):
+                    S_matrix += Wi * np.outer(upd_sigma_points[i] - obs_mean, upd_sigma_points[i] - obs_mean)
+                    C_matrix += Wi * np.outer(pred_sigma_points[i] - pred_mean, upd_sigma_points[i] - obs_mean)
+                K_gain = np.matmul(C_matrix, np.linalg.inv(S_matrix))
+                means[t] = pred_mean + np.matmul(K_gain, (observs[t] - obs_mean))
+                covs[t] = pred_cov - np.matmul(np.matmul(K_gain, S_matrix), K_gain.T)
+        print('UKF:', time.time() - tin)
         return means, covs
 
 
@@ -161,13 +245,13 @@ class LGSSM(StateSpaceModel):
         self.descr = "LG"
         self.params = parameters
         if self.dx == 1:
-          self.f = lambda prev_state: prev_state * self.params.A
+            self.f = lambda prev_state: prev_state * self.params.A
         else:
-          self.f = lambda prev_state: np.matmul(prev_state, self.params.A.T)
+            self.f = lambda prev_state: np.matmul(prev_state, self.params.A.T)
         if self.dy == 1:
-          self.g = lambda state: np.dot(state, self.params.H.T)
+            self.g = lambda state: np.dot(state, self.params.H.T)
         else:
-          self.g = lambda state: np.matmul(state, self.params.H.T)
+            self.g = lambda state: np.matmul(state, self.params.H.T)
 
     def simulate(self, T, init_state):
         """
