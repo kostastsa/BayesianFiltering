@@ -13,6 +13,7 @@ def collapse(mean_mat, covariance_tens, weight_vec):
     return mean_out, cov_out
 
 
+
 def dec_to_base(num, base):  # Maximum base - 36
     base_num = ""
     while num > 0:
@@ -39,12 +40,11 @@ def split_by_sampling(mean, cov, new_cov, num_comp):
     if dx == 1:
         new_means = np.random.normal(mean, dcov, (num_comp, 1))
     else:
-        new_means = np.random.multivariate_normal(mean, cov, num_comp)
+        new_means = np.random.multivariate_normal(mean, dcov, num_comp)
     return new_means
 
-def split_to_sigma_points(mean, cov, alpha, kappa):
+def split_to_sigma_points(mean, cov, lam):
     dx = np.shape(mean)[0]
-    lam = alpha ** 2 * (dx + kappa) - dx
     sigma_points = np.zeros((2 * dx + 1, dx))
     sigma_points[0] = mean
     if dx == 1:

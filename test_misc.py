@@ -11,7 +11,7 @@ new_cov = 0.001
 num_comp = 100
 xx = np.linspace(old_mean - 5*np.sqrt(old_cov), old_mean + 5*np.sqrt(old_cov), 1000)
 sigma = math.sqrt(new_cov)
-means = utils.split_by_sampling(np.array([old_mean]),np.array([old_cov]),np.array([new_cov]), num_comp)
+means = utils.split_by_sampling(np.array([old_mean]), np.array([old_cov]), np.array([new_cov]), num_comp)
 
 sigma_points = utils.split_to_sigma_points(np.zeros(2), np.eye(2), 1, 2)
 print(sigma_points)
