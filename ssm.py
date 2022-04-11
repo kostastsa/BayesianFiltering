@@ -1,7 +1,6 @@
 import numpy as np
 from scipy import stats as st
 import time
-
 import utils
 
 
@@ -37,7 +36,7 @@ class StateSpaceModel:
     ----------
     """
 
-    def __init__(self, dx, dy, f=None, g=None, params=None, descr=None):
+    def __init__(self, dx, dy, params, f=None, g=None, ):
         """Initialization method.
 
         :param dx:
@@ -50,11 +49,7 @@ class StateSpaceModel:
         self.dy = dy
         self.f = f
         self.g = g
-        self.descr = descr
-
-    def __str__(self):
-        if self.descr == "LG":
-            return str(self.params)
+        self.params = params
 
     def simulate(self, T, init_state):
         """
@@ -67,8 +62,7 @@ class StateSpaceModel:
         observs = np.zeros([T, self.dy])
         prev_state = init_state
         for t in range(T):
-            new_state = self.f(prev_state)
-            new_obs = self.g(new_state)
+            new_state, new_obs = self.propagate(prev_state)
             states[t, :] = new_state
             observs[t, :] = new_obs
             prev_state = new_state
@@ -91,7 +85,6 @@ class StateSpaceModel:
 
     def extended_kalman_step(self, jacob_dyn, jacob_obs, new_obs, mean_prev, cov_prev, params):
         """
-
          :param new_obs:
          :param mean_prev:
          :param cov_prev:
@@ -110,6 +103,7 @@ class StateSpaceModel:
                 v = new_obs - self.g(m_)
                 S = params.H * P_ * params.H + params.R
                 K = P_ * params.H / S
+
 
                 mean_new = m_ + K * v
                 cov_new = P_ - K * S * K
@@ -141,7 +135,7 @@ class StateSpaceModel:
                 lf = st.multivariate_normal(np.matmul(m_, params.H.T), S).pdf(new_obs)
         return mean_new, cov_new, lf
 
-    def extended_kalman_filter(self, observs, jacob_dyn, jacob_obs, params, init):
+    def extended_kalman_filter(self, observs, jacob_dyn, jacob_obs, params, init, verbose=False):
         tin = time.time()
         T = np.shape(observs)[0]
         means = np.zeros([T, self.dx])
@@ -151,10 +145,11 @@ class StateSpaceModel:
         for t in range(T - 1):
             means[t + 1], covs[t + 1], lf = self.extended_kalman_step(jacob_dyn, jacob_obs, observs[t], means[t],
                                                                       covs[t], params)
-        print('EKF:',time.time() - tin)
+        if verbose: print('EKF:', time.time() - tin)
         return means, covs
 
-    def latent_ekf(self, observs, num_comp, latent_cov, jacob_dyn, jacob_obs, params, init):
+    def latent_ekf(self, observs, num_comp, latent_cov, jacob_dyn, jacob_obs, params, init, sigma=False, verbose=False):
+        if sigma: num_comp = 2*self.dx + 1
         tin = time.time()
         T = np.shape(observs)[0]
         means = np.zeros([T, self.dx])
@@ -164,16 +159,18 @@ class StateSpaceModel:
         means[0] = init[0]
         covs[0] = init[1]
         for t in range(T - 1):
-            split_means = utils.split_by_sampling(means[t], covs[t], latent_cov, num_comp)
+            if sigma : split_means = utils.split_to_sigma_points(means[t], covs[t], 1, 0)
+            else : split_means = utils.split_by_sampling(means[t], covs[t], latent_cov, num_comp)
             for i in range(num_comp):
                 prop_means[i], prop_covs[i], lf = self.extended_kalman_step(jacob_dyn, jacob_obs, observs[t],
                                                                             split_means[i],
                                                                             latent_cov, params)
+                #print(prop_covs[i])
             means[t+1], covs[t+1] = utils.collapse(prop_means, prop_covs, np.ones(num_comp)/num_comp)
-        print('LEKF:', time.time() - tin)
+        if verbose: print('LEKF:', time.time() - tin)
         return means, covs
 
-    def unscented_kalman_filter(self, observs, init, params, alpha, beta, kappa):
+    def unscented_kalman_filter(self, observs, init, params, alpha, beta, kappa, verbose = False):
         tin = time.time()
         T = np.shape(observs)[0]
         lam = alpha**2 * (self.dx + kappa) - self.dx
@@ -185,7 +182,7 @@ class StateSpaceModel:
         covs[0] = init[1]
         for t in range(1, T):
             #Prediction
-            sigma_points = utils.split_to_sigma_points(means[t-1], covs[t-1], alpha, kappa)
+            sigma_points = utils.split_to_sigma_points(means[t-1], covs[t-1], lam)
             i = 0
             for point in sigma_points:
                 pred_sigma_points[i] = self.f(point)
@@ -194,7 +191,7 @@ class StateSpaceModel:
             Wi = 1 / (2 * (lam + self.dx))
             W0c = W0m + 1 - alpha**2 + beta
             pred_mean = W0m * pred_sigma_points[0]
-            pred_mean += Wi * np.mean(pred_sigma_points[1:], axis=0)
+            pred_mean += Wi * np.sum(pred_sigma_points[1:], axis=0)
             if self.dx == 1:
                 pred_cov = W0c * (pred_sigma_points[0] - pred_mean) ** 2 + params.Q
                 for i in range(1, 2 * self.dx):
@@ -204,12 +201,13 @@ class StateSpaceModel:
                 for i in range(1, 2*self.dx):
                     pred_cov += Wi * np.outer(pred_sigma_points[i] - pred_mean, pred_sigma_points[i] - pred_mean)
             # Update
+            new_sigma_points = utils.split_to_sigma_points(pred_mean, pred_cov, lam)
             i = 0
-            for point in pred_sigma_points:
+            for point in new_sigma_points:
                 upd_sigma_points[i] = self.g(point)
                 i += 1
             obs_mean = W0m * upd_sigma_points[0]
-            obs_mean += Wi * np.mean(upd_sigma_points[1:], axis=0)
+            obs_mean += Wi * np.sum(upd_sigma_points[1:], axis=0)
             if self.dx == 1:
                 S_matrix = W0c * (upd_sigma_points[0] - obs_mean) ** 2 + params.R
                 C_matrix = W0c * (upd_sigma_points[0] - obs_mean) ** 2
@@ -229,7 +227,7 @@ class StateSpaceModel:
                 K_gain = np.matmul(C_matrix, np.linalg.inv(S_matrix))
                 means[t] = pred_mean + np.matmul(K_gain, (observs[t] - obs_mean))
                 covs[t] = pred_cov - np.matmul(np.matmul(K_gain, S_matrix), K_gain.T)
-        print('UKF:', time.time() - tin)
+        if verbose: print('UKF:', time.time() - tin)
         return means, covs
 
 
