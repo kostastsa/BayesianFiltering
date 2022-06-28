@@ -2,6 +2,7 @@ import numpy as np
 from scipy import stats as st
 import time
 import utils
+import random
 
 
 class LinearModelParameters:
@@ -156,17 +157,20 @@ class StateSpaceModel:
         covs = np.zeros([T, self.dx, self.dx])
         prop_means = np.zeros((num_comp, self.dx))
         prop_covs = np.zeros((num_comp, self.dx, self.dx))
+        weights = np.ones(num_comp)/num_comp
         means[0] = init[0]
         covs[0] = init[1]
         for t in range(T - 1):
             if sigma : split_means = utils.split_to_sigma_points(means[t], covs[t], 1, 0)
-            else : split_means = utils.split_by_sampling(means[t], covs[t], latent_cov, num_comp)
+            else : split_means = utils.split_by_sampling(means[t], covs[t], covs[t]/5, num_comp)
             for i in range(num_comp):
                 prop_means[i], prop_covs[i], lf = self.extended_kalman_step(jacob_dyn, jacob_obs, observs[t],
                                                                             split_means[i],
                                                                             latent_cov, params)
-                #print(prop_covs[i])
-            means[t+1], covs[t+1] = utils.collapse(prop_means, prop_covs, np.ones(num_comp)/num_comp)
+                if sigma == False:
+                    weights[i] = lf
+            weights = weights / np.sum(weights)
+            means[t+1], covs[t+1] = utils.collapse(prop_means, prop_covs, weights)
         if verbose: print('LEKF:', time.time() - tin)
         return means, covs
 
