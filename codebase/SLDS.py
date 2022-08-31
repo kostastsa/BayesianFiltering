@@ -12,9 +12,9 @@ from utils import collapse, dec_to_base, normal_KL_div
 
 class SLDS:
     """
-    Regime Switching State Space Model class. This model class represents
+    Switching Linear Dynamical Systems (SLDS) class. This model class represents
     a SDLS as a set of models together with a transition matrix. 
-    -The simulate metasdod takes as input the model (it is a class method), a
+    -The simulate method takes as input the model (it is a class method), a
      final time T and a initial condition and generates data which are not part
      of the object. The method returns all data, i.e., discrete and continuous
      states as well as observations.
