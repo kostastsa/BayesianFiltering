@@ -13,7 +13,6 @@ def collapse(mean_mat, covariance_tens, weight_vec):
     return mean_out, cov_out
 
 
-
 def dec_to_base(num, base):  # Maximum base - 36
     base_num = ""
     while num > 0:
@@ -34,6 +33,7 @@ def normal_KL_div(mean1, mean2, cov1, cov2):
          np.matmul(np.matmul(np.transpose(mean1 - mean2), Omega), (mean1 - mean2)) + np.trace(Omega * cov1);
     return KL / 2;
 
+
 def split_by_sampling(mean, cov, new_cov, num_comp):
     dcov = cov - new_cov
     dx = np.shape(mean)[0]
@@ -43,20 +43,22 @@ def split_by_sampling(mean, cov, new_cov, num_comp):
         new_means = np.random.multivariate_normal(mean, dcov, num_comp)
     return new_means
 
-def split_to_sigma_points(mean, cov, lam):
+
+def split_to_sigma_points(mean, cov, lamda):
     dx = np.shape(mean)[0]
     sigma_points = np.zeros((2 * dx + 1, dx))
     sigma_points[0] = mean
     if dx == 1:
         sqrtCov = np.sqrt(cov)
-        sigma_points[1] = mean + np.sqrt(dx + lam) * sqrtCov
-        sigma_points[2] = mean - np.sqrt(dx + lam) * sqrtCov
+        sigma_points[1] = mean + np.sqrt(dx + lamda) * sqrtCov
+        sigma_points[2] = mean - np.sqrt(dx + lamda) * sqrtCov
     else:
         sqrtCov = np.linalg.cholesky(cov)
         for i in range(dx):
-            sigma_points[i+1] = mean + np.sqrt(dx + lam) * sqrtCov.T[i]
-            sigma_points[dx+i+1] = mean - np.sqrt(dx + lam) * sqrtCov.T[i]
+            sigma_points[i + 1] = mean + np.sqrt(dx + lamda) * sqrtCov.T[i]
+            sigma_points[dx + i + 1] = mean - np.sqrt(dx + lamda) * sqrtCov.T[i]
     return sigma_points
+
 
 def gm(x, means, sigma, num_comp):
     out = 0
@@ -64,3 +66,8 @@ def gm(x, means, sigma, num_comp):
         out += stats.norm.pdf(x, mean, sigma) / num_comp
     return out
 
+def gaussian_logpdf(y, m, S):
+    D = m.shape[0]
+    L = np.linalg.cholesky(S)
+    x = np.linalg.solve(L, np.transpose(y-m))
+    return -0.5 * D * np.log(2 * np.pi) - np.sum(np.log(np.diag(L))) -0.5 * np.sum(x**2)
