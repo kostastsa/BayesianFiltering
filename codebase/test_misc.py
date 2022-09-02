@@ -1,28 +1,40 @@
-import numpy as np
 import utils
+import gaussfilt as gf
+import numpy as np
 import matplotlib.pyplot as plt
-import scipy.stats as stats
-import math
+import jax.numpy as jnp
+from numpy import random
+from jax import grad, jit, vmap
 
 
-old_mean = 0
-old_cov = 1
-new_cov = 0.001
-num_comp = 100
-xx = np.linspace(old_mean - 5*np.sqrt(old_cov), old_mean + 5*np.sqrt(old_cov), 1000)
-sigma = math.sqrt(new_cov)
-means = utils.split_by_sampling(np.array([old_mean]), np.array([old_cov]), np.array([new_cov]), num_comp)
+dx = 1
+dy = 1
 
-sigma_points = utils.split_to_sigma_points(np.zeros(2), np.eye(2), 1, 2)
-print(sigma_points)
+A = np.eye(dx) # np.random.random([dx,dx])
+B = np.eye(dy, dx) # np.random.random([dy,dx])
+c = random.random([1, dx])
+d = random.random((1, dy))
 
-mean_collapsed, cov_collapsed = utils.collapse(means, np.ones(num_comp)*new_cov, np.ones(num_comp)/num_comp)
+f = lambda x: 0.5 * A @ x
+g = lambda x: 0.5 * B @ x #+ d
+#jnp.dot(x, x) ** 2 #
 
-fig3, axes3 = plt.subplots(1,1)
-axes3.plot(xx, stats.norm.pdf(xx, old_mean, np.sqrt(old_cov)))
-axes3.plot(xx, stats.norm.pdf(xx, mean_collapsed, np.sqrt(cov_collapsed[0])))
-for mean in means:
-    axes3.plot(xx, stats.norm.pdf(xx, mean, sigma) / num_comp)
-#axes3.plot(xx, utils.gm(xx, means, sigma, num_comp))
+## Generate Data
+ssm = gf.SSM(dx, dy, np.zeros(dx), np.eye(dx), np.zeros(dy), np.eye(dy), f, g)
+xs, ys = ssm.simulate(100, np.zeros(dx))
+print(xs, ys)
 
-plt.show()
+## Test UKF Class
+ukf = gf.UKF(ssm, 1e-3, 2, 0)
+ys = random.random((100, dy))
+#print(ukf.run(ys, np.zeros(dx), np.eye(dx)))
+
+## Test MCF Class
+mcf = gf.MCF(ssm, 100)
+#print(mcf.run(ys, np.zeros(dx), np.eye(dx)))
+
+## Test EKF Class
+ekf = gf.EKF(ssm, order=2)
+print(ekf.run(ys, np.zeros(dx), np.eye(dx))[0])
+
+plt.plot()

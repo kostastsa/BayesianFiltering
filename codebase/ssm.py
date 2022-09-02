@@ -174,7 +174,7 @@ class StateSpaceModel:
         if verbose: print('LEKF:', time.time() - tin)
         return means, covs
 
-    def unscented_kalman_filter(self, observs, init, params, alpha, beta, kappa, verbose = False):
+    def unscented_kalman_filter(self, observs, init, params, alpha, beta, kappa, verbose=False):
         tin = time.time()
         T = np.shape(observs)[0]
         lam = alpha**2 * (self.dx + kappa) - self.dx
