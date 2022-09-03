@@ -6,7 +6,7 @@ from numpy import random
 from jax import grad, jit, vmap
 
 
-dx = 2
+dx = 1
 dy = 1
 
 m0 = np.zeros(dx)
