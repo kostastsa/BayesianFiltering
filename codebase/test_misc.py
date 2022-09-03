@@ -9,6 +9,9 @@ from jax import grad, jit, vmap
 dx = 2
 dy = 1
 
+m0 = np.zeros(dx)
+P0 = np.eye(dx)
+
 A = np.eye(dx) # np.random.random([dx,dx])
 B = np.eye(dy, dx) # np.random.random([dy,dx])
 c = random.random([1, dx])
@@ -19,18 +22,23 @@ g = lambda x: 0.5 * B @ x #+ d
 #jnp.dot(x, x) ** 2 #
 
 ## Generate Data
+seq_length = 10
 ssm = gf.SSM(dx, dy, np.zeros(dx), np.eye(dx), np.zeros(dy), np.eye(dy), f, g)
-xs, ys = ssm.simulate(100, np.zeros(dx))
+xs, ys = ssm.simulate(seq_length, m0)
+#print(xs, ys)
 
 ## Test UKF Class
 ukf = gf.UKF(ssm, 1e-3, 2, 0)
-#print(ukf.run(ys, np.zeros(dx), np.eye(dx)))
+ukf_out = ukf.run(ys, m0, P0)
 
 ## Test MCF Class
-mcf = gf.MCF(ssm, 100)
-#print(mcf.run(ys, np.zeros(dx), np.eye(dx)))
+num_particles = 10
+mcf = gf.MCF(ssm, num_particles)
+mcf_out = mcf.run(ys, m0, P0)
 
 ## Test EKF Class
 ekf = gf.EKF(ssm, order=2)
-ekf.run(ys, np.zeros(dx), np.eye(dx))
+ekf_out = ekf.run(ys, m0, P0)
+
+ukf_out
 
