@@ -1,13 +1,12 @@
 import utils
 import gaussfilt as gf
 import numpy as np
-import matplotlib.pyplot as plt
 import jax.numpy as jnp
 from numpy import random
 from jax import grad, jit, vmap
 
 
-dx = 1
+dx = 2
 dy = 1
 
 A = np.eye(dx) # np.random.random([dx,dx])
@@ -22,11 +21,9 @@ g = lambda x: 0.5 * B @ x #+ d
 ## Generate Data
 ssm = gf.SSM(dx, dy, np.zeros(dx), np.eye(dx), np.zeros(dy), np.eye(dy), f, g)
 xs, ys = ssm.simulate(100, np.zeros(dx))
-print(xs, ys)
 
 ## Test UKF Class
 ukf = gf.UKF(ssm, 1e-3, 2, 0)
-ys = random.random((100, dy))
 #print(ukf.run(ys, np.zeros(dx), np.eye(dx)))
 
 ## Test MCF Class
@@ -35,6 +32,5 @@ mcf = gf.MCF(ssm, 100)
 
 ## Test EKF Class
 ekf = gf.EKF(ssm, order=2)
-print(ekf.run(ys, np.zeros(dx), np.eye(dx))[0])
+ekf.run(ys, np.zeros(dx), np.eye(dx))
 
-plt.plot()
