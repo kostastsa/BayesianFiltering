@@ -80,6 +80,7 @@ class GaussFilt:
         filtered_covs[seq_length] = P0
 
         for t in range(seq_length):
+            #print('t:', t)
             # Prediction
             predicted_means[t], predicted_covs[t] = self.moment_approx(filtered_means[t - 1], filtered_covs[t - 1],
                                                                        'pred')[0:2]
@@ -180,10 +181,11 @@ class EKF(GaussFilt):
         else:
             ax1 = 1
             ax2 = 2
-        mean_out = func(m) + (1 / 2) * np.trace(hessian(m) @ P, axis1=ax1, axis2=ax2)
+        H = np.squeeze(hessian(m))
+        mean_out = func(m) + (1 / 2) * np.trace(H @ P, axis1=ax1, axis2=ax2)
         var_out = cov + jacobian(m) @ P @ jacobian(m).T + (1 / 2) * \
-                  np.trace(((hessian(m) @ P).reshape(dim_in * dim_out, dim_in) @
-                            (hessian(m) @ P).reshape(dim_in * dim_out, dim_in).T)
+                  np.trace(((H @ P).reshape(dim_in * dim_out, dim_in) @
+                            (H @ P).reshape(dim_in * dim_out, dim_in).T)
                            .reshape(dim_in, dim_in * dim_out * dim_out).T
                            .reshape(dim_out * dim_out, dim_in, dim_in), axis1=1, axis2=2).reshape(dim_out, dim_out)
         cov_out = P @ jacobian(m).T
