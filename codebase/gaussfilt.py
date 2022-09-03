@@ -129,7 +129,7 @@ class UKF(GaussFilt):
                   (new_sigma_points[1:] - mean_out)
         cov_out = (self.lamda / (self.dx + self.lamda) + 1 - self.alpha ** 2 + self.beta) * np.outer(
             np.transpose(sigma_points[0] - m),
-            new_sigma_points[0] - mean_out) + 1 / (2 * (self.dx + self.lamda)) * \
+            new_sigma_points[0] - mean_out).T + 1 / (2 * (self.dx + self.lamda)) * \
                   np.transpose(sigma_points[1:] - m) @ (new_sigma_points[1:] - mean_out)
         return np.reshape(mean_out, [1, dim_out]), \
                np.reshape(var_out, [dim_out, dim_out]), \
