@@ -87,7 +87,7 @@ class GaussFilt:
             # Update
             mu_y, Sy, Cxy = self.moment_approx(predicted_means[t], predicted_covs[t], 'upd')
             gain_matrix = Cxy @ np.linalg.inv(Sy)  # TODO: replace inv with more efficient implementation
-            filtered_means[t] = predicted_means[t] + (mu_y - ys[t]) @ gain_matrix.transpose()
+            filtered_means[t] = predicted_means[t] + (ys[t] - mu_y) @ gain_matrix.transpose()
             filtered_covs[t] = predicted_covs[t] - gain_matrix @ Sy @ gain_matrix.transpose()
             ll[t] = utils.gaussian_logpdf(np.reshape(ys[t], [1, self.dy]), mu_y, Sy)
         return ll, filtered_means, filtered_covs
