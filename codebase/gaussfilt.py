@@ -119,7 +119,7 @@ class UKF(GaussFilt):
         func, cov, dim_in, dim_out = self.which_step(kw)
         sigma_points = utils.split_to_sigma_points(m, P, self.lamda)
         new_sigma_points = np.array(list(map(func, sigma_points)))
-        new_sigma_points = np.squeeze(new_sigma_points)
+        new_sigma_points = np.squeeze(new_sigma_points) #squeeze fix
         mean_out = (self.lamda / (self.dx + self.lamda)) * new_sigma_points[0] + 1 / (
                     2 * (self.dx + self.lamda)) * np.sum(
             new_sigma_points[1:], axis=0)
@@ -127,10 +127,10 @@ class UKF(GaussFilt):
             new_sigma_points[0] - mean_out, new_sigma_points[0] - mean_out) \
                   + 1 / (2 * (self.dx + self.lamda)) * np.transpose(new_sigma_points[1:] - mean_out) @ \
                   (new_sigma_points[1:] - mean_out)
-        cov_out = (self.lamda / (self.dx + self.lamda) + 1 - self.alpha ** 2 + self.beta) * np.outer(
+        cov_out = (self.lamda / (self.dx + self.lamda) + 1 - self.alpha ** 2 + self.beta) * np.squeeze(np.outer(
             np.transpose(sigma_points[0] - m),
-            new_sigma_points[0] - mean_out).T + 1 / (2 * (self.dx + self.lamda)) * \
-                  np.transpose(sigma_points[1:] - m) @ (new_sigma_points[1:] - mean_out)
+            new_sigma_points[0] - mean_out)) + 1 / (2 * (self.dx + self.lamda)) * \
+                  np.squeeze((sigma_points[1:] - m).T @ (new_sigma_points[1:] - mean_out)) #squeeze fix
         return np.reshape(mean_out, [1, dim_out]), \
                np.reshape(var_out, [dim_out, dim_out]), \
                np.reshape(cov_out, [dim_in, dim_out])
@@ -175,13 +175,26 @@ class EKF(GaussFilt):
         if kw == 'upd':
             jacobian = self.g_jacobian
             hessian = self.g_hessian
-        if self.dy == 1:
+
+        ## Check dimensions for trace ax (mean_out)
+        if dim_in == 1 or dim_out == 1:
             ax1 = 0
             ax2 = 1
         else:
             ax1 = 1
             ax2 = 2
-        H = np.squeeze(hessian(m))
+
+        H = hessian(m)
+        if dim_out == 1:
+            H = np.squeeze(H, axis=0)
+
+        ## for debugging
+        # print('1', )
+        # print('2', )
+        # print('3', )
+        # print('4', )
+
+        ## Compute moments
         mean_out = func(m) + (1 / 2) * np.trace(H @ P, axis1=ax1, axis2=ax2)
         var_out = cov + jacobian(m) @ P @ jacobian(m).T + (1 / 2) * \
                   np.trace(((H @ P).reshape(dim_in * dim_out, dim_in) @
@@ -189,6 +202,7 @@ class EKF(GaussFilt):
                            .reshape(dim_in, dim_in * dim_out * dim_out).T
                            .reshape(dim_out * dim_out, dim_in, dim_in), axis1=1, axis2=2).reshape(dim_out, dim_out)
         cov_out = P @ jacobian(m).T
+
         return np.reshape(mean_out, [1, dim_out]), \
                np.reshape(var_out, [dim_out, dim_out]), \
                np.reshape(cov_out, [dim_in, dim_out])
