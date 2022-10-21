@@ -20,7 +20,8 @@ R = 1 * np.eye(dy)
 ## Define nonlinearity
 ##############################################################  1
 A = 0.8 * np.eye(dx)
-f = lambda x: A @ x
+#f = lambda x: 0.5 * x + 25 * x / (1+ x**2)
+f = lambda x: jnp.cos(x)
 g = lambda x: jnp.array([jnp.sin(x) / x])
 
 ##############################################################  4
@@ -50,13 +51,11 @@ ekf_out = ekf.run(ys, m0, P0)
 for i in range(1):
 
     # Augmented Gaussian Sum filter
-    M = 1
-    N = 1
-    L = 100
+    M = 5
+    N = 2
+    L = 10
     AGSF = gsf.AugGaussSumFilt(ssm, M, N, L)
-    # deltafac = 1
-    # lamfac = 0.7 * 1
-    # AGSF.param_setter(deltafac, lamfac)
+    AGSF.set_aug_selection_params(1, 0.1, a='prop', b='prop')
     agsf_out = AGSF.run(ys, m0, P0)
     agsf_mean = np.sum(agsf_out[0], 2) / M
 

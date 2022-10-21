@@ -111,10 +111,27 @@ class AugGaussSumFilt:
     def __str__(self):
         return 'AGSF'
 
-    def param_setter(self, delta_factor, lambda_factor):
-        self.set = True
-        self.lf = lambda_factor
-        self.df = delta_factor
+    def set_aug_selection_params(self, *args, **selection_mode):
+        if list(selection_mode.values())[0] == 'prop':
+            self.aug_param_select_pred = 'prop'
+            self.prop_pred = args[0]
+        elif list(selection_mode.values())[0] == 'opt_lip':
+            self.aug_param_select_pred = 'opt_lip'
+            self.lip_pred = args[0]
+        elif list(selection_mode.values())[0] == 'opt_max_grad':
+            self.aug_param_select_pred = 'opt_max_grad'
+            self.lip_pred_fac = args[0]
+
+        if list(selection_mode.values())[1] == 'prop':
+            self.aug_param_select_upd = 'prop'
+            self.prop_upd = args[1]
+        elif list(selection_mode.values())[1] == 'opt_lip':
+            self.aug_param_select_upd = 'opt_lip'
+            self.lip_upd = args[1]
+        elif list(selection_mode.values())[1] == 'opt_max_grad':
+            self.aug_param_select_upd = 'opt_max_grad'
+            self.lip_upd_fac = args[1]
+
 
     def run(self, ys, m0, P0):
         tin = time.time()
@@ -150,10 +167,14 @@ class AugGaussSumFilt:
                     avg_hessian = H
                 else:
                     avg_hessian = jnp.sum(H, axis=0)
-                if not self.set:
-                    Delta = utils.sdp_opt(self.dx, self.N, 10 * max_grad_p, cov, cov, avg_hessian, 10, 0.01)
-                else:
-                    Delta = self.df * cov
+
+                if self.aug_param_select_pred == 'prop':
+                    Delta = self.prop_pred * cov
+                elif self.aug_param_select_pred == 'opt_lip':
+                    Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred, cov, cov, avg_hessian, 10, 0.01)
+                elif self.aug_param_select_pred == 'opt_max_grad':
+                    Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred_fac * max_grad_p, cov, cov, avg_hessian, 10, 0.01)
+
 
                 # Sample latent particles + compute Jacobians at particles
                 _particles_to_predict = random.multivariate_normal(mean, cov - Delta, self.N)
@@ -175,10 +196,12 @@ class AugGaussSumFilt:
                     else:
                         avg_hessian = jnp.sum(H, axis=0)
 
-                    if not self.set:
-                        Lambda = utils.sdp_opt(self.dx, self.L, 10 * max_grad_u, cov, cov, avg_hessian, 10, 0.01)
-                    else:
-                        Lambda = self.lf * cov
+                    if self.aug_param_select_upd == 'prop':
+                        Lambda = self.prop_upd * cov
+                    elif self.aug_param_select_upd == 'opt_lip':
+                        Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd, cov, cov, avg_hessian, 10, 0.01)
+                    elif self.aug_param_select_upd == 'opt_max_grad':
+                        Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd_fac * max_grad_u, cov, cov, avg_hessian, 10, 0.01)
 
                     # Sample latent particles + compute Jacobians at particles
                     _particles_to_update = random.multivariate_normal(mean, cov - Lambda, self.L)
