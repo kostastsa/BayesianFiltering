@@ -1,3 +1,4 @@
+from numpy import random
 import numpy as np
 import scipy.stats as stats
 
@@ -66,8 +67,69 @@ def gm(x, means, sigma, num_comp):
         out += stats.norm.pdf(x, mean, sigma) / num_comp
     return out
 
+
 def gaussian_logpdf(y, m, S):
     D = m.shape[0]
     L = np.linalg.cholesky(S)
-    x = np.linalg.solve(L, np.transpose(y-m))
-    return -0.5 * D * np.log(2 * np.pi) - np.sum(np.log(np.diag(L))) -0.5 * np.sum(x**2)
+    x = np.linalg.solve(L, np.transpose(y - m))
+    return -0.5 * D * np.log(2 * np.pi) - np.sum(np.log(np.diag(L))) - 0.5 * np.sum(x ** 2)
+
+
+def loss(D, Pv, L, Nv, H):
+    return (2 * L ** 2 / Nv) * np.trace(Pv - D) + (1 / 4) * np.trace(np.matmul(D, H)) ** 2
+
+
+def matrix_projection(A, B):
+    return (np.trace(np.matmul(A.T, B)) / np.trace(np.matmul(B.transpose(), B))) * B
+
+
+def project_to_psd(Delta):
+    evals, evec = np.linalg.eig(Delta)
+    nonzero_eig = np.sum(evals > 0)
+    new_evals = np.multiply(evals > 0, evals)
+    new_Delta = evec @ np.diag(new_evals) @ evec.T
+    return (new_Delta + new_Delta.T) / 2
+
+
+def gradient_descent(dim, N, L, X0, P, H, Nsteps, eta):
+    X = X0
+    for i in range(Nsteps):
+        X = X - eta * (-(2 * L ** 2 / N) * np.eye(dim) + (1 / 2) * np.trace(np.matmul(H, X)) * H)
+    return X
+
+
+def sdp_opt(dim, N, L, X0, P, H, Nsteps, eta):
+    X = X0
+    for i in range(Nsteps):
+        X = gradient_descent(dim, N, L, X, P, H, 1, eta ** i)
+        X = project_to_psd(X)
+        X = P - project_to_psd(P - X)
+        X = project_to_psd(X)
+    return X.reshape(dim, dim)
+
+
+def root_mse(x_est, x_base):
+    T, dx = x_est.shape
+    sum_sq = np.sum((x_est - x_base) ** 2)
+    return np.sqrt(sum_sq / T / dx)
+
+
+def resample(weights, num_samples):
+    _flattened_weights = weights.flatten()
+    M, N, L = weights.shape
+    ind_mat = [[[(m, n, l) for l in range(L)] for n in range(N)] for m in range(M)]
+    ind_arr = np.array(ind_mat)
+    _flat_ind_mat = np.array(ind_arr).reshape((M * N * L, 3))
+    sample_flat_ind = random.choice(np.arange(M * N * L), num_samples, p=_flattened_weights)
+    return _flat_ind_mat[sample_flat_ind]
+
+
+def retain(weights, num_retained):
+    _flattened_weights = weights.flatten()
+    M, N, L = weights.shape
+    ind_mat = [[[(m, n, l) for l in range(L)] for n in range(N)] for m in range(M)]
+    ind_arr = np.array(ind_mat)
+    _flat_ind_mat = np.array(ind_arr).reshape((M * N * L, 3))
+    sorted_ind = np.argsort(_flattened_weights)[-num_retained:]
+    return _flat_ind_mat[sorted_ind]
+
