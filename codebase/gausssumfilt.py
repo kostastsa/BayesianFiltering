@@ -11,7 +11,7 @@ import gaussfilt as gf
 class GaussSumFilt:
 
 
-    def __init__(self, ssm, M):
+    def __init__(self, ssm, M, verbose = False):
         self.f = ssm.f
         self.g = ssm.g
         self.Q = ssm.Q
@@ -23,6 +23,7 @@ class GaussSumFilt:
         self.f_hessian = jacfwd(jacrev(self.f))
         self.g_jacobian = jacfwd(self.g)
         self.g_hessian = jacfwd(jacrev(self.g))
+        self.verb = verbose
         self.time = 0.0
 
     def __str__(self):
@@ -47,7 +48,7 @@ class GaussSumFilt:
             filtered_component_covs[seq_length, :, :, m] = P0
 
         for t in range(seq_length):
-            print('{}.run | t='.format(self), t)
+            if self.verb: print('{}.run | t='.format(self), t)print('{}.run | t='.format(self), t)
             for m in range(self.M):
                 # prediction
                 mean = filtered_component_means[t - 1, :, m]
@@ -89,7 +90,7 @@ class GaussSumFilt:
 
 class AugGaussSumFilt:
 
-    def __init__(self, ssm, M, N, L):
+    def __init__(self, ssm, M, N, L, verbose = False):
         self.f = ssm.f
         self.g = ssm.g
         self.Q = ssm.Q
@@ -106,6 +107,7 @@ class AugGaussSumFilt:
         self.set = False
         self.lf = 'auto'
         self.df = 'auto'
+        self.verb = verbose
         self.time = 0.0
 
     def __str__(self):
@@ -156,7 +158,7 @@ class AugGaussSumFilt:
         max_grad_u = 1
         max_grad_p = 1
         for t in range(seq_length):
-            print('{}.run | t='.format(self), t)
+            if self.verb: print('{}.run | t='.format(self), t)
             # prediction
             for m in range(self.M):
                 mean = filtered_component_means[t - 1, :, m]
