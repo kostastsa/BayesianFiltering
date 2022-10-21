@@ -48,7 +48,8 @@ class GaussSumFilt:
             filtered_component_covs[seq_length, :, :, m] = P0
 
         for t in range(seq_length):
-            if self.verb: print('{}.run | t='.format(self), t)print('{}.run | t='.format(self), t)
+            if self.verb:
+                print('{}.run | t='.format(self), t)
             for m in range(self.M):
                 # prediction
                 mean = filtered_component_means[t - 1, :, m]
@@ -158,7 +159,8 @@ class AugGaussSumFilt:
         max_grad_u = 1
         max_grad_p = 1
         for t in range(seq_length):
-            if self.verb: print('{}.run | t='.format(self), t)
+            if self.verb:
+                print('{}.run | t='.format(self), t)
             # prediction
             for m in range(self.M):
                 mean = filtered_component_means[t - 1, :, m]
