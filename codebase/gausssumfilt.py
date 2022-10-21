@@ -10,8 +10,7 @@ import gaussfilt as gf
 
 class GaussSumFilt:
 
-
-    def __init__(self, ssm, M, verbose = False):
+    def __init__(self, ssm, M):
         self.f = ssm.f
         self.g = ssm.g
         self.Q = ssm.Q
@@ -23,13 +22,12 @@ class GaussSumFilt:
         self.f_hessian = jacfwd(jacrev(self.f))
         self.g_jacobian = jacfwd(self.g)
         self.g_hessian = jacfwd(jacrev(self.g))
-        self.verb = verbose
         self.time = 0.0
 
     def __str__(self):
         return 'GSF'
 
-    def run(self, ys, m0, P0):
+    def run(self, ys, m0, P0, verbose = False):
         tin = time.time()
         # Initialize arrays
         seq_length = np.shape(ys)[0]
@@ -48,7 +46,7 @@ class GaussSumFilt:
             filtered_component_covs[seq_length, :, :, m] = P0
 
         for t in range(seq_length):
-            if self.verb:
+            if verbose:
                 print('{}.run | t='.format(self), t)
             for m in range(self.M):
                 # prediction
@@ -91,7 +89,7 @@ class GaussSumFilt:
 
 class AugGaussSumFilt:
 
-    def __init__(self, ssm, M, N, L, verbose = False):
+    def __init__(self, ssm, M, N, L):
         self.f = ssm.f
         self.g = ssm.g
         self.Q = ssm.Q
@@ -108,7 +106,6 @@ class AugGaussSumFilt:
         self.set = False
         self.lf = 'auto'
         self.df = 'auto'
-        self.verb = verbose
         self.time = 0.0
 
     def __str__(self):
@@ -136,7 +133,7 @@ class AugGaussSumFilt:
             self.lip_upd_fac = args[1]
 
 
-    def run(self, ys, m0, P0):
+    def run(self, ys, m0, P0, verbose = False):
         tin = time.time()
         # Initialize arrays
         seq_length = np.shape(ys)[0]
@@ -159,7 +156,7 @@ class AugGaussSumFilt:
         max_grad_u = 1
         max_grad_p = 1
         for t in range(seq_length):
-            if self.verb:
+            if verbose:
                 print('{}.run | t='.format(self), t)
             # prediction
             for m in range(self.M):

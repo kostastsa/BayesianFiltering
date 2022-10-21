@@ -84,7 +84,7 @@ class GaussFilt:
         self.df['mu_y'] = np.zeros(seq_length)
         self.df['Sy'] = np.zeros(seq_length)
 
-    def run(self, ys, m0, P0):
+    def run(self, ys, m0, P0, verbose = False):
         tin = time.time()
         # Initialize arrays
         seq_length = np.shape(ys)[0]
@@ -103,7 +103,8 @@ class GaussFilt:
         filtered_covs[seq_length] = P0
 
         for t in range(seq_length):
-            print('{}.run | t='.format(self), t)
+            if verbose:
+                print('{}.run | t='.format(self), t)
             # Prediction
             predicted_means[t], predicted_covs[t] = self.moment_approx(filtered_means[t - 1], filtered_covs[t - 1],
                                                                        'pred')[0:2]
