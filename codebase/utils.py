@@ -108,10 +108,16 @@ def sdp_opt(dim, N, L, X0, P, H, Nsteps, eta):
     return X.reshape(dim, dim)
 
 
-def root_mse(x_est, x_base):
-    T, dx = x_est.shape
+def mse(x_est, x_base):
+    T = x_est.shape[0]
     sum_sq = np.sum((x_est - x_base) ** 2)
-    return np.sqrt(sum_sq / T / dx)
+    return sum_sq / T
+
+
+def rmse(x_est, x_base):
+    T = x_est.shape[0]
+    sum_sq = np.sum((x_est - x_base) ** 2)
+    return np.sqrt(sum_sq / T)
 
 
 def resample(weights, num_samples):
@@ -132,4 +138,6 @@ def retain(weights, num_retained):
     _flat_ind_mat = np.array(ind_arr).reshape((M * N * L, 3))
     sorted_ind = np.argsort(_flattened_weights)[-num_retained:]
     return _flat_ind_mat[sorted_ind]
+
+
 
