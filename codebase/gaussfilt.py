@@ -84,7 +84,7 @@ class GaussFilt:
         self.df['mu_y'] = np.zeros(seq_length)
         self.df['Sy'] = np.zeros(seq_length)
 
-    def run(self, ys, m0, P0, verbose = False):
+    def run(self, ys, m0, P0, verbose=False):
         tin = time.time()
         # Initialize arrays
         seq_length = np.shape(ys)[0]
@@ -302,3 +302,21 @@ class MCLAF(GaussFilt):
         return np.reshape(mean_out, [1, dim_out]), \
                np.reshape(var_out, [dim_out, dim_out]), \
                np.reshape(cov_out, [dim_in, dim_out])
+
+
+class GaussSumFilt:
+
+    def __init__(self, ssm, num_models, *args, model_type='EKF'):
+        for m in num_models:
+            if model_type == 'EKF':
+                self.models[m] = EKF(ssm, order=args[0])
+            elif model_type == 'MCF':
+                self.models[m] = MCF(ssm, num_particles=args[0])
+            elif model_type == 'MCLAF':
+                self.models[m] = MCLAF(ssm, num_particles=args[0])
+            elif model_type == 'UKF':
+                self.models[m] = UKF(ssm, alpha=args[0], beta=args[1], kappa=args[2])
+        self.num_models = num_models
+
+    def run(self, ys, init, verbose=False):
+

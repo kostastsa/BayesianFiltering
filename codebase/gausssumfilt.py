@@ -52,24 +52,8 @@ class GaussSumFilt:
                 # prediction
                 mean = filtered_component_means[t - 1, :, m]
                 cov = filtered_component_covs[t - 1, :, :, m]
-                H_pred = self.f_hessian(mean)
-
-                ## Check dimensions for trace ax (mean_out)
-                if self.dx == 1:
-                    ax1 = 0
-                    ax2 = 1
-                else:
-                    ax1 = 1
-                    ax2 = 2
-                predicted_component_means[m] = self.f(mean) \
-                                               # + (1 / 2) * np.trace(np.reshape(H_pred @ cov, (self.dx, self.dx,
-                                               #                                                        self.dx)), axis1=ax1, axis2=ax2)
+                predicted_component_means[m] = self.f(mean)
                 predicted_component_covs[m] = cov + self.f_jacobian(mean) @ cov @ self.f_jacobian(mean).T
-                          #                     + (1 / 2) * \
-                          # np.trace(((H_pred @ cov).reshape(self.dx * self.dx, self.dx) @
-                          #           (H_pred @ cov).reshape(self.dx * self.dx, self.dx).T)
-                          #          .reshape(self.dx, self.dx * self.dx * self.dx).T
-                          #          .reshape(self.dx * self.dx, self.dx, self.dx), axis1=1, axis2=2).reshape(self.dx, self.dx)
 
                 # update
                 mean = predicted_component_means[m]
@@ -81,6 +65,7 @@ class GaussSumFilt:
                 filtered_component_means[t, :, m] = mean + (ys[t] - mu_y) @ gain_matrix.T
                 filtered_component_covs[t, :, :, m] = cov - gain_matrix @ Sy @ gain_matrix.T
                 lik = multivariate_normal.pdf(np.reshape(ys[t], [1, self.dy]), mean=mu_y, cov=Sy)
+
                 component_weights[t, m] = component_weights[t-1, m] * lik
             component_weights[t] /= np.sum(component_weights[t])
 
@@ -121,6 +106,11 @@ class AugGaussSumFilt:
         elif list(selection_mode.values())[0] == 'opt_max_grad':
             self.aug_param_select_pred = 'opt_max_grad'
             self.lip_pred_fac = args[0]
+        elif list(selection_mode.values())[0] == 'input':
+            self.aug_param_select_pred = 'input'
+            self.Delta = args[0]
+
+
 
         if list(selection_mode.values())[1] == 'prop':
             self.aug_param_select_upd = 'prop'
@@ -131,6 +121,9 @@ class AugGaussSumFilt:
         elif list(selection_mode.values())[1] == 'opt_max_grad':
             self.aug_param_select_upd = 'opt_max_grad'
             self.lip_upd_fac = args[1]
+        elif list(selection_mode.values())[1] == 'input':
+            self.aug_param_select_upd = 'input'
+            self.Lambda = args[1]
 
 
     def run(self, ys, m0, P0, verbose = False):
@@ -170,20 +163,22 @@ class AugGaussSumFilt:
                     avg_hessian = jnp.sum(H, axis=0)
 
                 if self.aug_param_select_pred == 'prop':
-                    Delta = self.prop_pred * cov
+                    self.Delta = self.prop_pred * cov
                 elif self.aug_param_select_pred == 'opt_lip':
-                    Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred, cov, cov, avg_hessian, 10, 0.01)
+                    self.Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred, cov, cov, avg_hessian, 10, 0.01)
                 elif self.aug_param_select_pred == 'opt_max_grad':
-                    Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred_fac * max_grad_p, cov, cov, avg_hessian, 10, 0.01)
-
+                    self.Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred_fac * max_grad_p, cov, cov, avg_hessian, 10, 0.01)
+                elif self.aug_param_select_pred == 'input':
+                    self.Delta = self.Delta if self.Delta < cov else cov
+                    self.Delta = np.array(self.Delta).reshape(self.dx, self.dx)
 
                 # Sample latent particles + compute Jacobians at particles
-                _particles_to_predict = random.multivariate_normal(mean, cov - Delta, self.N)
+                _particles_to_predict = random.multivariate_normal(mean, cov - self.Delta, self.N)
                 predicted_component_means[m] = np.array(list(map(self.f, _particles_to_predict)))
                 _grads_at_particles = np.array(list(map(self.f_jacobian, _particles_to_predict)))
                 max_grad_p = np.abs(np.max(_grads_at_particles).squeeze())
                 for n in range(self.N):  # TODO: get rid of this for loop
-                    predicted_component_covs[m, n] = _grads_at_particles[n] @ Delta @ _grads_at_particles[n].T + self.Q
+                    predicted_component_covs[m, n] = _grads_at_particles[n] @ self.Delta @ _grads_at_particles[n].T + self.Q
 
             # update
             for m in range(self.M):
@@ -198,20 +193,23 @@ class AugGaussSumFilt:
                         avg_hessian = jnp.sum(H, axis=0)
 
                     if self.aug_param_select_upd == 'prop':
-                        Lambda = self.prop_upd * cov
+                        self.Lambda = self.prop_upd * cov
                     elif self.aug_param_select_upd == 'opt_lip':
-                        Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd, cov, cov, avg_hessian, 10, 0.01)
+                        self.Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd, cov, cov, avg_hessian, 10, 0.01)
                     elif self.aug_param_select_upd == 'opt_max_grad':
-                        Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd_fac * max_grad_u, cov, cov, avg_hessian, 10, 0.01)
+                        self.Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd_fac * max_grad_u, cov, cov, avg_hessian, 10, 0.01)
+                    elif self.aug_param_select_upd == 'input':
+                        self.Lambda = self.Lambda if self.Lambda < cov else cov
+                        self.Lambda = np.array(self.Lambda).reshape(self.dx, self.dx)
 
                     # Sample latent particles + compute Jacobians at particles
-                    _particles_to_update = random.multivariate_normal(mean, cov - Lambda, self.L)
+                    _particles_to_update = random.multivariate_normal(mean, cov - self.Lambda, self.L)
                     y_means = np.array(list(map(self.g, _particles_to_update)))
                     _grads_at_particles = np.array(list(map(self.g_jacobian, _particles_to_update)))
                     max_grad_u = np.abs(np.max(_grads_at_particles).squeeze())
                     for l in range(self.L):  # TODO: get rid of this for loop
-                        y_cov = _grads_at_particles[l] @ Lambda @ _grads_at_particles[l].T + self.R
-                        Cxy = Lambda @ _grads_at_particles[l].T
+                        y_cov = _grads_at_particles[l] @ self.Lambda @ _grads_at_particles[l].T + self.R
+                        Cxy = self.Lambda @ _grads_at_particles[l].T
                         gain_matrix = Cxy @ np.linalg.inv(y_cov)  # TODO: replace inv with more efficient implementation
                         _filtered_component_means[m, n, l] = predicted_component_means[m, n] + (
                                 ys[t] - y_means[l]) @ gain_matrix.T
