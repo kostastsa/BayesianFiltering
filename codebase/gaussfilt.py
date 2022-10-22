@@ -313,11 +313,13 @@ class GaussSumFilt():
         self.dy = gauss_filt.dy
         self.num_models = num_models
         self.gf = gauss_filt
+        self.time = 0.0
 
     def __str__(self):
         return 'gf.GSF'
 
     def run(self, ys, m0, P0, verbose=False):
+        tin = time.time()
         seq_length = np.shape(ys)[0]
         filtered_component_means = np.zeros((seq_length + 1, self.dx, self.M))
         filtered_component_covs = np.zeros((seq_length + 1, self.dx, self.dx, self.M))
@@ -348,6 +350,7 @@ class GaussSumFilt():
                 loglik = utils.gaussian_logpdf(np.reshape(ys[t], [1, self.dy]), mu_y, Sy)
                 component_weights[t, m] = np.exp(-loglik) * component_weights[t-1, m]
             component_weights[t] /= np.sum(component_weights[t])
+        self.time = time.time() - tin
 
         return filtered_component_means, filtered_component_covs, component_weights
 

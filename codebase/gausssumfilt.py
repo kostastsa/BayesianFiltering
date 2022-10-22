@@ -68,8 +68,7 @@ class GaussSumFilt:
                 component_weights[t, m] = np.exp(-loglik) * component_weights[t - 1, m]
             print(np.sum(component_weights[t]))
             component_weights[t] /= np.sum(component_weights[t])
-
-
+        self.time = time.time() - tin
         return filtered_component_means, filtered_component_covs, component_weights
 
 
@@ -229,7 +228,7 @@ class AugGaussSumFilt:
                 filtered_component_means[t, :, m] = _filtered_component_means[tuple(resampled_indices[m])]
                 filtered_component_covs[t, :, :, m] = _filtered_component_covs[tuple(resampled_indices[m])]
             component_weights[t] = component_weights[t-1]
-
+        self.time = time.time() - tin
         return filtered_component_means, filtered_component_covs
 
 
