@@ -31,10 +31,13 @@ R = 1 * np.eye(dy)
 f = lambda x: jnp.sin(x)
 g = lambda x: x**2
 
-Nsim = 10
+Nsim = 1
 ekf_rmse = np.zeros(Nsim)
 gsf_rmse = np.zeros(Nsim)
 agsf_rmse = np.zeros(Nsim)
+ekf_time = np.zeros(Nsim)
+gsf_time = np.zeros(Nsim)
+agsf_time = np.zeros(Nsim)
 for i in range(Nsim):
     print('sim {}/{}'.format(i, Nsim))
     # Generate Data
@@ -56,6 +59,7 @@ for i in range(Nsim):
     ekf = gf.EKF(ssm, order=1)
     ekf_out = ekf.run(ys, m0, P0, verbose=False)
 
+
     # Augmented Gaussian Sum filter
     M = 5
     N = 2
@@ -68,12 +72,18 @@ for i in range(Nsim):
 
     # Computation of errors
     ekf_rmse[i] = utils.rmse(ekf_out[0], xs)
+    ekf_time[i] = ekf.time
     gsf_rmse[i] = utils.rmse(gsf_mean[:seq_length], xs)
+    gsf_time[i] = gsf1.time
     agsf_rmse[i] = utils.rmse(agsf_mean[:seq_length], xs)
+    agsf_time[i] = AGSF.time
 
     print('EKF RMSE:', ekf_rmse[i])
+    print('EKF time:', ekf_time[i])
     print('GSF RMSE:', gsf_rmse[i])
+    print('GSF time:', gsf_time[i])
     print('AGSF RMSE:', agsf_rmse[i])
+    print('AGSF time:', agsf_time[i])
 
 # Plots
 # means
