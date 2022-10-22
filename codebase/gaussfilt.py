@@ -304,19 +304,50 @@ class MCLAF(GaussFilt):
                np.reshape(cov_out, [dim_in, dim_out])
 
 
-class GaussSumFilt:
+class GaussSumFilt():
 
-    def __init__(self, ssm, num_models, *args, model_type='EKF'):
-        for m in num_models:
-            if model_type == 'EKF':
-                self.models[m] = EKF(ssm, order=args[0])
-            elif model_type == 'MCF':
-                self.models[m] = MCF(ssm, num_particles=args[0])
-            elif model_type == 'MCLAF':
-                self.models[m] = MCLAF(ssm, num_particles=args[0])
-            elif model_type == 'UKF':
-                self.models[m] = UKF(ssm, alpha=args[0], beta=args[1], kappa=args[2])
+    def __init__(self, gauss_filt, num_models):
+        # Initialize GaussFilt objects
+        self.M = num_models
+        self.dx = gauss_filt.dx
+        self.dy = gauss_filt.dy
         self.num_models = num_models
+        self.gf = gauss_filt
 
-    def run(self, ys, init, verbose=False):
+    def __str__(self):
+        return 'gf.GSF'
+
+    def run(self, ys, m0, P0, verbose=False):
+        seq_length = np.shape(ys)[0]
+        filtered_component_means = np.zeros((seq_length + 1, self.dx, self.M))
+        filtered_component_covs = np.zeros((seq_length + 1, self.dx, self.dx, self.M))
+        component_weights = np.zeros((seq_length + 1, self.M))
+
+        # Initial conditions in last entry of the array (seq_length)
+        component_weights[seq_length] = np.ones(self.M) / self.M
+
+        for m in range(self.M):
+            filtered_component_means[seq_length, :, m] = m0 + random.multivariate_normal(np.zeros(self.dx),
+                                                                                         np.eye(self.dx))
+            filtered_component_covs[seq_length, :, :, m] = P0
+
+        for t in range(seq_length):
+            if verbose:
+                print('{}.run | t='.format(self), t)
+            for m in range(self.M):
+                # prediction
+                mean = filtered_component_means[t - 1, :, m]
+                cov = filtered_component_covs[t - 1, :, :, m]
+
+                mean_pred, cov_pred = self.gf.moment_approx(mean, cov, 'pred')[0:2]
+                # Update
+                mu_y, Sy, Cxy = self.gf.moment_approx(mean_pred, cov_pred, 'upd')
+                gain_matrix = Cxy @ np.linalg.inv(Sy)  # TODO: replace inv with more efficient implementation
+                filtered_component_means[t, :, m] = mean_pred + (ys[t] - mu_y) @ gain_matrix.T
+                filtered_component_covs[t, :, :, m] = cov_pred - gain_matrix @ Sy @ gain_matrix.T
+                loglik = utils.gaussian_logpdf(np.reshape(ys[t], [1, self.dy]), mu_y, Sy)
+                component_weights[t, m] = np.exp(-loglik) * component_weights[t-1, m]
+            component_weights[t] /= np.sum(component_weights[t])
+
+        return filtered_component_means, filtered_component_covs, component_weights
 
