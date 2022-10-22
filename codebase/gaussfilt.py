@@ -319,4 +319,4 @@ class GaussSumFilt:
         self.num_models = num_models
 
     def run(self, ys, init, verbose=False):
-
+      return
