@@ -38,12 +38,11 @@ R = 0.1 * np.eye(dy)
 # def sigmoid(x, alpha=1):
 #     return 1 / (1+jnp.exp(-alpha*x))
 
-
-dx = 1
+dx = 10
 dy = 1
 seq_length = 100
 m0 = 0.1 * np.ones(dx)
-P0 =10 * np.eye(dx)
+P0 = 10 * np.eye(dx)
 c = np.zeros(dx)
 d = np.zeros(dy)
 Q = 4 * np.eye(dx)
@@ -58,9 +57,7 @@ R = 1 * np.eye(dy)
 # g = lambda x: jnp.dot(coeff, jnp.array([x**i for i in range(p)]))
 
 ##############################################################  4
-A = 0.8 * np.eye(dx)
-f = lambda x: jnp.sin(x)
-g = lambda x: x**2
+
 
 # Generate Data
 
