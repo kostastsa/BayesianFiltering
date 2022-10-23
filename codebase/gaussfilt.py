@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import random
 from jax import numpy as jnp
-from jax import jacfwd, jacrev
+from jax import jacfwd, jacrev, jit
 import time
 import pandas as pd
 import utils
@@ -200,11 +200,11 @@ class EKF(GaussFilt):
 
     def __init__(self, ssm, order=2):
         GaussFilt.__init__(self, ssm)
-        self.f_jacobian = jacfwd(self.f)
-        self.g_jacobian = jacfwd(self.g)
+        self.f_jacobian = jit(jacfwd(self.f))
+        self.g_jacobian = jit(jacfwd(self.g))
         if order == 2:
-            self.f_hessian = jacfwd(jacrev(self.f))
-            self.g_hessian = jacfwd(jacrev(self.g))
+            self.f_hessian = jit(jacfwd(jacrev(self.f)))
+            self.g_hessian = jit(jacfwd(jacrev(self.g)))
         else:
             self.f_hessian = lambda x: np.zeros((self.dx, self.dx, self.dx))
             self.g_hessian = lambda x: np.zeros((self.dy, self.dx, self.dx))
@@ -235,12 +235,14 @@ class EKF(GaussFilt):
             H = np.squeeze(H, axis=0)
 
         ## Compute moments
-        mean_out = func(m) + (1 / 2) * np.trace(np.reshape(H @ P, (dim_out, dim_in, dim_in)), axis1=ax1, axis2=ax2)
-        var_out = cov + jacobian(m) @ P @ jacobian(m).T + (1 / 2) * \
-                  np.trace(((H @ P).reshape(dim_in * dim_out, dim_in) @
-                            (H @ P).reshape(dim_in * dim_out, dim_in).T)
-                           .reshape(dim_in, dim_in * dim_out * dim_out).T
-                           .reshape(dim_out * dim_out, dim_in, dim_in), axis1=1, axis2=2).reshape(dim_out, dim_out)
+        mean_out = func(m) \
+                   #+ (1 / 2) * np.trace(np.reshape(H @ P, (dim_out, dim_in, dim_in)), axis1=ax1, axis2=ax2)
+        var_out = cov + jacobian(m) @ P @ jacobian(m).T
+        #+ (1 / 2) * \
+                  # np.trace(((H @ P).reshape(dim_in * dim_out, dim_in) @
+                  #           (H @ P).reshape(dim_in * dim_out, dim_in).T)
+                  #          .reshape(dim_in, dim_in * dim_out * dim_out).T
+                  #          .reshape(dim_out * dim_out, dim_in, dim_in), axis1=1, axis2=2).reshape(dim_out, dim_out)
         cov_out = P @ jacobian(m).T
 
         return np.reshape(mean_out, [1, dim_out]), \
