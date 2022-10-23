@@ -65,8 +65,7 @@ class GaussSumFilt:
                 filtered_component_means[t, :, m] = mean + (ys[t] - mu_y) @ gain_matrix.T
                 filtered_component_covs[t, :, :, m] = cov - gain_matrix @ Sy @ gain_matrix.T
                 loglik = utils.gaussian_logpdf(np.reshape(ys[t], [1, self.dy]), mu_y, Sy)
-                component_weights[t, m] = np.exp(-loglik) * component_weights[t - 1, m]
-            print(np.sum(component_weights[t]))
+                component_weights[t, m] = np.exp(loglik) * component_weights[t - 1, m]
             component_weights[t] /= np.sum(component_weights[t])
         self.time = time.time() - tin
         return filtered_component_means, filtered_component_covs, component_weights
