@@ -33,6 +33,7 @@ class GaussSumFilt:
         seq_length = np.shape(ys)[0]
         filtered_component_means = np.zeros((seq_length + 1, self.dx, self.M))
         filtered_component_covs = np.zeros((seq_length + 1, self.dx, self.dx, self.M))
+        point_est = np.zeros((seq_length, self.dx))
         component_weights = np.zeros((seq_length + 1, self.M))
 
         predicted_component_means = np.zeros((self.M, self.dx))
@@ -65,11 +66,11 @@ class GaussSumFilt:
                 filtered_component_means[t, :, m] = mean + (ys[t] - mu_y) @ gain_matrix.T
                 filtered_component_covs[t, :, :, m] = cov - gain_matrix @ Sy @ gain_matrix.T
                 loglik = utils.gaussian_logpdf(np.reshape(ys[t], [1, self.dy]), mu_y, Sy)
-                component_weights[t, m] = np.exp(-loglik) * component_weights[t - 1, m]
-            print(np.sum(component_weights[t]))
+                component_weights[t, m] = np.exp(loglik) * component_weights[t - 1, m]
             component_weights[t] /= np.sum(component_weights[t])
+            point_est[t] = np.sum(np.multiply(filtered_component_means[t, :], component_weights[t]))
         self.time = time.time() - tin
-        return filtered_component_means, filtered_component_covs, component_weights
+        return filtered_component_means, filtered_component_covs, component_weights, point_est
 
 
 class AugGaussSumFilt:
@@ -125,13 +126,13 @@ class AugGaussSumFilt:
             self.aug_param_select_upd = 'input'
             self.Lambda = args[1]
 
-
     def run(self, ys, m0, P0, verbose = False):
         tin = time.time()
         # Initialize arrays
         seq_length = np.shape(ys)[0]
         filtered_component_means = np.zeros((seq_length + 1, self.dx, self.M))
         filtered_component_covs = np.zeros((seq_length + 1, self.dx, self.dx, self.M))
+        point_est = np.zeros((seq_length, self.dx))
         component_weights = np.zeros((seq_length + 1, self.M))
         _interm_weights = np.zeros((self.M, self.N, self.L))
 
@@ -228,7 +229,8 @@ class AugGaussSumFilt:
                 filtered_component_means[t, :, m] = _filtered_component_means[tuple(resampled_indices[m])]
                 filtered_component_covs[t, :, :, m] = _filtered_component_covs[tuple(resampled_indices[m])]
             component_weights[t] = component_weights[t-1]
+            point_est[t] = np.sum(filtered_component_means[t, :, :], 1) / self.M
         self.time = time.time() - tin
-        return filtered_component_means, filtered_component_covs
+        return filtered_component_means, filtered_component_covs, point_est
 
 
