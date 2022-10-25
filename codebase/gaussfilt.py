@@ -110,6 +110,7 @@ class GaussFilt:
                                                                        'pred')[0:2]
             # Update
             mu_y, Sy, Cxy = self.moment_approx(predicted_means[t], predicted_covs[t], 'upd')
+
             gain_matrix = Cxy @ np.linalg.inv(Sy)  # TODO: replace inv with more efficient implementation
             filtered_means[t] = predicted_means[t] + (ys[t] - mu_y) @ gain_matrix.T
             filtered_covs[t] = predicted_covs[t] - gain_matrix @ Sy @ gain_matrix.T
@@ -325,6 +326,7 @@ class GaussSumFilt():
         seq_length = np.shape(ys)[0]
         filtered_component_means = np.zeros((seq_length + 1, self.dx, self.M))
         filtered_component_covs = np.zeros((seq_length + 1, self.dx, self.dx, self.M))
+        point_est = np.zeros((seq_length, self.dx))
         component_weights = np.zeros((seq_length + 1, self.M))
 
         # Initial conditions in last entry of the array (seq_length)
@@ -352,7 +354,8 @@ class GaussSumFilt():
                 loglik = utils.gaussian_logpdf(np.reshape(ys[t], [1, self.dy]), mu_y, Sy)
                 component_weights[t, m] = np.exp(loglik) * component_weights[t-1, m]
             component_weights[t] /= np.sum(component_weights[t])
+            point_est[t] = np.sum(np.multiply(filtered_component_means[t, :], component_weights[t]))
         self.time = time.time() - tin
 
-        return filtered_component_means, filtered_component_covs, component_weights
+        return filtered_component_means, filtered_component_covs, component_weights, point_est
 
