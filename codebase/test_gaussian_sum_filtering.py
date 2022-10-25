@@ -22,21 +22,28 @@ R = 1 * np.eye(dy)
 
 ## Define nonlinearity
 ##############################################################  1 Polynomial
-# A = 0.8 * np.eye(dx)
+A = 0.8 * np.eye(dx)
+
 # f = lambda x: 1 * (-1/2 + 1 / (1 + jnp.exp(-4*x)))
-# p = 5
-# coeff = jnp.array([0.0, -0.0, 1.4 ,0.0001, -0.004])
-# g = lambda x: jnp.dot(coeff, jnp.array([x**i for i in range(p)]))
+#f = lambda x: jnp.array([x[0] + jnp.sin(x[1]), 0.9 * x[0]])
+#f = lambda x: 0.5 * x + 25 * x / (1+x**2)
+# f = lambda x: x
+# r = 3.44940
+# f = lambda x: jnp.array([max(r*x*(1-x), 1.0)])
+f = lambda x: jnp.exp(-x**2 / 10) * jnp.sin(10 * x)
 
 ##############################################################  4
-f = lambda x: x
-g = lambda x: jnp.sin(10.0 * x)
+# p = 5
+# coeff = jnp.array([0.0, -0.0, 1.4, 0.0001, -0.004])
+# g = lambda x: 100 * jnp.dot(coeff, jnp.array([x**i for i in range(p)]))
+# p=-1/2
+# g = lambda x: jnp.array([(1 + jnp.dot(x, x))**(p/2)])
+g = lambda x: x**2/20
+# g = lambda x: jnp.cos(x)
 
-# f = lambda x: jnp.array([x[0] + jnp.sin(x[1]), 0.9 * x[0]])
-# H = random.random((dy, dx))
-# g = lambda x: jnp.array(H @ x) / np.sum(H)
-verbose = True
-Nsim = 10
+
+verbose = False
+Nsim = 1
 ekf_rmse = np.zeros(Nsim)
 gsf_rmse = np.zeros(Nsim)
 agsf_rmse = np.zeros(Nsim)
@@ -48,7 +55,7 @@ bpf_time = np.zeros(Nsim)
 for i in range(Nsim):
     print('sim {}/{}'.format(i, Nsim))
     # Generate Data
-    ssm = gf.SSM(dx, dy, c=c, Q=P0, d=d, R=R, f=f, g=g)
+    ssm = gf.SSM(dx, dy, c=c, Q=Q, d=d, R=R, f=f, g=g)
     xs, ys = ssm.simulate(seq_length, m0)
 
     # Gaussian Sum filter
@@ -66,17 +73,17 @@ for i in range(Nsim):
     ekf_out = ekf.run(ys, m0, P0, verbose=verbose)
 
     # Bootstrap Particle Filter
-    num_prt = 10
+    num_prt = 1000
     bpf = pf.BootstrapPF(ssm, num_prt)
     bpf_out = bpf.run(ys, m0, P0, verbose=verbose)
     bpf_mean = np.sum(bpf_out[:seq_length], 1) / num_prt
 
     # Augmented Gaussian Sum filter
     M = 5
-    N = 1
-    L = 20
+    N = 5
+    L = 10
     AGSF = gsf.AugGaussSumFilt(ssm, M, N, L)
-    AGSF.set_aug_selection_params(1, 8, a='prop', b='opt_max_grad') # options are ['prop', 'opt_lip', 'opt_max_grad'], a='opt_max_grad', b='opt_max_grad')
+    AGSF.set_aug_selection_params(0.1, 0.2, a='prop', b='prop') # options are ['prop', 'opt_lip', 'opt_max_grad'], a='opt_max_grad', b='opt_max_grad')
     agsf_out = AGSF.run(ys, m0, P0, verbose=verbose)
 
     # Computation of errors
@@ -98,9 +105,32 @@ for i in range(Nsim):
     print('BPF RMSE:', bpf_rmse[i])
     print('BPF time:', bpf_time[i])
 
+    EKF_W = np.zeros(seq_length)
+    GSF_W = np.zeros(seq_length)
+    AGSF_W = np.zeros(seq_length)
+
+    for t in range(seq_length):
+        particles = bpf_out[t]
+        # EKF
+        means = ekf_out[1][t].reshape(1, dx)
+        covs = ekf_out[2][t].reshape(1, dx, dx)
+        EKF_W[t] = utils.W_distance(means, covs, particles, [1.0])
+
+        # GSF
+        means = gsf_out[0][t].reshape(M0, dx)
+        covs = gsf_out[1][t].reshape(M0, dx, dx)
+        weights = gsf_out[2][t]
+        GSF_W[t] = utils.W_distance(means, covs, particles, weights)
+
+        # AGSF
+        means = agsf_out[0][t].reshape(M, dx)
+        covs = agsf_out[1][t].reshape(M, dx, dx)
+        AGSF_W[t] = utils.W_distance(means, covs, particles, [1 / M] * M)
+
+
 # Plots
 # means
-fig1, axes1 = plt.subplots(3, 1, sharex=True, figsize=(10, 4))
+fig1, axes1 = plt.subplots(4, 1, sharex=True, figsize=(10, 4))
 axes1[0].plot(xs[:, 0], alpha=1, label="xs")
 axes1[0].plot(agsf_out[2], alpha=0.7, label="agsf")
 axes1[0].plot(gsf_out[3], alpha=0.7, label="gsf")
@@ -123,6 +153,11 @@ for m in range(M0):
 axes1[2].set_ylabel("X")
 axes1[2].set_xlabel("time")
 axes1[2].set_title("GSF Components")
+
+axes1[3].plot(xs[:, 0], alpha=1, label="xs")
+axes1[3].plot(agsf_out[2], alpha=0.7, label="agsf")
+axes1[3].plot(bpf_mean, alpha=0.7, label="agsf")
+axes1[3].legend(['x', 'AGSF', 'BPF'])
 
 plt.show()
 
