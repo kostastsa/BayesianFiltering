@@ -120,6 +120,16 @@ def rmse(x_est, x_base):
     return np.sqrt(sum_sq / T)
 
 
+def W_distance(means, covs, particles, weights):
+    dist = 0.0
+    N = means.shape[0]
+    num_prt = particles.shape[0]
+    for n in range(N):
+        for i in range(num_prt):
+            dist += weights[n] * (covs[n] + (means[n]-particles[i])**2)
+    return dist / num_prt
+
+
 def resample(weights, num_samples):
     _flattened_weights = weights.flatten()
     M, N, L = weights.shape
@@ -138,6 +148,9 @@ def retain(weights, num_retained):
     _flat_ind_mat = np.array(ind_arr).reshape((M * N * L, 3))
     sorted_ind = np.argsort(_flattened_weights)[-num_retained:]
     return _flat_ind_mat[sorted_ind]
+
+
+
 
 
 

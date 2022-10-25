@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import random
 from jax import numpy as jnp
-from jax import jacfwd, jacrev
+from jax import jacfwd, jacrev, jit
 from scipy.stats import multivariate_normal
 import time
 import pandas as pd
@@ -18,10 +18,10 @@ class GaussSumFilt:
         self.dx = ssm.dx
         self.dy = ssm.dy
         self.M = M
-        self.f_jacobian = jacfwd(self.f)
-        self.f_hessian = jacfwd(jacrev(self.f))
-        self.g_jacobian = jacfwd(self.g)
-        self.g_hessian = jacfwd(jacrev(self.g))
+        self.f_jacobian = jit(jacfwd(self.f))
+        self.f_hessian = jit(jacfwd(jacrev(self.f)))
+        self.g_jacobian = jit(jacfwd(self.g))
+        self.g_hessian = jit(jacfwd(jacrev(self.g)))
         self.time = 0.0
 
     def __str__(self):
@@ -85,10 +85,10 @@ class AugGaussSumFilt:
         self.M = M
         self.N = N
         self.L = L
-        self.f_jacobian = jacfwd(self.f)
-        self.f_hessian = jacfwd(jacrev(self.f))
-        self.g_jacobian = jacfwd(self.g)
-        self.g_hessian = jacfwd(jacrev(self.g))
+        self.f_jacobian = jit(jacfwd(self.f))
+        self.f_hessian = jit(jacfwd(jacrev(self.f)))
+        self.g_jacobian = jit(jacfwd(self.g))
+        self.g_hessian = jit(jacfwd(jacrev(self.g)))
         self.set = False
         self.lf = 'auto'
         self.df = 'auto'
