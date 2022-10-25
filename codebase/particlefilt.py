@@ -30,14 +30,16 @@ class BootstrapPF:
         particles[seq_length] = random.multivariate_normal(m0, P0, self.N)
         new_particles = np.zeros((self.N, self.dx))
         weights = np.ones(self.N) / self.N
+        loglik = np.zeros(self.N)
 
         for t in range(seq_length):
             if verbose:
                 print('{}.run | t='.format(self), t)
             for p in range(self.N):
                 new_particles[p] = random.multivariate_normal(self.f(particles[t-1, p]), self.Q)
-                loglik = utils.gaussian_logpdf(ys[t], self.g(new_particles[p]), self.R)
-                weights[p] = np.exp(loglik)
+                loglik[p] = utils.gaussian_logpdf(ys[t], self.g(new_particles[p]), self.R)
+            loglik -= np.max(loglik)
+            weights = np.exp(loglik)
             weights /= np.sum(weights)
             # Resampling
             idx_count = random.multinomial(self.N, pvals=weights)
