@@ -19,9 +19,9 @@ R = 0.1 * np.eye(dy)
 
 ## Define nonlinearity
 ##############################################################  1
-# f = lambda x: jnp.array([x[0] + jnp.sin(x[1]), 0.9 * x[0]])
-# H = random.random((dy, dx))
-# g = lambda x: jnp.array(H @ x) / np.sum(H)
+f = lambda x: jnp.array([x[0] + jnp.sin(x[1]), 0.9 * x[0]])
+H = random.random((dy, dx))
+g = lambda x: jnp.array(H @ x) / np.sum(H)
 ##############################################################  2
 # depth = 3
 # weights_tensor = np.random.random([depth, dx, dx])

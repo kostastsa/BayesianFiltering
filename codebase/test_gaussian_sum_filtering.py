@@ -30,20 +30,22 @@ A = 0.8 * np.eye(dx)
 # f = lambda x: x
 # r = 3.44940
 # f = lambda x: jnp.array([max(r*x*(1-x), 1.0)])
-f = lambda x: jnp.sin(10 * x) #* jnp.exp(-x**2 / 10)
+#f = lambda x: jnp.sin(jnp.array([10 * x[0]**2 + x[1], x[0]*x[1]])) #* jnp.exp(-x**2 / 10)
+f = lambda x: jnp.sin(10 * x)
 
 ##############################################################  4
 # p = 5
 # coeff = jnp.array([0.0, -0.0, 1.4, 0.0001, -0.004])
 # g = lambda x: 100 * jnp.dot(coeff, jnp.array([x**i for i in range(p)]))
 # p=-1/2
-# g = lambda x: jnp.array([(1 + jnp.dot(x, x))**(p/2)])
-g = lambda x: 10 * x ** 2 #+ 0.1 * x**2
+#g = lambda x: jnp.array([(1 + jnp.dot(x, x))**(1/2)])
+g = lambda x: 0.1 * x**2
+#g = lambda x: 20 * jnp.array([x[1], x[0]+x[1]]) ** 2 #+ 0.1 * x**2
 # g = lambda x: jnp.cos(x)
 
 
 verbose = False
-Nsim = 10
+Nsim = 1
 ekf_rmse = np.zeros(Nsim)
 ukf_rmse = np.zeros(Nsim)
 ugsf_rmse = np.zeros(Nsim)
@@ -57,7 +59,7 @@ agsf_time = np.zeros(Nsim)
 bpf_rmse = np.zeros(Nsim)
 bpf_time = np.zeros(Nsim)
 for i in range(Nsim):
-    print('sim {}/{}'.format(i, Nsim))
+    print('sim {}/{}'.format(i+1, Nsim))
     # Generate Data
     ssm = gf.SSM(dx, dy, c=c, Q=Q, d=d, R=R, f=f, g=g)
     xs, ys = ssm.simulate(seq_length, m0)
@@ -88,11 +90,11 @@ for i in range(Nsim):
     bpf_mean = np.sum(bpf_out[:seq_length], 1) / num_prt
 #
 #     # Augmented Gaussian Sum filter
-    M = 5
-    N = 5
-    L = 5
+    M = 3
+    N = 2
+    L = 2
     AGSF = gsf.AugGaussSumFilt(ssm, M, N, L)
-    AGSF.set_aug_selection_params(0.2, 0.8, a='input', b='input') # options are ['prop', 'opt_lip', 'opt_max_grad'], a='opt_max_grad', b='opt_max_grad')
+    AGSF.set_aug_selection_params(1.0, 1.0, a='opt_lip', b='opt_lip') # options are ['prop', 'opt_lip', 'opt_max_grad', 'input']
     agsf_out = AGSF.run(ys, m0, P0, verbose=verbose)
 
     # Computation of errors
@@ -121,7 +123,7 @@ for i in range(Nsim):
     print('AGSF time:', agsf_time[i])
     print('BPF RMSE:', bpf_rmse[i])
     print('BPF time:', bpf_time[i])
-#
+
 #     EKF_W = np.zeros(seq_length)
 #     GSF_W = np.zeros(seq_length)
 #     AGSF_W = np.zeros(seq_length)
@@ -145,8 +147,9 @@ for i in range(Nsim):
 #         AGSF_W[t] = utils.W_distance(means, covs, particles, [1 / M] * M)
 #
 #
-# Plots
-# means
+
+# #### Plots
+# #### means
 # fig1, axes1 = plt.subplots(5, 1, sharex=True, figsize=(10, 4))
 # axes1[0].plot(xs[:, 0], alpha=1, label="xs")
 # axes1[0].plot(agsf_out[2], alpha=0.7, label="agsf")
@@ -160,48 +163,48 @@ for i in range(Nsim):
 # #axes1[0].set_xlabel("time")
 # axes1[0].set_title("Delta_fac = {}, Lambda_fac = {}".format(AGSF.df, AGSF.lf))
 # axes1[0].legend(['x', 'AGSF', 'GSF', 'UGSF' , 'EKF', 'UKF', 'BPF'])
-#
+
 # for m in range(M):
 #     p22 = axes1[1].plot(agsf_out[0][:, :, m], alpha=0.7)
 # axes1[1].set_ylabel("X")
 # #axes1[1].set_xlabel("time")
 # axes1[1].set_title("AGSF Components")
-#
+
 # for m in range(M0):
 #     p22 = axes1[2].plot(gsf_out[0][:, :, m], alpha=0.7)
 # axes1[2].set_ylabel("X")
 # axes1[2].set_xlabel("time")
 # axes1[2].set_title("GSF Components")
-#
+
 # axes1[3].plot(xs[:, 0], alpha=1, label="xs")
 # axes1[3].plot(agsf_out[2], alpha=0.7, label="agsf")
 # #axes1[3].plot(ukf_out[1][:, 0], alpha=0.7, label="agsf")
 # axes1[3].plot(bpf_mean, alpha=0.7, label="agsf")
 # axes1[3].legend(['x', 'AGSF', 'BPF'])
-#
+
 # for prt in range(num_prt):
 #     axes1[4].plot(bpf_out[:, prt], alpha=0.7)
 # axes1[4].set_xlabel("time")
 # axes1[4].set_title("BPF particles")
-#
+
 # plt.show()
 
-# covs
+# ### covs
 # fig2, axes2 = plt.subplots(3, 1, sharex=True, figsize=(10, 4))
 # axes2[0].plot(ekf_out[2].squeeze(), alpha=0.6, label="ekf")
 # axes2[0].set_ylabel("X")
 # axes2[0].set_title("EKF cov")
-#
+
 # for m in range(M):
 #     axes2[1].plot(agsf_out[1].squeeze()[:, m], alpha=0.7)
 # axes2[1].set_ylabel("X")
 # axes2[1].set_title("AGSF covariances")
-#
+
 # for m in range(M0):
 #     axes2[2].plot(gsf_out[1].squeeze()[:seq_length, m], alpha=0.7)
 # axes2[2].set_ylabel("X")
 # axes2[2].set_xlabel("time")
 # axes2[2].set_title("GSF covariances")
-#
+
 # plt.show()
 

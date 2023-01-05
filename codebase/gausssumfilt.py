@@ -8,6 +8,7 @@ import pandas as pd
 import utils
 import gaussfilt as gf
 
+
 class GaussSumFilt:
 
     def __init__(self, ssm, M):
@@ -27,7 +28,7 @@ class GaussSumFilt:
     def __str__(self):
         return 'GSF'
 
-    def run(self, ys, m0, P0, verbose = False):
+    def run(self, ys, m0, P0, verbose=False):
         tin = time.time()
         # Initialize arrays
         seq_length = np.shape(ys)[0]
@@ -44,7 +45,8 @@ class GaussSumFilt:
         component_weights[seq_length] = np.ones(self.M) / self.M
 
         for m in range(self.M):
-            filtered_component_means[seq_length, :, m] = m0 + random.multivariate_normal(np.zeros(self.dx), np.eye(self.dx))
+            filtered_component_means[seq_length, :, m] = m0 + random.multivariate_normal(np.zeros(self.dx),
+                                                                                         np.eye(self.dx))
             filtered_component_covs[seq_length, :, :, m] = P0
 
         for t in range(seq_length):
@@ -71,8 +73,6 @@ class GaussSumFilt:
             loglik_weights = np.exp(loglik)
             component_weights[t] = np.multiply(loglik_weights, component_weights[t - 1])
             component_weights[t] /= np.sum(component_weights[t])
-
-
 
             point_est[t] = np.sum(np.multiply(filtered_component_means[t, :], component_weights[t]))
         self.time = time.time() - tin
@@ -117,8 +117,6 @@ class AugGaussSumFilt:
             self.aug_param_select_pred = 'input'
             self.Delta = args[0]
 
-
-
         if list(selection_mode.values())[1] == 'prop':
             self.aug_param_select_upd = 'prop'
             self.prop_upd = args[1]
@@ -132,7 +130,7 @@ class AugGaussSumFilt:
             self.aug_param_select_upd = 'input'
             self.Lambda = args[1]
 
-    def run(self, ys, m0, P0, verbose = False):
+    def run(self, ys, m0, P0, verbose=False):
         tin = time.time()
         # Initialize arrays
         seq_length = np.shape(ys)[0]
@@ -174,7 +172,8 @@ class AugGaussSumFilt:
                 elif self.aug_param_select_pred == 'opt_lip':
                     self.Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred, cov, cov, avg_hessian, 10, 0.01)
                 elif self.aug_param_select_pred == 'opt_max_grad':
-                    self.Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred_fac * max_grad_p, cov, cov, avg_hessian, 10, 0.01)
+                    self.Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred_fac * max_grad_p, cov, cov, avg_hessian,
+                                               10, 0.01)
                 elif self.aug_param_select_pred == 'input':
                     self.Delta = self.Delta if self.Delta < cov else cov
                     self.Delta = np.array(self.Delta).reshape(self.dx, self.dx)
@@ -185,7 +184,8 @@ class AugGaussSumFilt:
                 _grads_at_particles = np.array(list(map(self.f_jacobian, _particles_to_predict)))
                 max_grad_p = np.abs(np.max(_grads_at_particles).squeeze())
                 for n in range(self.N):  # TODO: get rid of this for loop
-                    predicted_component_covs[m, n] = _grads_at_particles[n] @ self.Delta @ _grads_at_particles[n].T + self.Q
+                    predicted_component_covs[m, n] = _grads_at_particles[n] @ self.Delta @ _grads_at_particles[
+                        n].T + self.Q
 
             # update
             for m in range(self.M):
@@ -204,7 +204,8 @@ class AugGaussSumFilt:
                     elif self.aug_param_select_upd == 'opt_lip':
                         self.Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd, cov, cov, avg_hessian, 10, 0.01)
                     elif self.aug_param_select_upd == 'opt_max_grad':
-                        self.Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd_fac * max_grad_u, cov, cov, avg_hessian, 10, 0.01)
+                        self.Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd_fac * max_grad_u, cov, cov,
+                                                    avg_hessian, 10, 0.01)
                     elif self.aug_param_select_upd == 'input':
                         self.Lambda = self.Lambda if self.Lambda < cov else cov
                         self.Lambda = np.array(self.Lambda).reshape(self.dx, self.dx)
@@ -234,9 +235,7 @@ class AugGaussSumFilt:
             for m in range(self.M):
                 filtered_component_means[t, :, m] = _filtered_component_means[tuple(resampled_indices[m])]
                 filtered_component_covs[t, :, :, m] = _filtered_component_covs[tuple(resampled_indices[m])]
-            component_weights[t] = component_weights[t-1]
+            component_weights[t] = component_weights[t - 1]
             point_est[t] = np.sum(filtered_component_means[t, :, :], 1) / self.M
         self.time = time.time() - tin
         return filtered_component_means, filtered_component_covs, point_est
-
-
