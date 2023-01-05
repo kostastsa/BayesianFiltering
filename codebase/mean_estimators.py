@@ -9,7 +9,7 @@ from scipy.stats import multivariate_normal
 import matplotlib.animation as animation
 import time
 
-dx = 5
+dx = 2
 dy = 1
 
 ## Define nonlinearity
@@ -58,14 +58,14 @@ dy = 1
 # g = lambda x: B @ x
 
 # 3 Linear-Nonlinear product  (dx = 2)
-# a = 1
-# g = lambda x: jnp.array([a * x[0] * jnp.sin(x[0] * x[1])])
+a = 1
+g = lambda x: jnp.array([a * x[0] * jnp.sin(x[0] * x[1])])
 
 ## 4 Linear-Nonlinear sum
 # (dx = 2)
 # g = lambda x: jnp.array([x[0] + jnp.sin(x[1])])
 #(dx = 5)
-g = lambda x: jnp.array([x[0] + 10 * x[3] + 3 * jnp.sin(x[2] * x[1]) * x[4] ** 2])
+# g = lambda x: jnp.array([x[0] + 10 * x[3] + 3 * jnp.sin(x[2] * x[1]) * x[4] ** 2])
 
 # g = lambda x: jnp.array([x**2])
 
@@ -73,7 +73,7 @@ g = lambda x: jnp.array([x[0] + 10 * x[3] + 3 * jnp.sin(x[2] * x[1]) * x[4] ** 2
 
 #np.random.seed(seed=1)
 m = 1.0 * np.ones(dx)
-P = np.multiply(np.diag(2 * np.arange(dx)), np.eye(dx))
+P = np.multiply(np.diag(2 * np.arange(1, dx+1)), np.eye(dx))
 
 # Baseline estimate
 
@@ -125,7 +125,7 @@ for p in [11]:  # range(11, 12):
         hess_at_sample = np.array(list(map(hessian, mcl_sample)))
         H = jnp.sum(hess_at_sample, axis=0).squeeze() / N
         if dx == 1:
-            H = H.reshape((1,1))
+            H = H.reshape((1, 1))
         mcl_estimates[trial] = np.sum(trans_mcl_sample) / N
         mcq_estimates[trial] = np.sum(trans_mcl_sample) / N + np.trace(H @ Delta) / 2
 

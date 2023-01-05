@@ -1,8 +1,6 @@
-from ssm import StateSpaceModel
 from ssm import LinearModelParameters
 from SLDS import SLDS
 from simulation import Simulation
-from ssm import LGSSM
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
