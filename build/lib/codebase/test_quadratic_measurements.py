@@ -10,10 +10,10 @@ import time
 
 # Parameters
 
-dx = 3
+dx = 1
 dy = 1
-seq_length = 1000
-m0_sim = np.array([0.0, 1.0, 1.05])
+seq_length = 100
+m0_sim = np.zeros(dx)
 m0 = np.zeros(dx)
 P0 = 1 * np.eye(dx)
 c = np.zeros(dx)
@@ -23,7 +23,6 @@ R = 1 * np.eye(dy)
 
 ## Define nonlinearity
 ##############################################################  1 Polynomial
-A = 0.8 * np.eye(dx)
 
 # f = lambda x: 1 * (-1/2 + 1 / (1 + jnp.exp(-4*x)))
 # f = lambda x: jnp.array([x[0] + jnp.sin(x[1]), 0.9 * x[0]])
@@ -32,13 +31,8 @@ A = 0.8 * np.eye(dx)
 # r = 3.44940
 # f = lambda x: jnp.array([max(r*x*(1-x), 1.0)])
 # f = lambda x: jnp.sin(jnp.array([10 * x[0]**2 + x[1], x[0]*x[1]])) #* jnp.exp(-x**2 / 10)
-# f = lambda x: jnp.sin(10 * x)
-# Lorenz
-def lorentz_63(x, sigma=10, rho=28, beta=2.667, dt=0.01):
-    dx = dt * sigma * (x[1] - x[0])
-    dy = dt * (x[0] * rho - x[1] - x[0] *x[2]) 
-    dz = dt * (x[0] * x[1] - beta * x[2])
-    return jnp.array([dx+x[0], dy+x[1], dz+x[2]])
+f = lambda x: jnp.sin(10 * x)
+
 
 
 
@@ -51,7 +45,7 @@ def lorentz_63(x, sigma=10, rho=28, beta=2.667, dt=0.01):
 # g = lambda x: 0.1 * x**2
 # g = lambda x: 20 * jnp.array([x[1], x[0]+x[1]]) ** 2 #+ 0.1 * x**2
 # g = lambda x: jnp.cos(x)
-g = lambda x: jnp.array([jnp.dot(x, x)])
+g = lambda x: 0.1 * jnp.array([jnp.dot(x, x)])
 
 
 verbose = False
@@ -71,64 +65,64 @@ bpf_time = np.zeros(Nsim)
 for i in range(Nsim):
     print('sim {}/{}'.format(i+1, Nsim))
     # Generate Data
-    ssm = gf.SSM(dx, dy, c=c, Q=Q, d=d, R=R, f=lorentz_63, g=g)
+    ssm = gf.SSM(dx, dy, c=c, Q=Q, d=d, R=R, f=f, g=g)
     xs, ys = ssm.simulate(seq_length, m0_sim)
 
-    # # Gaussian Sum filter
-    # M0 = 10
-    # gsf1 = gsf.GaussSumFilt(ssm, M=M0)
-    # gsf_out = gsf1.run(ys, m0, P0, verbose=verbose)
+    # Gaussian Sum filter
+    M0 = 10
+    gsf1 = gsf.GaussSumFilt(ssm, M=M0)
+    gsf_out = gsf1.run(ys, m0, P0, verbose=verbose)
 
-    # # Extended Kalman Filter
-    # ekf = gf.EKF(ssm, order=1)
-    # ekf_out = ekf.run(ys, m0, P0, verbose=verbose)
+    # Extended Kalman Filter
+    ekf = gf.EKF(ssm, order=1)
+    ekf_out = ekf.run(ys, m0, P0, verbose=verbose)
 
-    # # Unscented Kalman Filter
+    # Unscented Kalman Filter
     ukf = gf.UKF(ssm)
     ukf_out = ukf.run(ys, m0, P0, verbose=verbose)
 
     # Unscented Gaussian Sum Filter
-    # M1 = 10
-    # ukf1 = gf.UKF(ssm)
-    # ugsf = gf.GaussSumFilt(ukf1, num_models=M1)
-    # ugsf_out = ugsf.run(ys, m0, P0, verbose=verbose)
+    M1 = 10
+    ukf1 = gf.UKF(ssm)
+    ugsf = gf.GaussSumFilt(ukf1, num_models=M1)
+    ugsf_out = ugsf.run(ys, m0, P0, verbose=verbose)
 
-#     # Bootstrap Particle Filter
+    # Bootstrap Particle Filter
     num_prt = 100
     bpf = pf.BootstrapPF(ssm, num_prt)
     bpf_out = bpf.run(ys, m0, P0, verbose=verbose)
     bpf_mean = np.sum(bpf_out[:seq_length], 1) / num_prt
 
-    # Augmented Gaussian Sum filter
+     # Augmented Gaussian Sum filter
     M = 3
     N = 2
     L = 2
     AGSF = gsf.AugGaussSumFilt(ssm, M, N, L)
-    AGSF.set_aug_selection_params(0.8, 0.5, a='prop', b='prop') # options are ['prop', 'opt_lip', 'opt_max_grad', 'input']
+    AGSF.set_aug_selection_params(0.8, 0.5, a='input', b='input') # options are ['prop', 'opt_lip', 'opt_max_grad', 'input']
     agsf_out = AGSF.run(ys, m0, P0, verbose=verbose)
 
-#     # Computation of errors
-#     # ekf_rmse[i] = utils.rmse(ekf_out[1], xs)
-#     # ekf_time[i] = ekf.time
-#     # ukf_rmse[i] = utils.rmse(ukf_out[1], xs)
-#     # ukf_time[i] = ukf.time
-#     # ugsf_rmse[i] = utils.rmse(ugsf_out[1], xs)
-#     # ugsf_time[i] = ugsf.time
-#     # gsf_rmse[i] = utils.rmse(gsf_out[3], xs)
-#     # gsf_time[i] = gsf1.time
+    # Computation of errors
+    ekf_rmse[i] = utils.rmse(ekf_out[1], xs)
+    ekf_time[i] = ekf.time
+    ukf_rmse[i] = utils.rmse(ukf_out[1], xs)
+    ukf_time[i] = ukf.time
+    ugsf_rmse[i] = utils.rmse(ugsf_out[1], xs)
+    ugsf_time[i] = ugsf.time
+    gsf_rmse[i] = utils.rmse(gsf_out[3], xs)
+    gsf_time[i] = gsf1.time
     agsf_rmse[i] = utils.rmse(agsf_out[2], xs)
     agsf_time[i] = AGSF.time
     bpf_rmse[i] = utils.rmse(bpf_mean, xs)
     bpf_time[i] = bpf.time
 
-#     # print('EKF RMSE:', ekf_rmse[i])
-#     # print('EKF time:', ekf_time[i])
-#     # print('UKF RMSE:', ukf_rmse[i])
-#     # print('UKF time:', ukf_time[i])
-#     # print('GSF RMSE:', gsf_rmse[i])
-#     # print('GSF time:', gsf_time[i])
-#     # print('UGSF RMSE:', ugsf_rmse[i])
-#     # print('UGSF time:', ugsf_time[i])
+    print('EKF RMSE:', ekf_rmse[i])
+    print('EKF time:', ekf_time[i])
+    print('UKF RMSE:', ukf_rmse[i])
+    print('UKF time:', ukf_time[i])
+    print('GSF RMSE:', gsf_rmse[i])
+    print('GSF time:', gsf_time[i])
+    print('UGSF RMSE:', ugsf_rmse[i])
+    print('UGSF time:', ugsf_time[i])
     print('AGSF RMSE:', agsf_rmse[i])
     print('AGSF time:', agsf_time[i])
     print('BPF RMSE:', bpf_rmse[i])
@@ -160,33 +154,33 @@ for i in range(Nsim):
 
 # #### Plots
 
-## 3D Plot
+# Plots
+fig1, axes1 = plt.subplots(3, 1, sharex=True, figsize=(10, 4))
+p11 = axes1[0].plot(xs[:, 0], alpha=1, label="xs")
+p12 = axes1[0].plot(agsf_out[2], alpha=0.7, label="agsf")
+p13 = axes1[0].plot(ukf_out[1], alpha=0.7, label="ukf")
+# p14 = axes1[0].plot(ekf_out[1][:, 0], alpha=0.6, label="ekf")
+p14 = axes1[0].plot(bpf_mean, alpha=0.6, label="mcf")
+axes1[0].set_ylabel("X")
+#axes1[0].set_xlabel("time")
+axes1[0].set_title("Estimates")
+axes1[0].legend(['x', 'AGSF', 'UKF', 'BPF'])
 
-# Plot
-ax = plt.figure().add_subplot(projection='3d')
+legend = []
+for m in range(M):
+    p22 = axes1[1].plot(agsf_out[0][:, :, m], alpha=0.7)
+    legend.append('AGSF' + str(m))
+axes1[1].plot(xs[:,0], alpha=0.7)
+legend.append('x')
+axes1[1].set_ylabel("X")
+axes1[1].legend(legend)
+axes1[1].set_title("AGSF Components")
 
-ax.plot(*xs.T, lw=0.5)
-ax.set_xlabel("X Axis")
-ax.set_ylabel("Y Axis")
-ax.set_zlabel("Z Axis")
-ax.set_title("Lorenz Attractor")
+for m in range(M0):
+    p22 = axes1[2].plot(gsf_out[0][:, :, m], alpha=0.7)
+axes1[2].set_ylabel("X")
+axes1[2].set_xlabel("time")
+axes1[2].set_title("GSF Components")
 
-# Data for AGSF
-agsf0 = agsf_out[0][:, :, 0]
-ax.scatter3D(*agsf0.T, s=0.1, c='b');
-
-agsf1 = agsf_out[0][:, :, 1]
-ax.scatter3D(*agsf1.T, s=0.1, c='r');
-
-agsf2 = agsf_out[0][:, :, 2]
-ax.scatter3D(*agsf2.T, s=0.1, c='y');
-
-# Data for BPF
-ax.scatter3D(*bpf_mean.T, s=0.1, c='g');
-
-ax1 = plt.figure().add_subplot()
-
-ax1.plot(ys)
 
 plt.show()
-

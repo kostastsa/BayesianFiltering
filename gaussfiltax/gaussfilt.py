@@ -4,7 +4,7 @@ from jax import numpy as jnp
 from jax import jacfwd, jacrev, jit
 import time
 import pandas as pd
-import utils
+import codebase.utils as utils
 
 
 class SSM:
@@ -29,9 +29,10 @@ class SSM:
         xs = np.zeros([T, self.dx])
         ys = np.zeros([T, self.dy])
         old_x = x0
+
         assert self.f(old_x).shape[0] == self.dx
         assert self.g(old_x).shape[0] == self.dy
-
+    
         for t in range(T):
             new_x, new_y = self.propagate(old_x)
             # print(ys[t, :].shape)
