@@ -1,12 +1,10 @@
 import numpy as np
 from numpy import random
 from jax import numpy as jnp
-from jax import jacfwd, jacrev, jit
+from jax import jacfwd, jacrev, jit, vmap
+from jax import random as jrandom
 from scipy.stats import multivariate_normal
 import time
-import pandas as pd
-import utils
-import gaussfilt as gf
 
 
 class GaussSumFilt:
@@ -116,6 +114,8 @@ class AugGaussSumFilt:
         elif list(selection_mode.values())[0] == 'input':
             self.aug_param_select_pred = 'input'
             self.Delta = args[0]
+        elif list(selection_mode.values())[0] == 'test':
+            self.aug_param_select_pred = 'test'
 
         if list(selection_mode.values())[1] == 'prop':
             self.aug_param_select_upd = 'prop'
@@ -129,6 +129,9 @@ class AugGaussSumFilt:
         elif list(selection_mode.values())[1] == 'input':
             self.aug_param_select_upd = 'input'
             self.Lambda = args[1]
+        elif list(selection_mode.values())[1] == 'test':
+            self.aug_param_select_upd = 'test'
+
 
     def run(self, ys, m0, P0, verbose=False):
         tin = time.time()
@@ -148,6 +151,8 @@ class AugGaussSumFilt:
 
         # Initial conditions in last entry of the array (seq_length)
         component_weights[seq_length] = np.ones(self.M) / self.M
+        Deltas = np.zeros([seq_length, self.dx, self.dx])
+        Lambdas = np.zeros([seq_length, self.dx, self.dx])
         for m in range(self.M):
             filtered_component_means[seq_length, :, m] = m0
             filtered_component_covs[seq_length, :, :, m] = P0
@@ -171,6 +176,17 @@ class AugGaussSumFilt:
                     self.Delta = self.prop_pred * cov
                 elif self.aug_param_select_pred == 'opt_lip':
                     self.Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred, cov, cov, avg_hessian, 10, 0.01)
+                elif self.aug_param_select_pred == 'test':
+                    # create tentantive sample (used for optimization)
+                    mu = mean
+                    Sigma = cov
+                    num_prt = 3
+                    lip = 0.1
+                    sample = jrandom.multivariate_normal(jrandom.PRNGKey(0), mu, Sigma, (num_prt,))
+                    vhessian = vmap(self.f_hessian)
+                    hess_array = vhessian(sample)
+                    self.Delta = utils.sdp_opt_test(self.dx, self.dx, num_prt, lip , Sigma, Sigma, hess_array, 10, 0.1)
+                    Deltas[t] = self.Delta
                 elif self.aug_param_select_pred == 'opt_max_grad':
                     self.Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred_fac * max_grad_p, cov, cov, avg_hessian,
                                                10, 0.01)
@@ -198,7 +214,7 @@ class AugGaussSumFilt:
                         avg_hessian = H
                     else:
                         avg_hessian = jnp.sum(H, axis=0)
-
+                    
                     if self.aug_param_select_upd == 'prop':
                         self.Lambda = self.prop_upd * cov
                     elif self.aug_param_select_upd == 'opt_lip':
@@ -206,6 +222,17 @@ class AugGaussSumFilt:
                     elif self.aug_param_select_upd == 'opt_max_grad':
                         self.Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd_fac * max_grad_u, cov, cov,
                                                     avg_hessian, 10, 0.01)
+                    elif self.aug_param_select_upd == 'test':
+                        # create tentantive sample (used for optimization)
+                        mu = mean
+                        Sigma = cov
+                        num_prt = 3
+                        lip = 1
+                        sample = jrandom.multivariate_normal(jrandom.PRNGKey(0), mu, Sigma, (num_prt,))
+                        vhessian = vmap(self.f_hessian)
+                        hess_array = vhessian(sample)
+                        self.Lambda = utils.sdp_opt_test(self.dx, self.dy, num_prt, lip , Sigma, Sigma, hess_array, 10, 0.1)
+                        Lambdas[t] = self.Lambda
                     elif self.aug_param_select_upd == 'input':
                         self.Lambda = self.Lambda if self.Lambda < cov else cov
                         self.Lambda = np.array(self.Lambda).reshape(self.dx, self.dx)
@@ -238,4 +265,4 @@ class AugGaussSumFilt:
             component_weights[t] = component_weights[t - 1]
             point_est[t] = np.sum(filtered_component_means[t, :, :], 1) / self.M
         self.time = time.time() - tin
-        return filtered_component_means, filtered_component_covs, point_est
+        return filtered_component_means, filtered_component_covs, point_est, Deltas, Lambdas
