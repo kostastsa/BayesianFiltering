@@ -5,7 +5,7 @@ from jax import jacfwd, jacrev
 from scipy.stats import multivariate_normal
 import time
 import pandas as pd
-import codebase.utils as utils
+import gaussfiltax.utils as utils
 
 
 class BootstrapPF:

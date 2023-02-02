@@ -4,6 +4,7 @@ from jax import numpy as jnp
 from jax import jacfwd, jacrev, jit, vmap
 from jax import random as jrandom
 from scipy.stats import multivariate_normal
+import gaussfiltax.utils as utils
 import time
 
 
@@ -176,6 +177,7 @@ class AugGaussSumFilt:
                     self.Delta = self.prop_pred * cov
                 elif self.aug_param_select_pred == 'opt_lip':
                     self.Delta = utils.sdp_opt(self.dx, self.N, self.lip_pred, cov, cov, avg_hessian, 10, 0.01)
+                    Deltas[t] = self.Delta
                 elif self.aug_param_select_pred == 'test':
                     # create tentantive sample (used for optimization)
                     mu = mean
@@ -219,6 +221,7 @@ class AugGaussSumFilt:
                         self.Lambda = self.prop_upd * cov
                     elif self.aug_param_select_upd == 'opt_lip':
                         self.Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd, cov, cov, avg_hessian, 10, 0.01)
+                        Lambdas[t] = self.Lambda
                     elif self.aug_param_select_upd == 'opt_max_grad':
                         self.Lambda = utils.sdp_opt(self.dx, self.L, self.lip_upd_fac * max_grad_u, cov, cov,
                                                     avg_hessian, 10, 0.01)
@@ -265,4 +268,5 @@ class AugGaussSumFilt:
             component_weights[t] = component_weights[t - 1]
             point_est[t] = np.sum(filtered_component_means[t, :, :], 1) / self.M
         self.time = time.time() - tin
+
         return filtered_component_means, filtered_component_covs, point_est, Deltas, Lambdas
