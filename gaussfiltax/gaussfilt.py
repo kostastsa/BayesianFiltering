@@ -4,7 +4,7 @@ from jax import numpy as jnp
 from jax import jacfwd, jacrev, jit
 import time
 import pandas as pd
-import codebase.utils as utils
+import gaussfiltax.utils
 
 
 class SSM:

@@ -1,11 +1,11 @@
-import codebase.utils as utils
-import codebase.gaussfilt as gf
+import gaussfiltax.utils as utils
+import gaussfiltax.gaussfilt as gf
 import numpy as np
 from jax import numpy as jnp
 from numpy import random
 import matplotlib.pyplot as plt
-import codebase.gausssumfilt as gsf
-import codebase.particlefilt as pf
+import gaussfiltax.gausssumfilt as gsf
+import gaussfiltax.particlefilt as pf
 import time
 
 # Parameters
@@ -15,7 +15,7 @@ dy = 1
 seq_length = 100
 m0_sim = np.array([0.0, 1.0, 1.05])
 m0 = np.zeros(dx)
-P0 = 1 * np.eye(dx)
+P0 = 10 * np.eye(dx)
 c = np.zeros(dx)
 d = np.zeros(dy)
 Q = 0.1 * np.eye(dx)
@@ -34,17 +34,17 @@ A = 0.8 * np.eye(dx)
 # f = lambda x: jnp.sin(jnp.array([10 * x[0]**2 + x[1], x[0]*x[1]])) #* jnp.exp(-x**2 / 10)
 # f = lambda x: jnp.sin(10 * x)
 # Lorenz
-# def lorentz_63(x, sigma=10, rho=28, beta=2.667, dt=0.01):
-#     dx = dt * sigma * (x[1] - x[0])
-#     dy = dt * (x[0] * rho - x[1] - x[0] *x[2]) 
-#     dz = dt * (x[0] * x[1] - beta * x[2])
-#     return jnp.array([dx+x[0], dy+x[1], dz+x[2]])
-
-def f(x, sigma=10, rho=28, beta=2.667, dt=0.01):
-    dx = dt * sigma * (x[1]**3 - x[0]*x[1]*x[2])
-    dy = dt * (x[0] * rho - x[1] - x[0] *x[2]**2) 
+def lorentz_63(x, sigma=10, rho=28, beta=2.667, dt=0.01):
+    dx = dt * sigma * (x[1] - x[0])
+    dy = dt * (x[0] * rho - x[1] - x[0] *x[2]) 
     dz = dt * (x[0] * x[1] - beta * x[2])
     return jnp.array([dx+x[0], dy+x[1], dz+x[2]])
+
+# def f(x, sigma=10, rho=28, beta=2.667, dt=0.01):
+#     dx = dt * sigma * (x[1]**3 - x[0]*x[1]*x[2])
+#     dy = dt * (x[0] * rho - x[1] - x[0] *x[2]**2) 
+#     dz = dt * (x[0] * x[1] - beta * x[2])
+#     return jnp.array([dx+x[0], dy+x[1], dz+x[2]])
 
 
 
@@ -77,7 +77,7 @@ bpf_time = np.zeros(Nsim)
 for i in range(Nsim):
     print('sim {}/{}'.format(i+1, Nsim))
     # Generate Data
-    ssm = gf.SSM(dx, dy, c=c, Q=Q, d=d, R=R, f=f, g=g)
+    ssm = gf.SSM(dx, dy, c=c, Q=Q, d=d, R=R, f=lorentz_63, g=g)
     xs, ys = ssm.simulate(seq_length, m0_sim)
 
     # # Gaussian Sum filter
@@ -110,9 +110,11 @@ for i in range(Nsim):
     N = 2
     L = 2
     AGSF = gsf.AugGaussSumFilt(ssm, M, N, L)
-    AGSF.set_aug_selection_params(0.8, 0.5, a='prop', b='prop') # options are ['prop', 'opt_lip', 'opt_max_grad', 'input']
+    AGSF.set_aug_selection_params(0.5, 0.5, a='prop', b='prop') # options are ['prop', 'opt_lip', 'opt_max_grad', 'input']
     agsf_out = AGSF.run(ys, m0, P0, verbose=verbose)
-    print(agsf_out[1])
+
+    print(agsf_out[3])
+
 #     # Computation of errors
 #     # ekf_rmse[i] = utils.rmse(ekf_out[1], xs)
 #     # ekf_time[i] = ekf.time
@@ -190,9 +192,9 @@ ax.scatter3D(*agsf2.T, s=0.1, c='y');
 # Data for BPF
 ax.scatter3D(*bpf_mean.T, s=0.1, c='g');
 
-ax1 = plt.figure().add_subplot()
+# ax1 = plt.figure().add_subplot()
 
-ax1.plot(ys)
+# ax1.plot(ys)
 
 plt.show()
 

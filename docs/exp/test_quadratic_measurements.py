@@ -86,7 +86,7 @@ for i in range(Nsim):
     ugsf_out = ugsf.run(ys, m0, P0, verbose=verbose)
 
     # Bootstrap Particle Filter
-    num_prt = 100
+    num_prt = 50
     bpf = pf.BootstrapPF(ssm, num_prt)
     bpf_out = bpf.run(ys, m0, P0, verbose=verbose)
     bpf_mean = np.sum(bpf_out[:seq_length], 1) / num_prt
@@ -96,7 +96,7 @@ for i in range(Nsim):
     N = 2
     L = 2
     AGSF = gsf.AugGaussSumFilt(ssm, M, N, L)
-    AGSF.set_aug_selection_params(1.0, 0.5, a='input', b='prop') # options are ['prop', 'opt_lip', 'opt_max_grad', 'input']
+    AGSF.set_aug_selection_params(0.1, 0.1, a='opt_max_grad', b='opt_max_grad') # options are ['prop', 'opt_lip', 'opt_max_grad', 'input']
     agsf_out = AGSF.run(ys, m0, P0, verbose=verbose)
 
     # Computation of errors
