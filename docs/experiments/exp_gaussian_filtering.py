@@ -1,5 +1,5 @@
-import utils
-import gaussfilt as gf
+import import gaussfiltax.utils as utils
+import gaussfiltax.gaussfilt as gf
 import numpy as np
 import jax.numpy as jnp
 from numpy import random
