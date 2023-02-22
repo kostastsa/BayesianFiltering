@@ -1,9 +1,9 @@
-import utils
-import gaussfilt as gf
+import gaussfiltax.utils as utils
+import gaussfiltax.gaussfilt as gf
 import numpy as np
 import jax.numpy as jnp
 from numpy import random
-import particlefilt as pf
+import gaussfiltax.particlefilt as pf
 import matplotlib.pyplot as plt
 import time
 

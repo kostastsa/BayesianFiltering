@@ -108,7 +108,7 @@ def sdp_opt(dim, N, L, X0, P, H, Nsteps, eta):
         X = project_to_psd(X)
     return X.reshape(dim, dim)
 
-def sdp_opt_test(dim_in, dim_out, num_prt, lip, X0, cutoff_cov, hess_array, Nsteps, eta):
+def sdp_opt_test(dim_in, dim_out, alpha, X0, cutoff_cov, hess_array, Nsteps, eta):
     ## Gradient descent
     X = X0
     sum_hess = jnp.sum(hess_array, axis=0)
@@ -117,7 +117,7 @@ def sdp_opt_test(dim_in, dim_out, num_prt, lip, X0, cutoff_cov, hess_array, Nste
         term_two = jnp.zeros((dim_in, dim_in))
         for j in range(dim_out):
             term_two += coeffs[j] * sum_hess[j]
-        X = X - eta * (-(2 * lip ** 2 / num_prt) * np.eye(dim_in) + (1 / 2 / num_prt**2) * term_two)
+        X = X - eta * (-(2 * alpha) * np.eye(dim_in) + (1 / 2 / num_prt**2) * term_two)
     X = project_to_psd(X)
     X = cutoff_cov - project_to_psd(cutoff_cov - X)
     X = project_to_psd(X)

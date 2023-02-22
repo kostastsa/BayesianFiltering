@@ -3,7 +3,7 @@ import jax.random as jr
 import numpy as np
 from jax import jacfwd, jit, jacrev
 from jax.tree_util import tree_map
-import utils
+import gaussfiltax.utils as utils
 from typing import NamedTuple
 from jaxtyping import Float32
 from itertools import count
