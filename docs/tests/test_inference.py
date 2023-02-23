@@ -96,8 +96,8 @@ class TestInference:
         
 
 test = TestInference()
-# test.test_gaussian_sum_filter()
-test.test_augmented_gaussian_sum_filter()
+test.test_gaussian_sum_filter()
+# test.test_augmented_gaussian_sum_filter()
 
 # mean1 = jnp.array([0.0, 0.0])
 # cov1 = 1.0*jnp.eye(2)
