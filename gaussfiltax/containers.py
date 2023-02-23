@@ -11,6 +11,7 @@ from jaxtyping import Array, Float, Int
 from typing import List
 
 
+
 #@register_pytree_node_class
 class GaussianComponent(NamedTuple):
     r"""Container object for a Gaussian mixture component.
@@ -75,7 +76,10 @@ def _branches_from_node(
     """
     # latent_dist = MVN(node_component.mean, node_component.covariance - splitting_cov)
     # new_means = latent_dist.sample((num_particles,), seed=subkey)
-    new_means = jr.multivariate_normal(key, node_component.mean, node_component.covariance-splitting_cov, shape=(num_particles,))
+    num_particles = 3
+    sampling_covariance = node_component.covariance-splitting_cov
+    new_means = jr.multivariate_normal(key, node_component.mean, sampling_covariance, shape=(num_particles,))
+    new_means = jnp.where(jnp.isnan(new_means), node_component.mean, new_means)
     new_covs = jnp.tile(splitting_cov, (num_particles, 1, 1))
     new_weights = jnp.array([node_component.weight / num_particles] * int(num_particles))
     branch_sum = GaussianSum(new_means, new_covs, new_weights)
