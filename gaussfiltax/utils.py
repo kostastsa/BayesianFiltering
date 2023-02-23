@@ -2,6 +2,7 @@ from numpy import random
 import numpy as np
 import scipy.stats as stats
 import jax.numpy as jnp
+from jax import jit
 
 
 def collapse(mean_mat, covariance_tens, weight_vec):
@@ -83,12 +84,12 @@ def loss(D, Pv, L, Nv, H):
 def matrix_projection(A, B):
     return (np.trace(np.matmul(A.T, B)) / np.trace(np.matmul(B.transpose(), B))) * B
 
-
+@jit
 def project_to_psd(Delta):
-    evals, evec = np.linalg.eig(Delta)
-    nonzero_eig = np.sum(evals > 0)
-    new_evals = np.multiply(evals > 0, evals)
-    new_Delta = evec @ np.diag(new_evals) @ evec.T
+    evals, evec = jnp.linalg.eig(Delta)
+    nonzero_eig = jnp.sum(evals > 0)
+    new_evals = jnp.multiply(evals > 0, evals)
+    new_Delta = evec @ jnp.diag(new_evals) @ evec.T
     return (new_Delta + new_Delta.T) / 2
 
 
@@ -97,7 +98,6 @@ def gradient_descent(dim, N, L, X0, P, H, Nsteps, eta):
     for i in range(Nsteps):
         X = X - eta * (-(2 * L ** 2 / N) * np.eye(dim) + (1 / 2) * np.trace(np.matmul(H, X)) * H)
     return X
-
 
 def sdp_opt(dim, N, L, X0, P, H, Nsteps, eta):
     X = X0
@@ -111,16 +111,17 @@ def sdp_opt(dim, N, L, X0, P, H, Nsteps, eta):
 def sdp_opt_test(dim_in, dim_out, alpha, X0, cutoff_cov, hess_array, Nsteps, eta):
     ## Gradient descent
     X = X0
-    sum_hess = jnp.sum(hess_array, axis=0)
+    num_prt = 1
     for i in range(Nsteps):
-        coeffs = jnp.sum(jnp.trace(jnp.matmul(X, hess_array), axis1=2, axis2=3), axis = 0)
+        coeffs = jnp.trace(jnp.matmul(X, hess_array), axis1=1, axis2=2)
         term_two = jnp.zeros((dim_in, dim_in))
         for j in range(dim_out):
-            term_two += coeffs[j] * sum_hess[j]
-        X = X - eta * (-(2 * alpha) * np.eye(dim_in) + (1 / 2 / num_prt**2) * term_two)
+            term_two += coeffs[j] * hess_array[j]
+        X = X - eta * (-(2 * alpha) * jnp.eye(dim_in) + (1 / 2 / num_prt**2) * term_two)
     X = project_to_psd(X)
     X = cutoff_cov - project_to_psd(cutoff_cov - X)
     X = project_to_psd(X)
+    X = X.astype(jnp.float32)
     return X
 
 
