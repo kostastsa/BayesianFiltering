@@ -33,8 +33,8 @@ class PosteriorGaussianSumFiltered(NamedTuple):
     :param filtered_covariances: array of filtered covariances $\mathrm{Cov}[z_t \mid y_{1:t}, u_{1:t}]$
     """
     weights: Optional[Float[Array, "num_components ntime"]] = None
-    filtered_means: Optional[Float[Array, "num_components ntime state_dim"]] = None
-    filtered_covariances: Optional[Float[Array, "num_components ntime state_dim state_dim"]] = None
+    means: Optional[Float[Array, "num_components ntime state_dim"]] = None
+    covariances: Optional[Float[Array, "num_components ntime state_dim state_dim"]] = None
     predicted_means: Optional[Float[Array, "num_components ntime state_dim"]] = None
     predicted_covariances: Optional[Float[Array, "num_components ntime state_dim state_dim"]] = None
 
@@ -60,7 +60,7 @@ def _predict(m, P, f, F, Q, u):
     # print("Sigma_pred", Sigma_pred)
     return mu_pred, Sigma_pred
 
-def _condition_on(m, P, h, H, R, u, y, num_iter):
+def _condition_on(m, P, h, H, R, u, y):
     r"""Condition a Gaussian potential on a new observation.
        p(z_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
          propto p(z_t | y_{1:t-1}, u_{1:t-1}) p(y_t | z_t, u_t)
@@ -86,20 +86,13 @@ def _condition_on(m, P, h, H, R, u, y, num_iter):
          mu_cond (D_hid,): filtered mean.
          Sigma_cond (D_hid,D_hid): filtered covariance.
     """
-    def _step(carry, _):
-        _, prior_mean, prior_cov = carry
-        H_x = H(prior_mean, u)
-        S = R + H_x @ prior_cov @ H_x.T
-        K = psd_solve(S, H_x @ prior_cov).T
-        posterior_cov = prior_cov - K @ S @ K.T
-        posterior_mean = prior_mean + K @ (y - h(prior_mean, u))
-        ll = _MVN_log_prob(h(prior_mean, u), S, y)
-        return (ll, posterior_mean, posterior_cov), None
-
-    # Iterate re-linearization over posterior mean and covariance
-    carry = (0.0, m, P)
-    (ll, mu_cond, Sigma_cond), _ = lax.scan(_step, carry, jnp.arange(num_iter))
-    return ll, mu_cond, Sigma_cond
+    H_x = H(m, u)
+    S = R + H_x @ P @ H_x.T
+    K = psd_solve(S, H_x @ P).T
+    posterior_cov = P - K @ S @ K.T
+    posterior_mean = P + K @ (y - h(m, u))
+    ll = _MVN_log_prob(h(m, u), S, y)
+    return ll, posterior_mean, posterior_cov
 
 def _split_single_component(m, P, Delta, N, key=jr.PRNGKey(0)):
     r"""Split a Gaussian component into N Gaussian particles.
@@ -142,15 +135,15 @@ def _autocov(m, P, hessian_tensor, num_particles, args):
     # state_dim x state_dim matrix.
     state_dim = P.shape[0]
     _hessian = hessian_tensor(m)
-    hessian_avg = jnp.sum(_hessian, axis=0)
     emission_dim = _hessian.shape[0]
     cov_init = P                               # This is something that should be specified by the user / adapted
-    cov_cutoff = jnp.eye(state_dim) * 10       # This is something that should be specified by the user / adapted
+    cov_cutoff = 0.5 * P      # This is something that should be specified by the user / adapted
     nsteps_gd = args[0]
     eta_gd = args[1]
     alpha = args[2]
     alpha = alpha / num_particles # alpha = lipschitz ** 2 / number of particles    
-    Delta = 0.1*jnp.eye(state_dim) #utils.sdp_opt_test(state_dim, emission_dim, alpha, cov_init, cov_cutoff, hessian_avg, nsteps_gd, eta_gd)
+    Delta = utils.sdp_opt_test(state_dim, emission_dim, alpha, cov_init, cov_cutoff, _hessian, nsteps_gd, eta_gd)
+#    Delta = 0.5 * jnp.eye(state_dim)
     return Delta, num_particles
 
 def gaussian_sum_filter(
@@ -205,7 +198,7 @@ def gaussian_sum_filter(
         weights /= jnp.sum(weights)
 
         # Condition on this emission
-        lls, filtered_means, filtered_covs = vmap(_condition_on, in_axes=(0, 0, None, None, None, None, None, None))(pred_means, pred_covs, h, H, R, u, y, num_iter)
+        lls, filtered_means, filtered_covs = vmap(_condition_on, in_axes=(0, 0, None, None, None, None, None))(pred_means, pred_covs, h, H, R, u, y)
 
         # Predict the next state
         pred_means, pred_covs = vmap(_predict, in_axes=(0, 0, None, None, None, None))(filtered_means, filtered_covs, f, F, Q, u)
@@ -241,8 +234,9 @@ def augmented_gaussian_sum_filter(
     num_components: Int[Array, "1 3"],
     rng_key: jr.PRNGKey = jr.PRNGKey(0),
     num_iter: int = 1,
+    opt_args : Optional[Float[tuple, "1 3"]] = (20, 0.1, 0.1),
     inputs: Optional[Float[Array, "ntime input dim"]] = None,
-    output_fields: Optional[List[str]]=["weights", "filtered_means", "filtered_covariances"],
+    output_fields: Optional[List[str]]=["weights", "means", "covariances", "Deltas", "Lambdas"]
 ) -> PosteriorGaussianSumFiltered:
     r"""Run an Gaussian sum filter, which is a mixture of (iterated) extended Kalman filters to produce the
     marginal likelihood and filtered state estimates.
@@ -262,8 +256,8 @@ def augmented_gaussian_sum_filter(
 
     # Dynamics and emission functions and their Jacobians
     f, h = params.dynamics_function, params.emission_function
-    F, H = jacfwd(f), jacfwd(h)
-    FH, HH = jacrev(F), jacrev(H)
+    F, H = jit(jacfwd(f)), jit(jacfwd(h))
+    FH, HH = jit(jacrev(F)), jit(jacrev(H))
     f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
     f_vec, h_vec, F_vec, H_vec = (vmap(fn, in_axes=(0, None)) for fn in (f, h, F, H)) # vmap over components, component axis is 0
     inputs = _process_input(inputs, num_timesteps)
@@ -284,10 +278,9 @@ def augmented_gaussian_sum_filter(
 
         # Autocov 1
         tin = time.time()
-        pred_opt_args=(20, 0.1, 1.0)
         nums_to_split = jnp.array([num_components[1]]*num_components[0])
-        Deltas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None))(filtered_means, filtered_covs, FH, nums_to_split, pred_opt_args)
-        print("Autocov #1 time: ", time.time() - tin)
+        Deltas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None))(filtered_means, filtered_covs, FH, nums_to_split, opt_args)
+#        print("Autocov #1 time: ", time.time() - tin)
 
         # Branch 1
         key, subkey = jr.split(rng_key)
@@ -295,48 +288,48 @@ def augmented_gaussian_sum_filter(
         _components_to_predict = _branches_from_tree(filtered_components, list(Deltas), list(nums_to_split), subkey)
         leaves, treedef = jtu.tree_flatten(_components_to_predict, is_leaf=lambda x: isinstance(x, GaussianComponent))
         _sum_to_predict = containers._components_to_gaussian_sum(leaves)
-        print("Branch #1 time: ", time.time() - tin)
+#        print("Branch #1 time: ", time.time() - tin)
 
         # Predict
         tin = time.time()
         predicted_means, predicted_covs = vmap(_predict, in_axes=(0,0,None,None,None,None))(jnp.array(_sum_to_predict.means), jnp.array(_sum_to_predict.covariances), f, F, Q, u)
-        print("Predict time: ", time.time() - tin)
+#        print("Predict time: ", time.time() - tin)
 
         # Recast 1
         tin = time.time()
         predicted_sum = GaussianSum(list(predicted_means), list(predicted_covs), _sum_to_predict.weights)
         predicted_components = containers._gaussian_sum_to_components(predicted_sum)
-        print("Recast time: ", time.time() - tin)
+#        print("Recast time: ", time.time() - tin)
 
-        # Autocov 2
+        # Autocov before update
         tin = time.time()
-        pred_opt_args=(20, 0.1, 1.0)
         nums_to_split = jnp.array([num_components[2]] * num_components[0]*num_components[1])
-        Lambdas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None))(predicted_means, predicted_covs, FH, nums_to_split, pred_opt_args)
-        print("Autocov #2 time: ", time.time() - tin)
+        Lambdas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None))(predicted_means, predicted_covs, FH, nums_to_split, opt_args)
+#        print("Autocov #2 time: ", time.time() - tin)
 
-        # Branch 2
+
+        # Branching before update
         key, subkey = jr.split(key)
         tin = time.time()
         _components_to_update = _branches_from_tree(predicted_components, list(Lambdas), list(nums_to_split), subkey)
         leaves, treedef = jtu.tree_flatten(_components_to_update, is_leaf=lambda x: isinstance(x, GaussianComponent))
         _sum_to_update = containers._components_to_gaussian_sum(leaves)
-        print("Branch #2 time: ", time.time() - tin)
+#        print("Branch #2 time: ", time.time() - tin)
 
         # Update
         tin = time.time()
-        lls, updated_means, updated_covs = vmap(_condition_on, in_axes=(0,0,None,None,None,None,None,None))(jnp.array(_sum_to_update.means), jnp.array(_sum_to_update.covariances), h, H, R, u, y, num_iter)
+        lls, updated_means, updated_covs = vmap(_condition_on, in_axes=(0,0,None,None,None,None,None))(jnp.array(_sum_to_update.means), jnp.array(_sum_to_update.covariances), h, H, R, u, y)
         lls -= jnp.max(lls)
         ls = jnp.exp(lls)
         weights = jnp.multiply(ls, jnp.array(_sum_to_update.weights))
         weights /= jnp.sum(weights)
-        print("Update time: ", time.time() - tin)
+#        print("Update time: ", time.time() - tin)
 
         # Recast 2
         tin = time.time()
         updated_sum = GaussianSum(list(updated_means), list(updated_covs), weights)
         updated_components = containers._gaussian_sum_to_components(updated_sum)
-        print("Recast #2 time: ", time.time() - tin)
+#        print("Recast #2 time: ", time.time() - tin)
 
         # Resampling 
         tin - time.time()
@@ -344,16 +337,16 @@ def augmented_gaussian_sum_filter(
         filtered_means = jnp.take(updated_means, resampled_idx, axis=0)
         filtered_covs = jnp.take(updated_covs, resampled_idx, axis=0)
         weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
-        print("Resampling time: ", time.time() - tin)
-
+#        print("Resampling time: ", time.time() - tin)
 
         # Build carry and output states
         carry = filtered_components
-
         outputs = {
             "weights": weights,
-            "filtered_means": filtered_means,
-            "filtered_covariances": filtered_covs
+            "means": jnp.squeeze(filtered_means, axis = 2),
+            "covariances": filtered_covs,
+            "Deltas": Deltas,
+            "Lambdas": Lambdas
         }
 
         outputs = {key: val for key, val in outputs.items() if key in output_fields}
@@ -367,11 +360,13 @@ def augmented_gaussian_sum_filter(
     carry = init_components
 
     carry, outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
-#   outputs = swap_axes_on_values(outputs)
+    outputs = swap_axes_on_values(outputs)
     posterior_filtered = PosteriorGaussianSumFiltered(
-       **outputs,
+       outputs["weights"], outputs["means"], outputs["covariances"]
     )
+    aux_outputs = {'Deltas': outputs['Deltas'], 'Lambdas': outputs['Lambdas']}
+    
+    return posterior_filtered, aux_outputs
 
     # posterior_filtered = _step(carry, 0)
-
-    return posterior_filtered
+    # return posterior_filtered
