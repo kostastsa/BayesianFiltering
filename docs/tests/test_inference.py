@@ -21,8 +21,8 @@ class TestInference:
     def g2(x):
         return jnp.array([[1, 0], [0, 1], [0, 0]]) @ x
 
-    state_dim = 1
-    emission_dim = 1
+    state_dim = 2
+    emission_dim = 3
     seq_length = 100
     mu0 = jnp.zeros(state_dim)
     Sigma0 = 1.0 * jnp.eye(state_dim)
@@ -33,9 +33,9 @@ class TestInference:
     params = ParamsNLGSSM(
         initial_mean=mu0,
         initial_covariance=Sigma0,
-        dynamics_function=f1,
+        dynamics_function=f2,
         dynamics_covariance=Q,
-        emission_function=g1,
+        emission_function=g2,
         emission_covariance=R,
     )
 
@@ -48,8 +48,8 @@ class TestInference:
 
         posterior_filtered = gf.gaussian_sum_filter(self.params, emissions, num_components, 1)
 
-        means = posterior_filtered.filtered_means
-        covs = posterior_filtered.filtered_covariances
+        means = posterior_filtered.means
+        covs = posterior_filtered.covariances
         pred_means = posterior_filtered.predicted_means
         pred_covs = posterior_filtered.predicted_covariances
         weights = posterior_filtered.weights
@@ -57,6 +57,8 @@ class TestInference:
 
 
     def test_augmented_gaussian_sum_filter(self):
+        def g2(x):
+            return jnp.array([[1, 0], [0, 1], [0, 0]]) @ x
 
         key = jr.PRNGKey(0)
         states, emissions = self.model.sample(self.params, key, self.seq_length)
@@ -77,5 +79,8 @@ test.test_augmented_gaussian_sum_filter()
 tout = time.time()
 print('AGSF time:', tout - tin)
 
+test = TestInference()
+test.test_gaussian_sum_filter()
+#test.test_augmented_gaussian_sum_filter()
 
 

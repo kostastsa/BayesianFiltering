@@ -90,7 +90,7 @@ def _condition_on(m, P, h, H, R, u, y):
     S = R + H_x @ P @ H_x.T
     K = psd_solve(S, H_x @ P).T
     posterior_cov = P - K @ S @ K.T
-    posterior_mean = P + K @ (y - h(m, u))
+    posterior_mean = m + K @ (y - h(m, u))
     ll = _MVN_log_prob(h(m, u), S, y)
     return ll, posterior_mean, posterior_cov
 
@@ -152,7 +152,7 @@ def gaussian_sum_filter(
     num_components: int = 1,
     num_iter: int = 1,
     inputs: Optional[Float[Array, "ntime input_dim"]] = None,
-    output_fields: Optional[List[str]]=["weights", "filtered_means", "filtered_covariances", "predicted_means", "predicted_covariances"],
+    output_fields: Optional[List[str]]=["weights", "means", "covariances", "predicted_means", "predicted_covariances"],
 ) -> PosteriorGaussianSumFiltered:
     r"""Run an Gaussian sum filter, which is a mixture of (iterated) extended Kalman filters to produce the
     marginal likelihood and filtered state estimates.
@@ -187,18 +187,13 @@ def gaussian_sum_filter(
         u = inputs[t]
         y = emissions[t]
 
-        # Update the log likelihoods
-        H_x = H_vec(pred_means, u)
-        ml_means = h_vec(pred_means, u)
-        ml_covs = jnp.array([H_x[i] @ pred_covs[i] @ H_x[i].T + R for i in range(num_components)]) #TODO: check is this can be improved using an array generation approach
-        lls = MVN_log_prob_vec(ml_means, ml_covs, y)
+        # Condition on this emission
+        lls, filtered_means, filtered_covs = vmap(_condition_on, in_axes=(0, 0, None, None, None, None, None))(pred_means, pred_covs, h, H, R, u, y)
+        # Compute weights
         lls -= jnp.max(lls)
         loglik_weights = jnp.exp(lls)
         weights = jnp.multiply(loglik_weights, weights)
         weights /= jnp.sum(weights)
-
-        # Condition on this emission
-        lls, filtered_means, filtered_covs = vmap(_condition_on, in_axes=(0, 0, None, None, None, None, None))(pred_means, pred_covs, h, H, R, u, y)
 
         # Predict the next state
         pred_means, pred_covs = vmap(_predict, in_axes=(0, 0, None, None, None, None))(filtered_means, filtered_covs, f, F, Q, u)
@@ -206,8 +201,8 @@ def gaussian_sum_filter(
         # Build carry and output states
         carry = (weights, pred_means, pred_covs)
         outputs = {
-            "filtered_means": filtered_means,
-            "filtered_covariances": filtered_covs,
+            "means": filtered_means,
+            "covariances": filtered_covs,
             "predicted_means": pred_means,
             "predicted_covariances": pred_covs,
             "weights": weights
@@ -220,7 +215,7 @@ def gaussian_sum_filter(
     initial_covs = jnp.array([params.initial_covariance for i in range(num_components)])
     carry = (jnp.ones(num_components)/num_components, initial_means, initial_covs)
 
-    (lls, *_), outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    _, outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
     outputs = swap_axes_on_values(outputs)
     posterior_filtered = PosteriorGaussianSumFiltered(
        **outputs,
@@ -343,7 +338,7 @@ def augmented_gaussian_sum_filter(
         carry = filtered_components
         outputs = {
             "weights": weights,
-            "means": jnp.squeeze(filtered_means, axis = 2),
+            "means": filtered_means,
             "covariances": filtered_covs,
             "Deltas": Deltas,
             "Lambdas": Lambdas
