@@ -39,10 +39,10 @@ class GaussianSum(NamedTuple):
     _check_normalization = lambda self: jnp.allclose(jnp.sum(self.weights), 1.0)
     _sum_weights = lambda self: jnp.sum(self.weights)
 
-def _gaussian_sum_to_components(gaussian_sum: GaussianSum)-> GaussianComponent[List]:
+def _gaussian_sum_to_components(gaussian_sum: GaussianSum):
     return jtu.tree_map(lambda vars: GaussianComponent(vars[0], vars[1], vars[2]), list(zip(gaussian_sum.means, gaussian_sum.covariances, gaussian_sum.weights)), is_leaf=lambda node: type(node) is tuple)
 
-def _components_to_gaussian_sum(components:GaussianComponent[List])-> GaussianSum: # TODO: use scan instead of list comprehension
+def _components_to_gaussian_sum(components)-> GaussianSum: # TODO: use scan instead of list comprehension
     # def _step(carry, component):
     #     means = carry.means
     #     covariances = carry.covariances
@@ -63,7 +63,7 @@ def _branches_from_node(
     node_component: GaussianComponent, 
     splitting_cov: Array,
     num_particles: Int,
-    key:jr.PRNGKey)-> GaussianComponent[List]:
+    key:jr.PRNGKey):
     r"""Split a Gaussian component into N Gaussian particles.
     Args:
         m (D_hid,): mean.
@@ -87,7 +87,7 @@ def _branches_from_node(
     return new_components
 
 def _branches_from_tree(
-    components:GaussianComponent[List],
+    components,
     split_covs_array:Float[Array, "num_components D_hid D_hid"],
     num_branch_array:Int[Array, "num_components"],
     key:jr.PRNGKey = jr.PRNGKey(0)
