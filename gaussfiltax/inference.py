@@ -118,7 +118,7 @@ def _split_multiple_components(mus, covs, Deltas, n_split, key=jr.PRNGKey(0)):
         all_particles.append(particles)
     return all_particles
 
-def _autocov(m, P, hessian_tensor, num_particles, args):
+def _autocov(m, P, hessian_tensor, num_particles, u, args):
     r"""Automatically compute the covariance of the Gaussian particles my minimizing solving a semidefinite program.
     The mean, covariance and hessian are used in the construction of the SDP. Also, potentially the number of particles
     can be automatically determined, but can also be given as an argument.
@@ -134,7 +134,7 @@ def _autocov(m, P, hessian_tensor, num_particles, args):
     # Hessian has shape (emission_dim, state_dim, state_dim), i.e., for each of the emission_dim, we have a
     # state_dim x state_dim matrix.
     state_dim = P.shape[0]
-    _hessian = hessian_tensor(m)
+    _hessian = hessian_tensor(m, u)
     emission_dim = _hessian.shape[0]
     cov_init = P                               # This is something that should be specified by the user / adapted
     cov_cutoff = 0.5 * P      # This is something that should be specified by the user / adapted
@@ -274,7 +274,7 @@ def augmented_gaussian_sum_filter(
         # Autocov 1
         tin = time.time()
         nums_to_split = jnp.array([num_components[1]]*num_components[0])
-        Deltas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None))(filtered_means, filtered_covs, FH, nums_to_split, opt_args)
+        Deltas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None, None))(filtered_means, filtered_covs, FH, nums_to_split, u, opt_args)
 #        print("Autocov #1 time: ", time.time() - tin)
 
         # Branch 1
@@ -299,7 +299,7 @@ def augmented_gaussian_sum_filter(
         # Autocov before update
         tin = time.time()
         nums_to_split = jnp.array([num_components[2]] * num_components[0]*num_components[1])
-        Lambdas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None))(predicted_means, predicted_covs, FH, nums_to_split, opt_args)
+        Lambdas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None, None))(predicted_means, predicted_covs, FH, nums_to_split, u, opt_args)
 #        print("Autocov #2 time: ", time.time() - tin)
 
 
