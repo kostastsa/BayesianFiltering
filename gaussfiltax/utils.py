@@ -86,7 +86,7 @@ def matrix_projection(A, B):
 
 @jit
 def project_to_psd(Delta):
-    evals, evec = jnp.linalg.eig(Delta)
+    evals, evec = jnp.linalg.eigh(Delta)
     nonzero_eig = jnp.sum(evals > 0)
     new_evals = jnp.multiply(evals > 0, evals)
     new_Delta = evec @ jnp.diag(new_evals) @ evec.T
