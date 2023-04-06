@@ -299,7 +299,7 @@ def augmented_gaussian_sum_filter(
         # Autocov before update
         tin = time.time()
         nums_to_split = jnp.array([num_components[2]] * num_components[0]*num_components[1])
-        Lambdas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None, None))(predicted_means, predicted_covs, FH, nums_to_split, u, opt_args)
+        Lambdas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None, None))(predicted_means, predicted_covs, HH, nums_to_split, u, opt_args)
 #        print("Autocov #2 time: ", time.time() - tin)
 
 
