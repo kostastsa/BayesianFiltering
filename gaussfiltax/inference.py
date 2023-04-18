@@ -6,13 +6,14 @@ from jax import lax, vmap, jacfwd, jacrev, debug, device_put, jit
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from typing import List, Optional, NamedTuple, Union
 import gaussfiltax.utils as utils
+from gaussfiltax.utils import _resample
 from gaussfiltax.containers import GaussianComponent, GaussianSum, _branches_from_tree
 from gaussfiltax import containers
 from jaxtyping import Array, Float, Int
 
 
 from dynamax.utils.utils import psd_solve
-from gaussfiltax.models import ParamsNLSSM
+from gaussfiltax.models import ParamsNLSSM, ParamsBPF
 import time
 
 import matplotlib.pyplot as plt
@@ -116,7 +117,9 @@ def _autocov(m, P, hessian_tensor, num_particles, bias, u, args):
     # cov_cutoff = 0.1 * P      # This is something that should be specified by the user / adapted
     alpha = args[0]
     tol = args[1]
-    Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
+#    Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
+    Delta = 0.0 * jnp.eye(state_dim)
+#    Delta = 0.0 * P
     return Delta, num_particles
 
 def gaussian_sum_filter(
@@ -146,10 +149,8 @@ def gaussian_sum_filter(
     f, h = params.dynamics_function, params.emission_function
     F_x, H_x = jacfwd(f, argnums=0), jacfwd(h, argnums=0)
     F_q, H_r = jacfwd(f, argnums=1), jacfwd(h, argnums=1)
-    f, h, F_x, H_x, F_q, H_r = (_process_fn(fn, inputs) for fn in (f, h, F_x, H_x, F_q, H_r))
-    f_vec, h_vec, F_vec, H_vec = (vmap(fn, in_axes=(0, None)) for fn in (f, h, F_x, H_x)) # vmap over components, component axis is 0
+#    f, h, F_x, H_x, F_q, H_r = (_process_fn(fn, inputs) for fn in (f, h, F_x, H_x, F_q, H_r))
     inputs = _process_input(inputs, num_timesteps)
-    MVN_log_prob_vec = vmap(_MVN_log_prob, in_axes=(0, 0, None))
 
     def _step(carry, t):
         weights, pred_means, pred_covs = carry
@@ -203,10 +204,10 @@ def augmented_gaussian_sum_filter(
     num_components: Int[Array, "1 3"],
     rng_key: jr.PRNGKey = jr.PRNGKey(0),
     num_iter: int = 1,
-    opt_args : Optional[Float[tuple, "1 3"]] = (0.1, 0.1),
+    opt_args : Optional[Float[tuple, "1 2"]] = (0.1, 0.1),
     inputs: Optional[Float[Array, "ntime input dim"]] = None
 ) -> PosteriorGaussianSumFiltered:
-    r"""Run an Gaussian sum filter, which is a mixture of (iterated) extended Kalman filters to produce the
+    r"""Augmented Gaussian sum filter, which is a mixture of extended Kalman filters to produce the
     marginal likelihood and filtered state estimates.
     Args:
         params: model parameters.
@@ -227,13 +228,8 @@ def augmented_gaussian_sum_filter(
     F_x, H_x = jacfwd(f, argnums=0), jacfwd(h, argnums=0)
     F_q, H_r = jacfwd(f, argnums=1), jacfwd(h, argnums=1)
     F_xx, H_xx = jit(jacrev(F_x)), jit(jacrev(H_x))
-    f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
-
-    f_vec, h_vec, F_vec, H_vec = (vmap(fn, in_axes=(0, None)) for fn in (f, h, F, H)) # vmap over components, component axis is 0
-
-
+#    f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
     inputs = _process_input(inputs, num_timesteps)
-    MVN_log_prob_vec = vmap(_MVN_log_prob, in_axes=(0, 0, None))
 
     def _step(carry, t):
         filtered_components = carry
@@ -266,7 +262,7 @@ def augmented_gaussian_sum_filter(
 
         # Predict
         tin = time.time()
-        predicted_means, predicted_covs, grads_dyn = vmap(_predict, in_axes=(0,0,None,None,None,None))(jnp.array(_sum_to_predict.means), jnp.array(_sum_to_predict.covariances), f, F, Q, u)
+        predicted_means, predicted_covs, grads_dyn = vmap(_predict, in_axes=(0,0,None,None,None,None,None,None))(jnp.array(_sum_to_predict.means), jnp.array(_sum_to_predict.covariances), f, F_x, F_q, Q, q0, u)
         t_predict = time.time() - tin
 
         # Recast 1
@@ -291,7 +287,7 @@ def augmented_gaussian_sum_filter(
 
         # Update
         tin = time.time()
-        lls, updated_means, updated_covs, grads_obs, gain = vmap(_condition_on, in_axes=(0,0,None,None,None,None,None))(jnp.array(_sum_to_update.means), jnp.array(_sum_to_update.covariances), h, H, R, u, y)
+        lls, updated_means, updated_covs, grads_obs, gain = vmap(_condition_on, in_axes=(0,0,None,None,None,None,None,None,None))(jnp.array(_sum_to_update.means), jnp.array(_sum_to_update.covariances), h, H_x, H_r, R, r0, u, y)
         lls -= jnp.max(lls)
         ls = jnp.exp(lls)
         weights = jnp.multiply(ls, jnp.array(_sum_to_update.weights))
@@ -325,7 +321,8 @@ def augmented_gaussian_sum_filter(
             "Lambdas": Lambdas,
             "grads_dyn": grads_dyn,
             "grads_obs": grads_obs,
-            "gain": gain
+            "gain": gain,
+            "timing": jnp.array([t_autocov1, t_branch1, t_predict, t_recast1, t_autocov2, t_branch2, t_update, t_recast2, t_resample])
         }
 
         return carry, outputs
@@ -347,6 +344,93 @@ def augmented_gaussian_sum_filter(
                    'Lambdas': outputs['Lambdas'],
                    'grads_dyn': outputs['grads_dyn'],
                    'grads_obs': outputs['grads_obs'],
-                   'gain': outputs['gain']}
+                   'gain': outputs['gain'],
+                   'timing': outputs['timing']}
     
     return posterior_filtered, aux_outputs
+
+def bootstrap_particle_filter(
+    params: ParamsBPF,
+    emissions: Float[Array, "ntime emission dim"],
+    num_particles: Int,
+    key: jr.PRNGKey = jr.PRNGKey(0),
+    inputs: Optional[Float[Array, "ntime input dim"]] = None,
+    ess_threshold: float = 0.5
+):
+    r"""
+    Bootstrap particle filter for the nonlinear state space model.
+    Args:
+        params: Parameters of the nonlinear state space model.
+        emissions: Emissions.
+        num_particles: Number of particles.
+        rng_key: Random number generator key.
+        inputs: Inputs. 
+
+    Returns:
+        Posterior particle filtered.
+    """
+
+    num_timesteps = len(emissions)
+
+    # Dynamics and emission functions
+    f, h = params.dynamics_function, params.emission_function
+    inputs = _process_input(inputs, num_timesteps)
+
+    
+    def _step(carry, t):
+        weights, particles, key = carry
+        
+        # Get parameters and inputs for time index t
+        Q = _get_params(params.dynamics_noise_covariance, 2, t)
+        q0 = _get_params(params.dynamics_noise_bias, 2, t)
+        R = _get_params(params.emission_noise_covariance, 2, t)
+        r0 = _get_params(params.emission_noise_bias, 2, t)
+        u = inputs[t]
+        y = emissions[t]
+
+        # Sample new particles 
+        keys = jr.split(key, num_particles+1)
+        next_key = keys[0]
+        map_sample_particles = vmap(params.sample_dynamics_distribution, in_axes=(0,0,None))
+        new_particles = map_sample_particles(keys[1:], particles, u)
+
+        # Compute weights 
+        map_log_prob = vmap(params.emission_distribution_log_prob, in_axes=(0,None,None))
+        lls = map_log_prob(new_particles, y, u)
+        lls -= jnp.max(lls)
+        ls = jnp.exp(lls)
+        weights = jnp.multiply(ls, weights)
+        new_weights = weights / jnp.sum(weights)
+
+        # Resample if necessary
+        resample_cond = 1.0 / jnp.sum(jnp.square(new_weights)) < ess_threshold * num_particles
+        weights, new_particles, next_key = lax.cond(resample_cond, _resample, lambda *args: args, new_weights, new_particles, next_key)
+
+        outputs = {
+            'weights':weights,
+            'particles':new_particles
+        }
+
+        carry = (weights, new_particles, next_key)
+
+        return carry, outputs
+    
+    # Initialize carry
+    keys = jr.split(key, num_particles+1)
+    next_key = keys[0]
+    weights = jnp.ones(num_particles) / num_particles
+    map_sample = vmap(MVN(loc=params.initial_mean, covariance_matrix=params.initial_covariance).sample, in_axes=(None,0))
+    particles = map_sample((), keys[1:])
+    carry = (weights, particles, next_key)
+
+    # scan
+    _, outputs =  lax.scan(_step, carry, jnp.arange(num_timesteps))
+    outputs = swap_axes_on_values(outputs)
+ 
+    return outputs
+
+
+
+
+
+

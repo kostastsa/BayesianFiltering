@@ -2,6 +2,7 @@ from numpy import random
 import numpy as np
 import scipy.stats as stats
 import jax.numpy as jnp
+import jax.random as jr
 from jax import jit, vmap, lax
 from functools import partial
 
@@ -176,6 +177,14 @@ def retain(weights, num_retained):
     sorted_ind = np.argsort(_flattened_weights)[-num_retained:]
     return _flat_ind_mat[sorted_ind]
 
+def _resample(weights, particles, key):                                                                  
+    keys = jr.split(key, 2)
+    num_particles = weights.shape[0]
+    resampled_idx = jr.choice(keys[0], jnp.arange(weights.shape[0]), shape=(num_particles,), p=weights)
+    resampled_particles = jnp.take(particles, resampled_idx, axis=0)
+    weights = jnp.ones(shape=(num_particles,)) / num_particles
+    next_key = keys[1]
+    return weights, resampled_particles, next_key    
 
 
 

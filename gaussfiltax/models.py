@@ -49,6 +49,39 @@ class ParamsNLSSM(NamedTuple):
     emission_noise_bias: Float[Array, "emission_noise_dim"] 
     emission_noise_covariance: Float[Array, "emission_noise_dim emission_noise_dim"]
 
+
+
+class ParamsBPF(NamedTuple):
+    """Parameters for a BPF model.
+
+    $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$
+    $$p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)$$
+    $$p(z_1) = N(z_1 | m, S)$$
+
+    If you have no inputs, the dynamics and emission functions do not to take $u_t$ as an argument.
+
+    :param dynamics_function: $f$
+    :param dynamics_covariance: $Q$
+    :param emissions_function: $h$
+    :param emissions_covariance: $R$
+    :param initial_mean: $m$
+    :param initial_covariance: $S$
+
+    """
+    initial_mean: Float[Array, "state_dim"]
+    initial_covariance: Float[Array, "state_dim state_dim"]
+    dynamics_function: Union[FnStateToState, FnStateAndInputToState]
+    dynamics_noise_bias: Float[Array, "state_noise_dim"]
+    dynamics_noise_covariance: Float[Array, "state_noise_dim state_noise_dim"]
+    emission_function: Union[FnStateToEmission, FnStateAndInputToEmission]
+    emission_noise_bias: Float[Array, "emission_noise_dim"] 
+    emission_noise_covariance: Float[Array, "emission_noise_dim emission_noise_dim"]
+    emission_distribution_log_prob: Callable
+
+    def sample_dynamics_distribution(self, key, x, u):
+        q = MVN(loc = self.dynamics_noise_bias, covariance_matrix=self.dynamics_noise_covariance).sample(seed=key)
+        return self.dynamics_function(x, q, u)
+
 class NonlinearGaussianSSM(SSM):
     """
     Nonlinear Gaussian State Space Model.
@@ -123,7 +156,7 @@ class NonlinearGaussianSSM(SSM):
         return MVN(mean, params.emission_noise_covariance)
     
 
-class GeneralNonlinearSSM(SSM):
+class NonlinearSSM(SSM):
     """
     General Nonlinear State Space Model.
 
