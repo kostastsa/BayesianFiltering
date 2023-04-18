@@ -294,12 +294,6 @@ def augmented_gaussian_sum_filter(
         weights /= jnp.sum(weights)
         t_update = time.time() - tin
 
-        # Recast 2
-        tin = time.time()
-        updated_sum = GaussianSum(list(updated_means), list(updated_covs), weights)
-        updated_components = containers._gaussian_sum_to_components(updated_sum)
-        t_recast2 = time.time() - tin
-
         # Resampling 
         tin = time.time()
         resampled_idx = jr.choice(jr.PRNGKey(0), jnp.arange(weights.shape[0]), shape=(num_components[0], ), p=weights)
@@ -308,11 +302,8 @@ def augmented_gaussian_sum_filter(
         weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
         t_resample =  time.time() - tin
 
-        # Collect gradients 
-
-
         # Build carry and output states
-        carry = filtered_components
+        carry = containers._gaussian_sum_to_components(GaussianSum(list(filtered_means), list(filtered_covs), weights))
         outputs = {
             "weights": weights,
             "means": filtered_means,
@@ -322,7 +313,7 @@ def augmented_gaussian_sum_filter(
             "grads_dyn": grads_dyn,
             "grads_obs": grads_obs,
             "gain": gain,
-            "timing": jnp.array([t_autocov1, t_branch1, t_predict, t_recast1, t_autocov2, t_branch2, t_update, t_recast2, t_resample])
+            "timing": jnp.array([t_autocov1, t_branch1, t_predict, t_recast1, t_autocov2, t_branch2, t_update, t_resample])
         }
 
         return carry, outputs
