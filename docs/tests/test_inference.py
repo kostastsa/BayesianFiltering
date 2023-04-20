@@ -116,7 +116,7 @@ params = ParamsNLSSM(
 )
 
 # Generate synthetic data 
-key = jr.PRNGKey(0)
+key = jr.PRNGKey(10000)
 states, emissions = model.sample(params, key, seq_length, inputs = inputs)
 
 # GSF
@@ -125,11 +125,9 @@ posterior_filtered_gsf = gf.gaussian_sum_filter(params, emissions, M, 1, inputs)
 point_estimate_gsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_gsf.means, posterior_filtered_gsf.weights), axis=0)
 
 # AGSF
-num_components = [M, 1, 1] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
+num_components = [M, 3, 3] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
 posterior_filtered_agsf, aux_outputs = gf.augmented_gaussian_sum_filter(params, emissions, num_components, opt_args = (0.0, 0.1), inputs=inputs)
 point_estimate_agsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_agsf.means, posterior_filtered_agsf.weights), axis=0)
-
-print(aux_outputs['timing'])
 
 # BPF
 num_particles = 10
@@ -154,40 +152,11 @@ point_estimate_bpf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_bpf["particles"
 
 
 # Plots
-# plt.plot(states)
-# plt.plot(point_estimate_gsf)
-# plt.plot(point_estimate_agsf)
-# plt.plot(point_estimate_bpf)
-# plt.plot(emissions)
-# plt.legend(['x','gsf', 'agsf', 'bpf', 'y'])
-# plt.show()
-
-
-point_estimates = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_agsf.means, posterior_filtered_agsf.weights), axis=0)
-
-fig, axes = plt.subplots(4, 1, sharex=True, figsize=(10, 7))
-fig.tight_layout(pad=3.0)
-axes[0].plot(states, label="xs")
-leg = ["states"]
-for m in range(M):
-    axes[0].plot(posterior_filtered_agsf.means[m])
-    leg.append("model {}".format(m))
-    axes[0].set_title("filtered means")
-
-#axes[0].legend(leg)
-
-for m in range(M):
-    axes[1].plot(posterior_filtered_agsf.covariances[m].squeeze())
-    axes[1].set_title("filtered covariances")
-
-for m in range(M):
-    axes[2].plot(posterior_filtered_agsf.weights[m])
-    axes[2].set_title("weights")
-
-axes[3].plot(states, label="xs")
-leg = ["states", "AGSF"]
-axes[3].plot(point_estimates)
-axes[3].legend(leg)
-axes[3].set_title("point estimate")
+plt.plot(states)
+plt.plot(point_estimate_gsf)
+plt.plot(point_estimate_agsf)
+plt.plot(point_estimate_bpf)
+plt.plot(emissions)
+plt.legend(['x','gsf', 'agsf', 'bpf', 'y'])
 
 plt.show()
