@@ -117,8 +117,8 @@ def _autocov(m, P, hessian_tensor, num_particles, bias, u, args):
     # cov_cutoff = 0.1 * P      # This is something that should be specified by the user / adapted
     alpha = args[0]
     tol = args[1]
-#    Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
-    Delta = 0.0 * jnp.eye(state_dim)
+    Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
+#    Delta = 0.0 * jnp.eye(state_dim)
 #    Delta = 0.0 * P
     return Delta, num_particles
 

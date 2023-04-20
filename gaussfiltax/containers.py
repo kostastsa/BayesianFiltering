@@ -76,7 +76,7 @@ def _branches_from_node(
     """
     # latent_dist = MVN(node_component.mean, node_component.covariance - splitting_cov)
     # new_means = latent_dist.sample((num_particles,), seed=subkey)
-    num_particles = 1 # this has to be set manually for now. has to match the input given in the script.
+    num_particles = 3 # this has to be set manually for now. has to match the input given in the script.
     sampling_covariance = node_component.covariance-splitting_cov
     new_means = jr.multivariate_normal(key, node_component.mean, sampling_covariance, shape=(num_particles,))
     new_means = jnp.where(jnp.isnan(new_means), node_component.mean, new_means)
