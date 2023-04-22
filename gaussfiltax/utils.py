@@ -134,7 +134,7 @@ def sdp_opt(state_dim, P, hessian, alpha, tol=0.1):
     diff_init = 1.
     val_init = (vec_delta_init, diff_init)
     out = lax.while_loop(lambda x: x[1]>tol, _step, val_init)
-    return out[0]
+    return _mat(out[0], state_dim)
 
 def mse(x_est, x_base):
     T = x_est.shape[0]
