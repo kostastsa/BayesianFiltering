@@ -6,6 +6,7 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.ssm import SSM
 from dynamax.parameters import ParameterSet, PropertySet
 from dynamax.types import PRNGKey, Scalar
+import jax
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
 import jax.numpy as jnp

@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import jax.random as jr
 import jax.tree_util as jtu
+import jax
 from functools import partial
 from jax import lax, vmap, jacfwd, jacrev, debug, device_put, jit
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
@@ -285,13 +286,14 @@ def augmented_gaussian_sum_filter(
         _sum_to_update = containers._components_to_gaussian_sum(leaves)
         t_branch2 = time.time() - tin
 
-        # Update
+        # # Update
         tin = time.time()
         lls, updated_means, updated_covs, grads_obs, gain = vmap(_condition_on, in_axes=(0,0,None,None,None,None,None,None,None))(jnp.array(_sum_to_update.means), jnp.array(_sum_to_update.covariances), h, H_x, H_r, R, r0, u, y)
         lls -= jnp.max(lls)
         ls = jnp.exp(lls)
         weights = jnp.multiply(ls, jnp.array(_sum_to_update.weights))
         weights /= jnp.sum(weights)
+        pre_weights = weights
         t_update = time.time() - tin
 
         # Resampling 
@@ -302,43 +304,46 @@ def augmented_gaussian_sum_filter(
         weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
         t_resample =  time.time() - tin
 
+        # jax.debug.print("🤯 {x} 🤯", x=t)
+        # jax.debug.print("🤯 {x} 🤯", x=updated_means)
+
         # Build carry and output states
         carry = containers._gaussian_sum_to_components(GaussianSum(list(filtered_means), list(filtered_covs), weights))
         outputs = {
             "weights": weights,
             "means": filtered_means,
-            "covariances": filtered_covs,
+            "covariances": filtered_covs
+        }
+
+        aux_outputs = {
             "Deltas": Deltas,
             "Lambdas": Lambdas,
             "grads_dyn": grads_dyn,
             "grads_obs": grads_obs,
             "gain": gain,
-            "timing": jnp.array([t_autocov1, t_branch1, t_predict, t_recast1, t_autocov2, t_branch2, t_update, t_resample])
+            "timing": jnp.array([t_autocov1, t_branch1, t_predict, t_recast1, t_autocov2, t_branch2, t_update, t_resample]),
+            "updated_means": updated_means,
+            "pre_weights": pre_weights
         }
 
-        return carry, outputs
-        
+        return carry, (outputs, aux_outputs)
+    
     initial_means = MVN(params.initial_mean, params.initial_covariance).sample(num_components[0], jr.PRNGKey(0))
     initial_covs = jnp.array([params.initial_covariance for i in range(num_components[0])])
     initial_weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
     init_components = containers._gaussian_sum_to_components(GaussianSum(initial_means, initial_covs, initial_weights))
     carry = init_components
 
-    carry, outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    carry, (outputs, aux_outputs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
     outputs = swap_axes_on_values(outputs)
     posterior_filtered = PosteriorGaussianSumFiltered(
        outputs["weights"], 
        outputs["means"], 
        outputs["covariances"]
     )
-    aux_outputs = {'Deltas': outputs['Deltas'], 
-                   'Lambdas': outputs['Lambdas'],
-                   'grads_dyn': outputs['grads_dyn'],
-                   'grads_obs': outputs['grads_obs'],
-                   'gain': outputs['gain'],
-                   'timing': outputs['timing']}
     
     return posterior_filtered, aux_outputs
+
 
 def bootstrap_particle_filter(
     params: ParamsBPF,
