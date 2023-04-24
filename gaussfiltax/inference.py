@@ -96,7 +96,7 @@ def _condition_on(m, P, h, H_x, H_r, R, r0, u, y):
     ll = _MVN_log_prob(h(m, r0, u), S, y)
     return ll, posterior_mean, posterior_cov, H_x, K
 
-def _autocov(m, P, hessian_tensor, num_particles, bias, u, args):
+def _autocov1(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
     r"""Automatically compute the covariance of the Gaussian particles my minimizing solving a semidefinite program.
     The mean, covariance and hessian are used in the construction of the SDP. Also, potentially the number of particles
     can be automatically determined, but can also be given as an argument.
@@ -115,13 +115,45 @@ def _autocov(m, P, hessian_tensor, num_particles, bias, u, args):
     _hessian = hessian_tensor(m, bias, u)
     # emission_dim = _hessian.shape[0]
     # cov_init = P                               # This is something that should be specified by the user / adapted
+<<<<<<< HEAD
     # cov_cutoff = 0.1 * P      # This is something that should be specified by the user / adapted
     alpha = args[0]
     tol = args[1]
     # Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
     Delta = 0.8 * jnp.eye(state_dim)
 #    Delta = 0.0 * P
+=======
+    # cov_cutoff = 0.1 * P                       # This is something that should be specified by the user / adapted
+    # Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
+    # Delta = 0.0 * jnp.eye(state_dim)
+    Delta = alpha * P
+>>>>>>> c8581d9d7f389e464c07fced3d627842a88f4638
     return Delta, num_particles
+
+def _autocov2(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
+    r"""Automatically compute the covariance of the Gaussian particles my minimizing solving a semidefinite program.
+    The mean, covariance and hessian are used in the construction of the SDP. Also, potentially the number of particles
+    can be automatically determined, but can also be given as an argument.
+    Args:
+        m (D_hid,): mean.
+        P (D_hid,D_hid): covariance.
+        hessian_tensor (Callable): Hessian of the emission function.
+        args (tuple): list of arguments for the optimizer.
+    Returns:
+        cov (D_hid,D_hid): covariance of the Gaussian particles.
+        num_particles (int): number of particles.
+    """
+    # Hessian has shape (emission_dim, state_dim, state_dim), i.e., for each of the emission_dim, we have a
+    # (state_dim x state_dim) matrix.
+    state_dim = P.shape[0]
+    _hessian = hessian_tensor(m, bias, u)
+    # emission_dim = _hessian.shape[0]
+    # cov_init = P                               # This is something that should be specified by the user / adapted
+    # cov_cutoff = 0.1 * P                       # This is something that should be specified by the user / adapted
+    # Lambda = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
+    # Lambda = 0.0 * jnp.eye(state_dim)
+    Lambda = alpha * P
+    return Lambda, num_particles
 
 def gaussian_sum_filter(
     params: ParamsNLSSM,
@@ -250,7 +282,7 @@ def augmented_gaussian_sum_filter(
         # Autocov 1
         tin = time.time()
         nums_to_split = jnp.array([num_components[1]]*num_components[0])
-        Deltas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None, None, None))(filtered_means, filtered_covs, F_xx, nums_to_split, q0, u, opt_args)
+        Deltas, nums_to_split = vmap(_autocov1, in_axes=(0, 0, None, 0, None, None, None))(filtered_means, filtered_covs, F_xx, nums_to_split, q0, u, opt_args[0])
         t_autocov1 = time.time() - tin
 
         # Branch 1
@@ -275,7 +307,7 @@ def augmented_gaussian_sum_filter(
         # Autocov before update
         tin = time.time()
         nums_to_split = jnp.array([num_components[2]] * num_components[0]*num_components[1])
-        Lambdas, nums_to_split = vmap(_autocov, in_axes=(0, 0, None, 0, None, None, None))(predicted_means, predicted_covs, H_xx, nums_to_split, r0, u, opt_args)
+        Lambdas, nums_to_split = vmap(_autocov2, in_axes=(0, 0, None, 0, None, None, None))(predicted_means, predicted_covs, H_xx, nums_to_split, r0, u, opt_args[1])
         t_autocov2 = time.time() - tin
 
         # Branching before update
@@ -286,7 +318,7 @@ def augmented_gaussian_sum_filter(
         _sum_to_update = containers._components_to_gaussian_sum(leaves)
         t_branch2 = time.time() - tin
 
-        # # Update
+        # Update
         tin = time.time()
         lls, updated_means, updated_covs, grads_obs, gain = vmap(_condition_on, in_axes=(0,0,None,None,None,None,None,None,None))(jnp.array(_sum_to_update.means), jnp.array(_sum_to_update.covariances), h, H_x, H_r, R, r0, u, y)
         lls -= jnp.max(lls)

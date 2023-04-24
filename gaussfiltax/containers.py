@@ -108,3 +108,8 @@ def _branches_from_tree(
     branched_tree = jtu.tree_map(_branches_from_node, components, split_covs_array, num_branch_array, keys, is_leaf=lambda x: isinstance(x, GaussianComponent))
     # branched_tree = vmap(lambda mean, cov, weight, split_cov, num_prt, key: _branches_from_node(GaussianComponent(mean, cov, weight), split_cov, num_prt, key))(gauss_sum.means, gauss_sum.covariances, gauss_sum.weights, jnp.array(split_covs_array), jnp.array(num_branch_array), keys)
     return branched_tree
+
+
+
+# how to assign value to array entry in JAX?
+
