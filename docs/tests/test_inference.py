@@ -162,5 +162,5 @@ states, emissions = model.sample(params, key, seq_length, inputs = inputs)
 
 # AGSF
 M = 5
-num_components = [M, 3, 3]
+num_components = [M, 1, 1]
 out = gf.augmented_gaussian_sum_filter(params, emissions, num_components, opt_args = (0.0, 0.1), inputs=inputs)
