@@ -2,7 +2,9 @@ from numpy import random
 import numpy as np
 import scipy.stats as stats
 import jax.numpy as jnp
-from jax import jit
+import jax.random as jr
+from jax import jit, vmap, lax
+from functools import partial
 
 
 def collapse(mean_mat, covariance_tens, weight_vec):
@@ -87,10 +89,10 @@ def matrix_projection(A, B):
 @jit
 def project_to_psd(Delta):
     evals, evec = jnp.linalg.eigh(Delta)
-    nonzero_eig = jnp.sum(evals > 0)
     new_evals = jnp.multiply(evals > 0, evals)
     new_Delta = evec @ jnp.diag(new_evals) @ evec.T
-    return (new_Delta + new_Delta.T) / 2
+    Delta = (new_Delta + new_Delta.T) / 2
+    return Delta.astype(jnp.float32)
 
 
 def gradient_descent(dim, N, L, X0, P, H, Nsteps, eta):
@@ -99,31 +101,40 @@ def gradient_descent(dim, N, L, X0, P, H, Nsteps, eta):
         X = X - eta * (-(2 * L ** 2 / N) * np.eye(dim) + (1 / 2) * np.trace(np.matmul(H, X)) * H)
     return X
 
-def sdp_opt(dim, N, L, X0, P, H, Nsteps, eta):
-    X = X0
-    for i in range(Nsteps):
-        X = gradient_descent(dim, N, L, X, P, H, 1, eta ** i)
-        X = project_to_psd(X)
-        X = P - project_to_psd(P - X)
-        X = project_to_psd(X)
-    return X.reshape(dim, dim)
+_vec = lambda x, n: jnp.reshape(x, (n**2, ))
+_mat = lambda x, n: jnp.reshape(x, (n, n))
+_matrices_to_vectors = lambda matrix_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n**2, )))(matrix_array)))
+_vectors_to_matrices = lambda vector_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n, n)))(vector_array)))
 
-def sdp_opt_test(dim_in, dim_out, alpha, X0, cutoff_cov, hess_array, Nsteps, eta):
-    ## Gradient descent
-    X = X0
-    num_prt = 1
-    for i in range(Nsteps):
-        coeffs = jnp.trace(jnp.matmul(X, hess_array), axis1=1, axis2=2)
-        term_two = jnp.zeros((dim_in, dim_in))
-        for j in range(dim_out):
-            term_two += coeffs[j] * hess_array[j]
-        X = X - eta * (-(2 * alpha) * jnp.eye(dim_in) + (1 / 2 / num_prt**2) * term_two)
-    X = project_to_psd(X)
-    X = cutoff_cov - project_to_psd(cutoff_cov - X)
-    X = project_to_psd(X)
-    X = X.astype(jnp.float32)
-    return X
+def sdp_opt(state_dim, P, hessian, alpha, tol=0.1):
+    tol = 0.1
+    # construct 2nd order term
+    vec_hessians = _matrices_to_vectors(hessian, state_dim)
+    low_rank = jnp.zeros((state_dim**2, state_dim**2))
+    for i in range(state_dim):
+        low_rank += vec_hessians[i] * vec_hessians[i].T
+    lhs = low_rank + jnp.eye(state_dim**2)
+    aid = alpha * _vec(jnp.eye(state_dim), state_dim)
 
+    # looping step
+    def _step(val):
+        vec_delta = val[0]
+        rhs = aid + vec_delta
+        new_vec_delta = jnp.linalg.solve(lhs, rhs)
+        Delta = _mat(new_vec_delta, state_dim)
+        Delta = project_to_psd(Delta)
+        Delta = P - project_to_psd(P - Delta)
+        Delta = project_to_psd(Delta)
+        new_vec_delta = _vec(Delta, state_dim)
+        new_diff = jnp.linalg.norm(new_vec_delta-vec_delta) / state_dim ** 2
+        return (new_vec_delta, new_diff)
+
+    delta_init = jnp.zeros((state_dim, state_dim))
+    vec_delta_init = _vec(delta_init, state_dim)
+    diff_init = 1.
+    val_init = (vec_delta_init, diff_init)
+    out = lax.while_loop(lambda x: x[1]>tol, _step, val_init)
+    return _mat(out[0], state_dim)
 
 def mse(x_est, x_base):
     T = x_est.shape[0]
@@ -166,6 +177,14 @@ def retain(weights, num_retained):
     sorted_ind = np.argsort(_flattened_weights)[-num_retained:]
     return _flat_ind_mat[sorted_ind]
 
+def _resample(weights, particles, key):                                                                  
+    keys = jr.split(key, 2)
+    num_particles = weights.shape[0]
+    resampled_idx = jr.choice(keys[0], jnp.arange(weights.shape[0]), shape=(num_particles,), p=weights)
+    resampled_particles = jnp.take(particles, resampled_idx, axis=0)
+    weights = jnp.ones(shape=(num_particles,)) / num_particles
+    next_key = keys[1]
+    return weights, resampled_particles, next_key    
 
 
 
