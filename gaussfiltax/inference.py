@@ -118,8 +118,8 @@ def _autocov(m, P, hessian_tensor, num_particles, bias, u, args):
     # cov_cutoff = 0.1 * P      # This is something that should be specified by the user / adapted
     alpha = args[0]
     tol = args[1]
-    Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
-#    Delta = 0.0 * jnp.eye(state_dim)
+    # Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
+    Delta = 0.8 * jnp.eye(state_dim)
 #    Delta = 0.0 * P
     return Delta, num_particles
 
@@ -297,20 +297,20 @@ def augmented_gaussian_sum_filter(
         t_update = time.time() - tin
 
         # Resampling 
-        # tin = time.time()
-        # resampled_idx = jr.choice(jr.PRNGKey(0), jnp.arange(weights.shape[0]), shape=(num_components[0], ), p=weights)
-        # filtered_means = jnp.take(updated_means, resampled_idx, axis=0)
-        # filtered_covs = jnp.take(updated_covs, resampled_idx, axis=0)
-        # weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
-        # t_resample =  time.time() - tin
+        tin = time.time()
+        resampled_idx = jr.choice(jr.PRNGKey(0), jnp.arange(weights.shape[0]), shape=(num_components[0], ), p=weights)
+        filtered_means = jnp.take(updated_means, resampled_idx, axis=0)
+        filtered_covs = jnp.take(updated_covs, resampled_idx, axis=0)
+        weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
+        t_re =  time.time() - tin
 
         # Deterministic Reduction
-        tin = time.time()
-        idx = jnp.argpartition(weights, -num_components[0])[-num_components[0]:]
-        filtered_means = jnp.take(updated_means, idx, axis=0)
-        filtered_covs = jnp.take(updated_covs, idx, axis=0)
-        weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
-        t_reduction =  time.time() - tin
+        # tin = time.time()
+        # idx = jnp.argpartition(weights, -num_components[0])[-num_components[0]:]
+        # filtered_means = jnp.take(updated_means, idx, axis=0)
+        # filtered_covs = jnp.take(updated_covs, idx, axis=0)
+        # weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
+        # t_re =  time.time() - tin
 
         # jax.debug.print("🤯 {x} 🤯", x=t)
         # jax.debug.print("🤯 {x} 🤯", x=updated_means)
@@ -329,7 +329,7 @@ def augmented_gaussian_sum_filter(
             "grads_dyn": grads_dyn,
             "grads_obs": grads_obs,
             "gain": gain,
-            "timing": jnp.array([t_autocov1, t_branch1, t_predict, t_recast1, t_autocov2, t_branch2, t_update, t_reduction]),
+            "timing": jnp.array([t_autocov1, t_branch1, t_predict, t_recast1, t_autocov2, t_branch2, t_update, t_re]),
             "updated_means": updated_means,
             "pre_weights": pre_weights
         }
