@@ -8,7 +8,7 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from typing import List, Optional, NamedTuple, Union
 import gaussfiltax.utils as utils
 from gaussfiltax.utils import _resample
-from gaussfiltax.containers import GaussianComponent, GaussianSum, _branches_from_tree
+from gaussfiltax.containers import GaussianComponent, GaussianSum, _branches_from_tree1, _branches_from_tree2
 from gaussfiltax import containers
 from jaxtyping import Array, Float, Int
 
@@ -113,21 +113,19 @@ def _autocov1(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
     # (state_dim x state_dim) matrix.
     state_dim = P.shape[0]
     _hessian = hessian_tensor(m, bias, u)
-    # emission_dim = _hessian.shape[0]
-    # cov_init = P                               # This is something that should be specified by the user / adapted
-<<<<<<< HEAD
-    # cov_cutoff = 0.1 * P      # This is something that should be specified by the user / adapted
-    alpha = args[0]
-    tol = args[1]
+
+    #1 
     # Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
-    Delta = 0.8 * jnp.eye(state_dim)
-#    Delta = 0.0 * P
-=======
-    # cov_cutoff = 0.1 * P                       # This is something that should be specified by the user / adapted
-    # Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
-    # Delta = 0.0 * jnp.eye(state_dim)
+
+    #2
+    # Delta = alpha * jnp.eye(state_dim)
+
+    #3
     Delta = alpha * P
->>>>>>> c8581d9d7f389e464c07fced3d627842a88f4638
+
+    #4 
+    # Delta = jnp.minimum(1, alpha * jnp.trace(P) / jnp.sum(jnp.trace(_hessian @ P, axis1=1, axis2=2))) * P
+
     return Delta, num_particles
 
 def _autocov2(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
@@ -147,12 +145,20 @@ def _autocov2(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
     # (state_dim x state_dim) matrix.
     state_dim = P.shape[0]
     _hessian = hessian_tensor(m, bias, u)
-    # emission_dim = _hessian.shape[0]
-    # cov_init = P                               # This is something that should be specified by the user / adapted
-    # cov_cutoff = 0.1 * P                       # This is something that should be specified by the user / adapted
+    
+    #1
     # Lambda = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
-    # Lambda = 0.0 * jnp.eye(state_dim)
-    Lambda = alpha * P
+
+    #2
+    # Lambda = alpha * jnp.eye(state_dim)
+
+    #3
+    # Lambda = alpha * P
+
+    #4
+    Lambda = jnp.minimum(1.0, alpha * jnp.trace(P) / jnp.sum(jnp.trace(_hessian @ P, axis1=1, axis2=2)**2)) * P
+    # jax.debug.print("🤯 {x} 🤯", x = alpha * jnp.trace(P) / jnp.sum(jnp.trace(_hessian @ P, axis1=1, axis2=2)**2))
+
     return Lambda, num_particles
 
 def gaussian_sum_filter(
@@ -288,7 +294,7 @@ def augmented_gaussian_sum_filter(
         # Branch 1
         key, subkey = jr.split(rng_key)
         tin = time.time()
-        _components_to_predict = _branches_from_tree(filtered_components, list(Deltas), list(nums_to_split), subkey)
+        _components_to_predict = _branches_from_tree1(filtered_components, list(Deltas), list(nums_to_split), subkey)
         leaves, treedef = jtu.tree_flatten(_components_to_predict, is_leaf=lambda x: isinstance(x, GaussianComponent))
         _sum_to_predict = containers._components_to_gaussian_sum(leaves)
         t_branch1 = time.time() - tin
@@ -313,7 +319,7 @@ def augmented_gaussian_sum_filter(
         # Branching before update
         key, subkey = jr.split(key)
         tin = time.time()
-        _components_to_update = _branches_from_tree(predicted_components, list(Lambdas), list(nums_to_split), subkey)
+        _components_to_update = _branches_from_tree2(predicted_components, list(Lambdas), list(nums_to_split), subkey)
         leaves, treedef = jtu.tree_flatten(_components_to_update, is_leaf=lambda x: isinstance(x, GaussianComponent))
         _sum_to_update = containers._components_to_gaussian_sum(leaves)
         t_branch2 = time.time() - tin
@@ -383,7 +389,6 @@ def augmented_gaussian_sum_filter(
     )
     
     return posterior_filtered, aux_outputs
-
 
 def bootstrap_particle_filter(
     params: ParamsBPF,
