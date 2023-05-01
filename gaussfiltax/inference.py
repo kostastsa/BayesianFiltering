@@ -96,7 +96,7 @@ def _condition_on(m, P, h, H_x, H_r, R, r0, u, y):
     ll = _MVN_log_prob(h(m, r0, u), S, y)
     return ll, posterior_mean, posterior_cov, H_x, K
 
-def _autocov1(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
+def _autocov1(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
     r"""Automatically compute the covariance of the Gaussian particles my minimizing solving a semidefinite program.
     The mean, covariance and hessian are used in the construction of the SDP. Also, potentially the number of particles
     can be automatically determined, but can also be given as an argument.
@@ -112,10 +112,11 @@ def _autocov1(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
     # Hessian has shape (emission_dim, state_dim, state_dim), i.e., for each of the emission_dim, we have a
     # (state_dim x state_dim) matrix.
     state_dim = P.shape[0]
-    _hessian = hessian_tensor(m, bias, u)
+    hessian = hessian_tensor(m, bias, u)
+    J = jacobian(m,bias,u)
 
     #1 
-    # Delta = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
+    # Delta = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
 
     #2
     # Delta = alpha * jnp.eye(state_dim)
@@ -128,7 +129,7 @@ def _autocov1(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
 
     return Delta, num_particles
 
-def _autocov2(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
+def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
     r"""Automatically compute the covariance of the Gaussian particles my minimizing solving a semidefinite program.
     The mean, covariance and hessian are used in the construction of the SDP. Also, potentially the number of particles
     can be automatically determined, but can also be given as an argument.
@@ -144,10 +145,12 @@ def _autocov2(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
     # Hessian has shape (emission_dim, state_dim, state_dim), i.e., for each of the emission_dim, we have a
     # (state_dim x state_dim) matrix.
     state_dim = P.shape[0]
-    _hessian = hessian_tensor(m, bias, u)
+    hessian = hessian_tensor(m, bias, u)
+    J = jacobian(m,bias,u)
+
     
     #1
-    # Lambda = utils.sdp_opt(state_dim, P, _hessian, alpha, tol)
+    Lambda = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
 
     #2
     # Lambda = alpha * jnp.eye(state_dim)
@@ -156,7 +159,7 @@ def _autocov2(m, P, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
     # Lambda = alpha * P
 
     #4
-    Lambda = jnp.minimum(1.0, alpha * jnp.trace(P) / jnp.sum(jnp.trace(_hessian @ P, axis1=1, axis2=2)**2)) * P
+    # Lambda = jnp.minimum(1.0, alpha * jnp.trace(P) / jnp.sum(jnp.trace(_hessian @ P, axis1=1, axis2=2)**2)) * P
     # jax.debug.print("🤯 {x} 🤯", x = alpha * jnp.trace(P) / jnp.sum(jnp.trace(_hessian @ P, axis1=1, axis2=2)**2))
 
     return Lambda, num_particles
@@ -288,7 +291,7 @@ def augmented_gaussian_sum_filter(
         # Autocov 1
         tin = time.time()
         nums_to_split = jnp.array([num_components[1]]*num_components[0])
-        Deltas, nums_to_split = vmap(_autocov1, in_axes=(0, 0, None, 0, None, None, None))(filtered_means, filtered_covs, F_xx, nums_to_split, q0, u, opt_args[0])
+        Deltas, nums_to_split = vmap(_autocov1, in_axes=(0, 0, None, None, 0, None, None, None))(filtered_means, filtered_covs, F_x, F_xx, nums_to_split, q0, u, opt_args[0])
         t_autocov1 = time.time() - tin
 
         # Branch 1
@@ -313,7 +316,7 @@ def augmented_gaussian_sum_filter(
         # Autocov before update
         tin = time.time()
         nums_to_split = jnp.array([num_components[2]] * num_components[0]*num_components[1])
-        Lambdas, nums_to_split = vmap(_autocov2, in_axes=(0, 0, None, 0, None, None, None))(predicted_means, predicted_covs, H_xx, nums_to_split, r0, u, opt_args[1])
+        Lambdas, nums_to_split = vmap(_autocov2, in_axes=(0, 0, None, None, 0, None, None, None))(predicted_means, predicted_covs, H_x, H_xx, nums_to_split, r0, u, opt_args[1])
         t_autocov2 = time.time() - tin
 
         # Branching before update
