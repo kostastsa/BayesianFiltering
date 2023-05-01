@@ -106,15 +106,15 @@ _mat = lambda x, n: jnp.reshape(x, (n, n))
 _matrices_to_vectors = lambda matrix_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n**2, )))(matrix_array)))
 _vectors_to_matrices = lambda vector_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n, n)))(vector_array)))
 
-def sdp_opt(state_dim, P, hessian, alpha, tol=0.1):
+def sdp_opt(state_dim, N, P, jacobian, hessian, alpha, tol=0.1):
     tol = 0.1
     # construct 2nd order term
     vec_hessians = _matrices_to_vectors(hessian, state_dim)
     low_rank = jnp.zeros((state_dim**2, state_dim**2))
     for i in range(state_dim):
         low_rank += vec_hessians[i] * vec_hessians[i].T
-    lhs = low_rank + jnp.eye(state_dim**2)
-    aid = alpha * _vec(jnp.eye(state_dim), state_dim)
+    lhs = ((N-1)/4 * N) * low_rank + jnp.eye(state_dim**2)
+    aid = alpha * _vec(jacobian.T @ jacobian, state_dim) / N 
 
     # looping step
     def _step(val):
