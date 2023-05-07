@@ -136,6 +136,28 @@ def sdp_opt(state_dim, N, P, jacobian, hessian, alpha, tol=0.1):
     out = lax.while_loop(lambda x: x[1]>tol, _step, val_init)
     return _mat(out[0], state_dim)
 
+def sdp_opt2(state_dim, N, P, jacobian, hessian, alpha, eta = 0.1, tol=0.1):
+    tol = 0.1
+    JTJ = -jacobian.T @ jacobian / N
+    # looping step
+    def _step(carry):
+        Delta, _ = carry
+        HtrHD = (alpha / 2) * jnp.einsum('ijk,i', hessian, jnp.trace(hessian @ Delta, axis1 = 1, axis2 = 2))
+        HDH = -(2 / N) * jnp.einsum('ijk,ikl->jl', hessian @ (P-Delta), hessian)
+        grad = JTJ + HtrHD + HDH
+        newDelta = Delta - eta * grad
+        newDelta = project_to_psd(newDelta)
+        newDelta = P - project_to_psd(P - newDelta)
+        newDelta = project_to_psd(newDelta)
+        diff = jnp.linalg.norm(newDelta-Delta) / state_dim ** 2
+        return (newDelta, diff)
+
+    delta_init = jnp.zeros((state_dim, state_dim))
+    diff_init = 1.
+    carry = (delta_init, diff_init)
+    out = lax.while_loop(lambda x: x[1]>tol, _step, carry)
+    return out[0]
+
 def mse(x_est, x_base):
     T = x_est.shape[0]
     sum_sq = np.sum((x_est - x_base) ** 2)

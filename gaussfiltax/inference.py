@@ -96,7 +96,7 @@ def _condition_on(m, P, h, H_x, H_r, R, r0, u, y):
     ll = _MVN_log_prob(h(m, r0, u), S, y)
     return ll, posterior_mean, posterior_cov, H_x, K
 
-def _autocov1(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
+def _autocov1(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta=0.1, tol=0.1):
     r"""Automatically compute the covariance of the Gaussian particles my minimizing solving a semidefinite program.
     The mean, covariance and hessian are used in the construction of the SDP. Also, potentially the number of particles
     can be automatically determined, but can also be given as an argument.
@@ -116,20 +116,20 @@ def _autocov1(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, tol
     J = jacobian(m,bias,u)
 
     #1 
-    # Delta = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
+    Delta = utils.sdp_opt2(state_dim, num_particles, P, J, hessian, alpha, eta, tol)
 
     #2
     # Delta = alpha * jnp.eye(state_dim)
 
     #3
-    Delta = alpha * P
+    # Delta = alpha * P
 
     #4 
     # Delta = jnp.minimum(1, alpha * jnp.trace(P) / jnp.sum(jnp.trace(_hessian @ P, axis1=1, axis2=2))) * P
 
     return Delta, num_particles
 
-def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, tol=0.1):
+def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta=0.1, tol=0.1):
     r"""Automatically compute the covariance of the Gaussian particles my minimizing solving a semidefinite program.
     The mean, covariance and hessian are used in the construction of the SDP. Also, potentially the number of particles
     can be automatically determined, but can also be given as an argument.
@@ -150,7 +150,7 @@ def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, tol
 
     
     #1
-    Lambda = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
+    Lambda = utils.sdp_opt2(state_dim, num_particles, P, J, hessian, alpha, eta, tol)
 
     #2
     # Lambda = alpha * jnp.eye(state_dim)
