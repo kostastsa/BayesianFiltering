@@ -10,7 +10,7 @@ from gaussfiltax.models import ParamsNLSSM, NonlinearGaussianSSM, NonlinearSSM, 
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 import time
 import gaussfiltax.inference as gf
-from gaussfiltax.utils import sdp_opt2
+from gaussfiltax.utils import sdp_opt
 
 import matplotlib.pyplot as plt
 
@@ -249,14 +249,14 @@ class TestInference:
             # plt.show()
 
 
-state_dim = 5
-emission_dim = 3
-f = lambda x: (jnp.ones((emission_dim, state_dim)) @ jnp.outer(x, x)) @ jnp.ones(state_dim)
-N = 10
-P = jnp.eye(state_dim)
-m = jnp.zeros(state_dim)
+state_dim = 3
+A = jnp.eye(state_dim-1, state_dim)
+f = lambda x: jnp.concatenate((A @ x, jnp.array([jnp.dot(x.T,x)])), axis=0)
+N = 100
+P = 10*jnp.eye(state_dim)
+m = jnp.ones((state_dim,))
 jacobian = jacfwd(f)(m)
 hessian = jacrev(jacfwd(f))(m)
-
-Lambda = sdp_opt2(state_dim, N, P, jacobian, hessian, 1.0, eta = 0.5, tol = .05)
+Lambda = sdp_opt(state_dim, N, P, jacobian, hessian, 100)
+print(jnp.linalg.eigvals(Lambda))
 print(Lambda)
