@@ -32,3 +32,21 @@ A = np.array([[a, 0], [0, b]])
 f5 = lambda x: np.dot(x, np.matmul(A, x))/2
 J5 = lambda x: np.matmul(A, x)
 H5 = lambda x: A
+
+
+# Lorentz 96
+alpha = 1.0
+beta = 1.0
+gamma = 8.0
+dt = 0.01
+H = jnp.zeros((emission_dim, state_dim))
+for row in range(emission_dim):
+    col = 2*row
+    H = H.at[row,col].set(1.0)
+CP = lambda n: jnp.block([[jnp.zeros((1,n-1)), 1.0 ],[jnp.eye(n-1), jnp.zeros((n-1,1))]])
+A = CP(state_dim)
+B = jnp.power(A, state_dim-1) - jnp.power(A, 2)
+f96 = lambda x, q, u: x + dt * (alpha * jnp.multiply(A @ x, B @ x) - beta * x + gamma * jnp.ones(state_dim)) + q
+g96 = lambda x, r, u: H @ x + r
+def g96lp(x,y,u):
+  return MVN(loc = g96(x, 0.0, u), covariance_matrix = R).log_prob(y)

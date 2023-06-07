@@ -113,7 +113,7 @@ def _autocov1(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
     # (state_dim x state_dim) matrix.
     state_dim = P.shape[0]
     hessian = hessian_tensor(m, bias, u)
-    J = jacobian(m,bias,u)
+    J = jacobian(m, bias, u)
 
     #1a
     # Delta = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
@@ -132,7 +132,7 @@ def _autocov1(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
 
     return Delta, num_particles
 
-def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta=0.1, tol=0.5):
+def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta=0.1, tol=1.0):
     r"""Automatically compute the covariance of the Gaussian particles my minimizing solving a semidefinite program.
     The mean, covariance and hessian are used in the construction of the SDP. Also, potentially the number of particles
     can be automatically determined, but can also be given as an argument.
@@ -153,7 +153,7 @@ def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
 
     
     #1a
-    Lambda = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
+    # Lambda = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
 
     #1b 
     # Lambda = utils.sdp_opt2(state_dim, num_particles, P, J, hessian, alpha, eta, tol)
@@ -163,7 +163,7 @@ def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
     # Lambda = alpha * jnp.eye(state_dim)
 
     #3
-    # Lambda = alpha * P
+    Lambda = alpha * P
 
     #4
     # Lambda = jnp.minimum(1.0, alpha * jnp.trace(P) / jnp.sum(jnp.trace(_hessian @ P, axis1=1, axis2=2)**2)) * P

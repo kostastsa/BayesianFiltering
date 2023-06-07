@@ -113,7 +113,7 @@ def sdp_opt(state_dim, N, P, jacobian, hessian, alpha, tol=0.1):
     low_rank = jnp.zeros((state_dim**2, state_dim**2))
     for i in range(state_dim):
         low_rank += vec_hessians[i] * vec_hessians[i].T
-    lhs = ((N-1)/4 * N) * low_rank + jnp.eye(state_dim**2)
+    lhs = (1/4) * low_rank + jnp.eye(state_dim**2)
     aid = alpha * _vec(jacobian.T @ jacobian, state_dim) / N 
 
     # looping step
