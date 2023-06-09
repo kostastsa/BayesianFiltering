@@ -132,7 +132,7 @@ def _autocov1(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
 
     return Delta, num_particles
 
-def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta=0.1, tol=0.5):
+def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta=0.1, tol=1.0):
     r"""Automatically compute the covariance of the Gaussian particles my minimizing solving a semidefinite program.
     The mean, covariance and hessian are used in the construction of the SDP. Also, potentially the number of particles
     can be automatically determined, but can also be given as an argument.
