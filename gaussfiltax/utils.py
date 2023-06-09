@@ -208,6 +208,36 @@ def _resample(weights, particles, key):
     next_key = keys[1]
     return weights, resampled_particles, next_key    
 
+@partial(jit, static_argnums=(1,))
+def optimal_resampling(weights, N, key):
+    """Find the threshold for resampling particles using the optimal resampling algorithm of Fearnhead and Clifford (2003).
+    Returns inidices of resampled particles and their weights.
+    """
+    # sort weights
+    M = weights.shape[0]
+    sorted_weights = jnp.sort(weights)
+    sorted_idx = jnp.argsort(weights)
+
+    # compute threshold p and value L of particles to retain
+    lower_diag = jnp.triu(jnp.ones((M, M)), k=0).T
+    ps = lax.dynamic_slice(lower_diag, (M-N, 0), (N-1, M)) @ sorted_weights / jnp.arange(1,N)
+    ps = jnp.flip(ps)
+    bounds = vmap(lambda ind: (sorted_weights[M-ind-1], sorted_weights[M-ind]))(jnp.arange(1, N))
+    preds = vmap(lambda y,x,z : jnp.logical_and(y < x, x < z))(bounds[0], ps, bounds[1])
+    L = jnp.where(preds, jnp.arange(1, N), 0).sum()
+    p = jnp.where(L==0, 1/N, ps[L-1])
+    
+    # resample
+    res_weights = jnp.where(sorted_weights < p, sorted_weights, 0.0)
+    res_weights = res_weights / res_weights.sum()
+    res_idx = jr.choice(key, M, shape=(M,), replace=True, p=res_weights)
+    unsort_res_idx = sorted_idx[res_idx]
+
+    final_idx = jnp.where(sorted_weights < p, unsort_res_idx, sorted_idx)
+    final_weights = jnp.where(sorted_weights < p, p, sorted_weights)
+
+    return final_idx[M-N:], final_weights[M-N:] / final_weights[M-N:].sum() 
+
 
 
 
