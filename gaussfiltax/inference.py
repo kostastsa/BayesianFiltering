@@ -154,6 +154,8 @@ def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
     
     #1a
     # Lambda = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
+    # Lambda = 0.5 * Lambda/jnp.trace(Lambda) - utils.project_to_psd(0.5 * Lambda/jnp.trace(Lambda) - Lambda)
+
 
     #1b 
     # Lambda = utils.sdp_opt2(state_dim, num_particles, P, J, hessian, alpha, eta, tol)
@@ -349,6 +351,7 @@ def augmented_gaussian_sum_filter(
         resampled_idx = jr.choice(jr.PRNGKey(0), jnp.arange(weights.shape[0]), shape=(num_components[0], ), p=weights)
         filtered_means = jnp.take(updated_means, resampled_idx, axis=0)
         filtered_covs = jnp.take(updated_covs, resampled_idx, axis=0)
+        filtered_covs = 10*filtered_covs
         weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
         t_re =  time.time() - tin
 
@@ -399,86 +402,6 @@ def augmented_gaussian_sum_filter(
     )
     
     return posterior_filtered, aux_outputs
-
-def bootstrap_particle_filter(
-    params: ParamsBPF,
-    emissions: Float[Array, "ntime emission dim"],
-    num_particles: Int,
-    key: jr.PRNGKey = jr.PRNGKey(0),
-    inputs: Optional[Float[Array, "ntime input dim"]] = None,
-    ess_threshold: float = 0.5
-):
-    r"""
-    Bootstrap particle filter for the nonlinear state space model.
-    Args:
-        params: Parameters of the nonlinear state space model.
-        emissions: Emissions.
-        num_particles: Number of particles.
-        rng_key: Random number generator key.
-        inputs: Inputs. 
-
-    Returns:
-        Posterior particle filtered.
-    """
-
-    num_timesteps = len(emissions)
-
-    # Dynamics and emission functions
-    f, h = params.dynamics_function, params.emission_function
-    inputs = _process_input(inputs, num_timesteps)
-
-    
-    def _step(carry, t):
-        weights, particles, key = carry
-        
-        # Get parameters and inputs for time index t
-        Q = _get_params(params.dynamics_noise_covariance, 2, t)
-        q0 = _get_params(params.dynamics_noise_bias, 2, t)
-        R = _get_params(params.emission_noise_covariance, 2, t)
-        r0 = _get_params(params.emission_noise_bias, 2, t)
-        u = inputs[t]
-        y = emissions[t]
-
-        # Sample new particles 
-        keys = jr.split(key, num_particles+1)
-        next_key = keys[0]
-        map_sample_particles = vmap(params.sample_dynamics_distribution, in_axes=(0,0,None))
-        new_particles = map_sample_particles(keys[1:], particles, u)
-
-        # Compute weights 
-        map_log_prob = vmap(params.emission_distribution_log_prob, in_axes=(0,None,None))
-        lls = map_log_prob(new_particles, y, u)
-        lls -= jnp.max(lls)
-        ls = jnp.exp(lls)
-        weights = jnp.multiply(ls, weights)
-        new_weights = weights / jnp.sum(weights)
-
-        # Resample if necessary
-        resample_cond = 1.0 / jnp.sum(jnp.square(new_weights)) < ess_threshold * num_particles
-        weights, new_particles, next_key = lax.cond(resample_cond, _resample, lambda *args: args, new_weights, new_particles, next_key)
-
-        outputs = {
-            'weights':weights,
-            'particles':new_particles
-        }
-
-        carry = (weights, new_particles, next_key)
-
-        return carry, outputs
-    
-    # Initialize carry
-    keys = jr.split(key, num_particles+1)
-    next_key = keys[0]
-    weights = jnp.ones(num_particles) / num_particles
-    map_sample = vmap(MVN(loc=params.initial_mean, covariance_matrix=params.initial_covariance).sample, in_axes=(None,0))
-    particles = map_sample((), keys[1:])
-    carry = (weights, particles, next_key)
-
-    # scan
-    _, outputs =  lax.scan(_step, carry, jnp.arange(num_timesteps))
-    outputs = swap_axes_on_values(outputs)
- 
-    return outputs
 
 def augmented_gaussian_sum_filter_optimal(
     params: ParamsNLSSM,
@@ -624,3 +547,84 @@ def augmented_gaussian_sum_filter_optimal(
     )
 
     return posterior_filtered, aux_outputs
+
+def bootstrap_particle_filter(
+    params: ParamsBPF,
+    emissions: Float[Array, "ntime emission dim"],
+    num_particles: Int,
+    key: jr.PRNGKey = jr.PRNGKey(0),
+    inputs: Optional[Float[Array, "ntime input dim"]] = None,
+    ess_threshold: float = 0.5
+):
+    r"""
+    Bootstrap particle filter for the nonlinear state space model.
+    Args:
+        params: Parameters of the nonlinear state space model.
+        emissions: Emissions.
+        num_particles: Number of particles.
+        rng_key: Random number generator key.
+        inputs: Inputs. 
+
+    Returns:
+        Posterior particle filtered.
+    """
+
+    num_timesteps = len(emissions)
+
+    # Dynamics and emission functions
+    f, h = params.dynamics_function, params.emission_function
+    inputs = _process_input(inputs, num_timesteps)
+
+    
+    def _step(carry, t):
+        weights, particles, key = carry
+        
+        # Get parameters and inputs for time index t
+        Q = _get_params(params.dynamics_noise_covariance, 2, t)
+        q0 = _get_params(params.dynamics_noise_bias, 2, t)
+        R = _get_params(params.emission_noise_covariance, 2, t)
+        r0 = _get_params(params.emission_noise_bias, 2, t)
+        u = inputs[t]
+        y = emissions[t]
+
+        # Sample new particles 
+        keys = jr.split(key, num_particles+1)
+        next_key = keys[0]
+        map_sample_particles = vmap(params.sample_dynamics_distribution, in_axes=(0,0,None))
+        new_particles = map_sample_particles(keys[1:], particles, u)
+
+        # Compute weights 
+        map_log_prob = vmap(params.emission_distribution_log_prob, in_axes=(0,None,None))
+        lls = map_log_prob(new_particles, y, u)
+        lls -= jnp.max(lls)
+        ls = jnp.exp(lls)
+        weights = jnp.multiply(ls, weights)
+        new_weights = weights / jnp.sum(weights)
+
+        # Resample if necessary
+        resample_cond = 1.0 / jnp.sum(jnp.square(new_weights)) < ess_threshold * num_particles
+        weights, new_particles, next_key = lax.cond(resample_cond, _resample, lambda *args: args, new_weights, new_particles, next_key)
+
+        outputs = {
+            'weights':weights,
+            'particles':new_particles
+        }
+
+        carry = (weights, new_particles, next_key)
+
+        return carry, outputs
+    
+    # Initialize carry
+    keys = jr.split(key, num_particles+1)
+    next_key = keys[0]
+    weights = jnp.ones(num_particles) / num_particles
+    map_sample = vmap(MVN(loc=params.initial_mean, covariance_matrix=params.initial_covariance).sample, in_axes=(None,0))
+    particles = map_sample((), keys[1:])
+    carry = (weights, particles, next_key)
+
+    # scan
+    _, outputs =  lax.scan(_step, carry, jnp.arange(num_timesteps))
+    outputs = swap_axes_on_values(outputs)
+ 
+    return outputs
+

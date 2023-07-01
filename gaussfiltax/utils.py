@@ -33,10 +33,10 @@ def dec_to_base(num, base):  # Maximum base - 36
 
 def normal_KL_div(mean1, mean2, cov1, cov2):
     d = np.shape(cov1)[0]
-    Omega = np.linalg.inv(cov2);
+    Omega = np.linalg.inv(cov2)
     KL = np.log(np.linalg.det(cov2) / np.linalg.det(cov1)) - d + \
-         np.matmul(np.matmul(np.transpose(mean1 - mean2), Omega), (mean1 - mean2)) + np.trace(Omega * cov1);
-    return KL / 2;
+         np.matmul(np.matmul(np.transpose(mean1 - mean2), Omega), (mean1 - mean2)) + np.trace(Omega * cov1)
+    return KL / 2
 
 
 def split_by_sampling(mean, cov, new_cov, num_comp):
@@ -106,15 +106,18 @@ _mat = lambda x, n: jnp.reshape(x, (n, n))
 _matrices_to_vectors = lambda matrix_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n**2, )))(matrix_array)))
 _vectors_to_matrices = lambda vector_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n, n)))(vector_array)))
 
-def sdp_opt(state_dim, N, P, jacobian, hessian, alpha, tol=0.1):
+def sdp_opt(state_dim, N, P, jacobian, hessian, beta, tol=0.1):
     tol = 0.1
     # construct 2nd order term
+    vec_P = _vec(P, state_dim)
     vec_hessians = _matrices_to_vectors(hessian, state_dim)
     low_rank = jnp.zeros((state_dim**2, state_dim**2))
     for i in range(state_dim):
         low_rank += vec_hessians[i] * vec_hessians[i].T
     lhs = (1/4) * low_rank + jnp.eye(state_dim**2)
-    aid = alpha * _vec(jacobian.T @ jacobian, state_dim) / N 
+    vec_J = _vec(jacobian.T @ jacobian, state_dim)
+    alpha = beta * (N/4) * jnp.dot(vec_P.T, low_rank @ vec_P) / jnp.dot(vec_P.T, vec_J)
+    aid = alpha * vec_J / N 
 
     # looping step
     def _step(val):
