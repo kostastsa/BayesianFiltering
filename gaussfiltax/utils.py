@@ -107,6 +107,9 @@ _matrices_to_vectors = lambda matrix_array, n: jnp.array(list(vmap(lambda x : jn
 _vectors_to_matrices = lambda vector_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n, n)))(vector_array)))
 
 def sdp_opt(state_dim, N, P, jacobian, hessian, beta, tol=0.1):
+    """
+    This works by blancing the two terms using alpha
+    """
     tol = 0.1
     # construct 2nd order term
     vec_P = _vec(P, state_dim)
@@ -139,27 +142,38 @@ def sdp_opt(state_dim, N, P, jacobian, hessian, beta, tol=0.1):
     out = lax.while_loop(lambda x: x[1]>tol, _step, val_init)
     return _mat(out[0], state_dim)
 
-def sdp_opt2(state_dim, N, P, jacobian, hessian, alpha, eta = 0.1, tol=0.1):
+def sdp_opt2(state_dim, N, P, jacobian, hessian, alpha, tol=0.1):
+    """
+    original vanilla sdt_opt
+    """
     tol = 0.1
-    JTJ = -jacobian.T @ jacobian / N
+    # construct 2nd order term
+    vec_hessians = _matrices_to_vectors(hessian, state_dim)
+    low_rank = jnp.zeros((state_dim**2, state_dim**2))
+    for i in range(state_dim):
+        low_rank += vec_hessians[i] * vec_hessians[i].T
+    lhs = (1/4) * low_rank + jnp.eye(state_dim**2)
+    aid = alpha * _vec(jacobian.T @ jacobian, state_dim) / N 
+
     # looping step
-    def _step(carry):
-        Delta, _ = carry
-        HtrHD = (alpha / 2) * jnp.einsum('ijk,i', hessian, jnp.trace(hessian @ Delta, axis1 = 1, axis2 = 2))
-        HDH = -(2 / N) * jnp.einsum('ijk,ikl->jl', hessian @ (P-Delta), hessian)
-        grad = JTJ + HtrHD + HDH
-        newDelta = Delta - eta * grad
-        newDelta = project_to_psd(newDelta)
-        newDelta = P - project_to_psd(P - newDelta)
-        newDelta = project_to_psd(newDelta)
-        diff = jnp.linalg.norm(newDelta-Delta) / state_dim ** 2
-        return (newDelta, diff)
+    def _step(val):
+        vec_delta = val[0]
+        rhs = aid + vec_delta
+        new_vec_delta = jnp.linalg.solve(lhs, rhs)
+        Delta = _mat(new_vec_delta, state_dim)
+        Delta = project_to_psd(Delta)
+        Delta = P - project_to_psd(P - Delta)
+        Delta = project_to_psd(Delta)
+        new_vec_delta = _vec(Delta, state_dim)
+        new_diff = jnp.linalg.norm(new_vec_delta-vec_delta) / state_dim ** 2
+        return (new_vec_delta, new_diff)
 
     delta_init = jnp.zeros((state_dim, state_dim))
+    vec_delta_init = _vec(delta_init, state_dim)
     diff_init = 1.
-    carry = (delta_init, diff_init)
-    out = lax.while_loop(lambda x: x[1]>tol, _step, carry)
-    return out[0]
+    val_init = (vec_delta_init, diff_init)
+    out = lax.while_loop(lambda x: x[1]>tol, _step, val_init)
+    return _mat(out[0], state_dim)
 
 def mse(x_est, x_base):
     T = x_est.shape[0]
