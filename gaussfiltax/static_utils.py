@@ -40,8 +40,6 @@ class AugmentedJointApproximation():
             particles[i] = MVN(self.mu, self.cov-self.Delta).sample(seed=next(keys))
         self.particles = particles
 
-
-    
     def return_posterior(self, y0, seed)->MixtureModel:
         self._sample_particles(seed)
         means = np.zeros((self.num_comp, self.dim_in))
@@ -50,15 +48,16 @@ class AugmentedJointApproximation():
         lls = np.zeros(self.num_comp)
         grads = np.zeros((self.num_comp, self.dim_in, self.dim_out))
         for n in range(self.num_comp):
-            Jn = np.expand_dims(self.jacobian(self.particles[n]), axis=1)
+            Jn = self.jacobian(self.particles[n])
             mu_y = np.float32(self.f(self.particles[n]))
-            Sy = self.cov_tol + Jn.T @ self.Delta @ Jn
+            Sy = self.cov_tol + Jn @ self.Delta @ Jn.T
             Omy = jnp.linalg.inv(Sy)
-            means[n] = self.particles[n] + self.Delta @ Jn @ Omy @ (y0 - mu_y)
-            covs[n] = self.cov - self.Delta @ Jn @ Omy @ Jn.T @ self.Delta
-            lls[n] = MVN(loc=mu_y, covariance_matrix=Sy).prob(y0)
-            grads[n] = Jn
-        weights = jnp.exp(lls - jnp.max(lls))
+            means[n] = self.particles[n] + self.Delta @ Jn.T @ Omy @ (y0 - mu_y)
+            covs[n] = self.cov - self.Delta @ Jn.T @ Omy @ Jn @ self.Delta
+            lls[n] = MVN(loc=mu_y, covariance_matrix=Sy).log_prob(y0)
+            grads[n] = Jn.T
+        lls -= jnp.max(lls)
+        weights = jnp.exp(lls)
         weights /= jnp.sum(weights)
         _posterior = MixtureModel(means, covs, weights)
         return _posterior, grads
