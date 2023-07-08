@@ -180,12 +180,10 @@ def mse(x_est, x_base):
     sum_sq = np.sum((x_est - x_base) ** 2)
     return sum_sq / T
 
-
 def rmse(x_est, x_base):
     T = x_est.shape[0]
     sum_sq = np.sum((x_est - x_base) ** 2)
     return np.sqrt(sum_sq / T)
-
 
 def W_distance(means, covs, particles, weights):
     dist = 0.0
@@ -256,6 +254,13 @@ def optimal_resampling(weights, N, key):
     return final_idx[M-N:], final_weights[M-N:] / final_weights[M-N:].sum() 
 
 
-
-
-
+def _get_sigma_points(m, P, ulambda):
+    """Get sigma points for the unscented transform."""
+    dx = m.shape[0]
+    L = jnp.linalg.cholesky(P)
+    sigma_plus = jnp.stack([m]*dx, axis = 1) + jnp.sqrt(dx+ulambda)*L
+    sigma_minus = jnp.stack([m]*dx, axis = 1) - jnp.sqrt(dx+ulambda)*L
+    sigma_points = jnp.concatenate([sigma_plus, sigma_minus], axis=0)
+    return sigma_points
+    
+    
