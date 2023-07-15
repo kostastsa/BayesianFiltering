@@ -10,7 +10,8 @@ import gaussfiltax.utils as utils
 from jaxtyping import Array, Float, Int
 from typing import List
 
-
+num_prt1 = 3
+num_prt2 = 6
 
 #@register_pytree_node_class
 class GaussianComponent(NamedTuple):
@@ -76,7 +77,7 @@ def _branches_from_node1(
     """
     # latent_dist = MVN(node_component.mean, node_component.covariance - splitting_cov)
     # new_means = latent_dist.sample((num_particles,), seed=subkey)
-    num_particles = 5 # this has to be set manually for now. has to match the input given in the script.
+    num_particles = num_prt1 # this has to be set manually for now. has to match the input given in the script.
     sampling_covariance = node_component.covariance-splitting_cov
     new_means = jr.multivariate_normal(key, node_component.mean, sampling_covariance, shape=(num_particles,))
     new_means = jnp.where(jnp.isnan(new_means), node_component.mean, new_means)
@@ -126,7 +127,7 @@ def _branches_from_node2(
     """
     # latent_dist = MVN(node_component.mean, node_component.covariance - splitting_cov)
     # new_means = latent_dist.sample((num_particles,), seed=subkey)
-    num_particles = 5 # this has to be set manually for now. has to match the input given in the script.
+    num_particles = num_prt2 # this has to be set manually for now. has to match the input given in the script.
     sampling_covariance = node_component.covariance-splitting_cov
     new_means = jr.multivariate_normal(key, node_component.mean, sampling_covariance, shape=(num_particles,))
     new_means = jnp.where(jnp.isnan(new_means), node_component.mean, new_means)

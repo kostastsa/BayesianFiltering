@@ -3,7 +3,7 @@ import numpy as np
 import scipy.stats as stats
 import jax.numpy as jnp
 import jax.random as jr
-from jax import jit, vmap, lax
+from jax import jit, vmap, lax, scipy
 from functools import partial
 
 
@@ -119,7 +119,7 @@ def sdp_opt(state_dim, N, P, jacobian, hessian, beta, tol=0.1):
         low_rank += vec_hessians[i] * vec_hessians[i].T
     lhs = (1/4) * low_rank + jnp.eye(state_dim**2)
     vec_J = _vec(jacobian.T @ jacobian, state_dim)
-    alpha = beta * (N/4) * jnp.dot(vec_P.T, low_rank @ vec_P) / jnp.dot(vec_P.T, vec_J)
+    alpha = beta #* (N/4) * jnp.dot(vec_P.T, low_rank @ vec_P) / jnp.dot(vec_P.T, vec_J)
     aid = alpha * vec_J / N 
 
     # looping step
@@ -185,16 +185,6 @@ def rmse(x_est, x_base):
     sum_sq = np.sum((x_est - x_base) ** 2)
     return np.sqrt(sum_sq / T)
 
-def W_distance(means, covs, particles, weights):
-    dist = 0.0
-    N = means.shape[0]
-    num_prt = particles.shape[0]
-    for n in range(N):
-        for i in range(num_prt):
-            dist += weights[n] * (covs[n] + (means[n]-particles[i])**2)
-    return dist / num_prt
-
-
 def resample(weights, num_samples):
     _flattened_weights = weights.flatten()
     M, N, L = weights.shape
@@ -203,7 +193,6 @@ def resample(weights, num_samples):
     _flat_ind_mat = np.array(ind_arr).reshape((M * N * L, 3))
     sample_flat_ind = random.choice(np.arange(M * N * L), num_samples, p=_flattened_weights)
     return _flat_ind_mat[sample_flat_ind]
-
 
 def retain(weights, num_retained):
     _flattened_weights = weights.flatten()
@@ -253,14 +242,23 @@ def optimal_resampling(weights, N, key):
 
     return final_idx[M-N:], final_weights[M-N:] / final_weights[M-N:].sum() 
 
-
+# @partial(jit, static_argnums=(1,))
 def _get_sigma_points(m, P, ulambda):
     """Get sigma points for the unscented transform."""
     dx = m.shape[0]
-    L = jnp.linalg.cholesky(P)
-    sigma_plus = jnp.stack([m]*dx, axis = 1) + jnp.sqrt(dx+ulambda)*L
-    sigma_minus = jnp.stack([m]*dx, axis = 1) - jnp.sqrt(dx+ulambda)*L
+    L = jnp.real(scipy.linalg.sqrtm(P))
+    sigma_plus = jnp.stack([m]*dx, axis = 0) + jnp.sqrt(dx+ulambda)*L.T
+    sigma_minus = jnp.stack([m]*dx, axis = 0) - jnp.sqrt(dx+ulambda)*L.T
     sigma_points = jnp.concatenate([sigma_plus, sigma_minus], axis=0)
     return sigma_points
     
     
+# def my_sqrtm(A):
+#     """Compute the square root of a matrix."""
+#     T, Z = jnp.schu
+#         else:
+#         T, Z = schur(A, output='complex')
+#     failflag = False
+#     try:
+#         R = _sqrtm_triu(T, blocksize=blocksize)
+#         ZH = np.conjugate(Z).T

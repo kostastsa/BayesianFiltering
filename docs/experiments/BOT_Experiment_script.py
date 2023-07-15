@@ -113,7 +113,7 @@ for i in range(Nsim):
 
     # AGSF
     opt_args = (1.0, 1.0)
-    num_components = [M, 5, 5] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
+    num_components = [M, 2, 2] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
 
 
     tin = time.time()
@@ -122,14 +122,6 @@ for i in range(Nsim):
     tout = time.time()
     t_agsf= tout - tin
     print('       Time taken for AGSF: ', tout - tin)
-
-    # AGSF Optimal
-    # tin = time.time()
-    # posterior_filtered_agsf_opt, aux_outputs_opt = gf.augmented_gaussian_sum_filter_optimal(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)    
-    # point_estimate_agsf_opt = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_agsf_opt.means, posterior_filtered_agsf_opt.weights), axis=0)
-    # tout = time.time()
-    # t_agsf_opt= tout - tin
-    # print('       Time taken for AGSF optimal: ', tout - tin)
 
     # BPF
     tin = time.time()
