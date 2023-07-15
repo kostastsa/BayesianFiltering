@@ -18,51 +18,51 @@ from gaussfiltax.utils import sdp_opt
 
 import matplotlib.pyplot as plt
 
-_MVN_log_prob = lambda mean, cov, y: MVN(mean, cov).log_prob(jnp.atleast_1d(y))
-
-def lorentz_63(x, sigma=10, rho=28, beta=2.667, dt=0.01):
-    dx = dt * sigma * (x[1] - x[0])
-    dy = dt * (x[0] * rho - x[1] - x[0] *x[2]) 
-    dz = dt * (x[0] * x[1] - beta * x[2])
-    return jnp.array([dx+x[0], dy+x[1], dz+x[2]])
-
-state_dim = 1
-state_noise_dim = 1
+# Parameters
+state_dim = 4
+state_noise_dim = 2
 emission_dim = 1
 emission_noise_dim = 1
+seq_length = 30
+# mu0 = 1.0 * jnp.array([-0.05, 0.001, 0.7, -0.05])
+mu0 = jnp.ones(state_dim)
+q0 = jnp.zeros(state_noise_dim)
+r0 = jnp.zeros(emission_noise_dim)
+Sigma0 = 1.0 * jnp.array([[0.1, 0.0, 0.0, 0.0],[0.0, 0.005, 0.0, 0.0],[0.0, 0.0, 0.1, 0.0],[0.0, 0.0, 0.0, 0.01]])
+Q = 1 * jnp.eye(state_noise_dim)
+R = 25*1e-6 * jnp.eye(emission_noise_dim)
+
+dt = 0.5
+FCV = jnp.array([[1, dt, 0, 0],[0, 1, 0, 0],[0, 0, 1, dt],[0, 0, 0, 1]])
+acc = 0.5
+Omega = lambda x, acc: 0.1 * acc / jnp.sqrt(x[1]**2 + x[3]**2)
+FCT =  lambda x, a: jnp.array([[1, jnp.sin(dt * Omega(x, a)) / Omega(x, a), 0, -(1-jnp.cos(dt * Omega(x, a))) / Omega(x, a)],
+                            [0, jnp.cos(dt * Omega(x, a)), 0, -jnp.sin(dt * Omega(x, a))],
+                            [0, (1-jnp.cos(dt * Omega(x, a))) / Omega(x, a), 1, jnp.sin(dt * Omega(x, a)) / Omega(x, a)],
+                            [0, jnp.sin(dt * Omega(x, a)), 0, jnp.cos(dt * Omega(x, a))]])
+
+G = jnp.array([[0.5, 0],[1, 0],[0, 0.5],[0, 1]])
+fBOT = lambda x, q, u: FCV @ x + G @ q
+fManBOT = lambda x, q, u: (0.5*(u-1)*(u-2)*FCV - u*(u-2)*FCT(x, acc) + 0.5*u*(u-1) * FCT(x, -acc)) @ x + G @ q
+gBOT = lambda x, r, u: jnp.arctan2(x[2], x[0]) + r
+gBOTlp = lambda x, y, u: MVN(loc = gBOT(x, 0.0, u), covariance_matrix = R).log_prob(y)
+# inputs = jnp.zeros((seq_length, 1))
+inputs = jnp.array([1]*int(seq_length/3) + [0]*int(seq_length/3) + [2]*int(seq_length/3)) # maneuver inputs
+
+f = fManBOT
+g = gBOT
 
 class TestInference:
-    # Parameters
-    seq_length = 100
-    mu0 = jnp.zeros(state_dim)
-    Sigma0 = 1.0 * jnp.eye(state_dim)
-    Q = 1.0 * jnp.eye(state_dim)
-    R = .1 * jnp.eye(emission_dim)
-
-    fLG = lambda x, q, u: 0.8 * jnp.eye(state_dim, state_dim) @ x + q
-    gLG = lambda x, r, u: 1.0 * jnp.eye(emission_dim, state_dim) @ x + r
-
-    # stochastic growth model
-    # f3 = lambda x, q, u: x / 2. + 25. * x / (1+ jnp.power(x, 2)) + u + q
-    f3 = lambda x, q, u: 0.8 * x + q
-    g3 = lambda x, r, u: x**2/20. + r
-
-    # Lorenz 63
-    f63 = lambda x, q, u: lorentz_63(x) + q
-    g1 = lambda x, r, u:  0.05 * jnp.dot(x, x) + r
-
-    # Inputs
-    inputs = 0. * jnp.cos(jnp.arange(seq_length))
-
+    
     # Model definition 
     model = NonlinearSSM(state_dim, state_noise_dim, emission_dim, emission_noise_dim)
     params = ParamsNLSSM(
         initial_mean=mu0,
         initial_covariance=Sigma0,
-        dynamics_function=fLG,
+        dynamics_function=f,
         dynamics_noise_bias=jnp.zeros(Q.shape[0]),
         dynamics_noise_covariance=Q,
-        emission_function=gLG,
+        emission_function=g,
         emission_noise_bias=jnp.zeros(R.shape[0]),
         emission_noise_covariance=R,
     )
@@ -73,92 +73,48 @@ class TestInference:
 
     def test_gaussian_sum_filter(self):
         num_components = 5
-        posterior_filtered = gf.gaussian_sum_filter(self.params, self.emissions, num_components, 1, self.inputs)
+        posterior_filtered = gf.gaussian_sum_filter(self.params, self.emissions, num_components, 1, inputs)
         return posterior_filtered
 
     def test_augmented_gaussian_sum_filter(self):
         num_components = [2, 5, 5] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
-        posterior_filtered, aux_outputs = gf.augmented_gaussian_sum_filter(self.params, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=self.inputs)
+        posterior_filtered, aux_outputs = gf.augmented_gaussian_sum_filter(self.params, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=inputs)
         return posterior_filtered
 
     def test_augmented_gaussian_sum_filter_optimal(self):
         num_components = [5, 5, 5] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
-        posterior_filtered, aux_outputs = gf.augmented_gaussian_sum_filter_optimal(self.params, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=self.inputs)
+        posterior_filtered, aux_outputs = gf.augmented_gaussian_sum_filter_optimal(self.params, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=inputs)
         return posterior_filtered
     
     def test_unscented_gaussian_sum_filter(self):
         num_components = 5
-        uparams = ParamsUKF(alpha=1e-3, beta=2.0, kappa=10.0)
-        posterior_filtered = gf.unscented_gaussian_sum_filter(self.params, uparams, self.emissions, num_components, 1, self.inputs)
+        uparams = ParamsUKF()
+        posterior_filtered = gf.unscented_gaussian_sum_filter(self.params, uparams, self.emissions, num_components, 1, inputs)
         return posterior_filtered
     
     def test_unscented_agsf(self):
         num_components = [2, 5, 5] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
         uparams = ParamsUKF(alpha=1e-3, beta=2.0, kappa=0.0)
-        posterior_filtered, aux_outputs = gf.unscented_agsf(self.params, uparams, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=self.inputs)
+        posterior_filtered, aux_outputs = gf.unscented_agsf(self.params, uparams, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=inputs)
         return posterior_filtered
 
 if __name__ == "__main__":
     test = TestInference()
     posterior_filtered = test.test_unscented_gaussian_sum_filter()
-    print(posterior_filtered.means)
-    plt.plot(test.states, label='true')
-    for m in range(2):
-        plt.plot(posterior_filtered.means[m], label='{}'.format(m))
-    plt.legend()
+    point_estimate_ugsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered.means, posterior_filtered.weights), axis=0)
+
+    # print(posterior_filtered.means)
+    # print(posterior_filtered.weights)
+
+    # plt.plot(test.states, label='true')
+    # for m in range(2):
+    #     plt.plot(posterior_filtered.means[m], label='{}'.format(m))
+    # plt.legend()
+    # plt.show()
+    
+    fig, axes = plt.subplots(3, 1, sharex=False, figsize=(10, 7))
+    fig.tight_layout(pad=3.0)
+    axes[0].scatter(test.states[:,0], test.states[:,2], label = 'True', s = 4)
+    axes[0].scatter(point_estimate_ugsf[:,0], point_estimate_ugsf[:,2], label = 'UGSF', s = 4, marker = 'o')
+    axes[0].legend()   
     plt.show()
-    
-    # def _ukf_condition_on_additive(m, P, h, R, u, y, uparams):
-    #     r"""Condition a Gaussian potential on a new observation using first-order additive UKF.
-    #     """
-    #     state_dim = m.shape[0]
-    #     emission_dim = y.shape[0]
-    #     r0 = jnp.zeros(emission_dim)
-    #     lamda = uparams.alpha**2 * (state_dim + uparams.kappa) - state_dim
-    #     sigma_points = utils._get_sigma_points(m, P, lamda)
-    #     new_sigma_points = vmap(h, in_axes=(0, None, None))(sigma_points, r0, u)
-
-    #     mu_pred = jnp.sum(new_sigma_points, axis=0) / (2*(lamda+state_dim)) + h(m, r0, u) * lamda / (lamda + state_dim)
-    #     S = (new_sigma_points - mu_pred).T @ (new_sigma_points - mu_pred) / ( 2 * (lamda+state_dim)) + \
-    #                 (h(m, r0, u)-mu_pred) @ (h(m, r0, u) - mu_pred).T * (lamda / (lamda + state_dim) + 1-uparams.alpha**2+uparams.beta) + R
-    #     C = (new_sigma_points - mu_pred).T @ (sigma_points - m) / (2*(lamda+state_dim)) 
-        
-    #     K = psd_solve(S, C).T
-    #     posterior_cov = P - K @ S @ K.T
-    #     posterior_mean = m + K @ (y - mu_pred)
-    #     ll = _MVN_log_prob(mu_pred, S, y)
-    #     return ll, posterior_mean, posterior_cov
-    
-    # def _ukf_predict_additive(m, P, f, u, Q, uparams):
-    #     r"""Predict next mean and covariance using first-order additive UKF`
-            
-    #     Args:
-    #         m (D_hid,): prior mean.
-    #         P (D_hid,D_hid): prior covariance.
-    #         f (Callable): dynamics function.
-    #         Q (D_hid,D_hid): dynamics covariance matrix.
-    #         u (D_in,): inputs.
-    #     Returns:
-    #         mu_pred (D_hid,): predicted mean.
-    #         Sigma_pred (D_hid,D_hid): predicted covariance.
-    #     """
-    #     state_dim = m.shape[0]
-    #     q0 = jnp.zeros((state_dim,))
-    #     lamda = uparams.alpha**2 * (state_dim + uparams.kappa) - state_dim
-    #     sigma_points = utils._get_sigma_points(m, P, lamda)
-    #     new_sigma_points = vmap(f, in_axes=(0, None, None))(sigma_points, q0, u)
-    
-    #     mu_pred = jnp.sum(new_sigma_points, axis=0) / (2*(lamda+state_dim)) + f(m, q0, u) * lamda / (lamda + state_dim)
-    #     Sigma_pred = (new_sigma_points - mu_pred).T @ (new_sigma_points - mu_pred) / ( 2 * (lamda+state_dim)) + \
-    #                 (f(m, q0, u)-mu_pred) @ (f(m, q0, u) - mu_pred).T * (lamda / (lamda + state_dim) + 1-uparams.alpha**2+uparams.beta) + Q
-    #     return mu_pred, Sigma_pred
-
-    # uparams = ParamsUKF(alpha=1.0, beta=2.0, kappa=0.0)
-    # fLG = lambda x, q, u: 0.8 * jnp.eye(state_dim) @ x + q
-    # gLG = lambda x, r, u: 10 * jnp.eye(emission_dim, state_dim) @ x + r
-    # ll, posterior_mean, posterior_cov = _ukf_condition_on_additive(test.mu0, test.Sigma0, gLG, test.R, test.inputs[0], test.emissions[0], uparams)
-
-    # mu_pred, Sigma_pred = _ukf_predict_additive(posterior_mean, posterior_cov, fLG, test.inputs[0], test.Q, uparams)
-
-    # print(posterior_mean, posterior_cov)
-    # print(mu_pred, Sigma_pred)

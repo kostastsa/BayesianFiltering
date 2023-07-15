@@ -106,7 +106,7 @@ def _condition_on(m, P, h, H_x, H_r, R, r0, u, y):
     ll = _MVN_log_prob(h(m, r0, u), S, y)
     return ll, posterior_mean, posterior_cov, H_x, K
 
-def _ukf_predict_additive(m, P, f, u, Q, uparams):
+def _ukf_predict_additive(m, P, f, u, Q, uparams, q0):
     r"""Predict next mean and covariance using first-order additive UKF`
         
     Args:
@@ -130,7 +130,37 @@ def _ukf_predict_additive(m, P, f, u, Q, uparams):
                 (f(m, q0, u)-mu_pred) @ (f(m, q0, u) - mu_pred).T * (lamda / (lamda + state_dim) + 1-uparams.alpha**2+uparams.beta) + Q
     return mu_pred, Sigma_pred
 
-def _ukf_condition_on_additive(m, P, h, R, u, y, uparams):
+def _ukf_predict_nonadditive(m, P, f, u, Q, uparams, q0):
+    r"""Predict next mean and covariance using first-order additive UKF`
+        
+    Args:
+        m (D_hid,): prior mean.
+        P (D_hid,D_hid): prior covariance.
+        f (Callable): dynamics function.
+        Q (D_hid,D_hid): dynamics covariance matrix.
+        u (D_in,): inputs.
+    Returns:
+        mu_pred (D_hid,): predicted mean.
+        Sigma_pred (D_hid,D_hid): predicted covariance.
+    """
+    state_dim = m.shape[0]
+    noise_dim = Q.shape[0]
+
+    lamda = uparams.alpha**2 * (state_dim + noise_dim + uparams.kappa) - (state_dim + noise_dim)
+
+    mA = jnp.concatenate((m, q0))
+    PA = jnp.block([[P, jnp.zeros((state_dim, noise_dim))], [jnp.zeros((noise_dim, state_dim)), Q]])
+
+    sigma_points = utils._get_sigma_points(mA, PA, lamda)
+    fA = lambda xA, u: f(xA[:state_dim], xA[state_dim:], u)
+    new_sigma_points = vmap(fA, in_axes=(0, None))(sigma_points, u)
+
+    mu_pred = jnp.sum(new_sigma_points, axis=0) / (2 * (lamda + state_dim + noise_dim)) + f(m, q0, u) * lamda / (lamda + state_dim + noise_dim)
+    Sigma_pred = jnp.einsum('ij,ik->jk',(new_sigma_points - mu_pred), (new_sigma_points - mu_pred)) / ( 2 * (lamda + state_dim + noise_dim)) + \
+                        (lamda / (lamda + state_dim + noise_dim) + 1 - uparams.alpha**2 + uparams.beta) * jnp.einsum('i,j->ij', f(m, q0, u) - mu_pred, f(m, q0, u) - mu_pred)
+    return mu_pred, Sigma_pred
+
+def _ukf_condition_on_additive(m, P, h, R, u, y, uparams, r0):
     r"""Condition a Gaussian potential on a new observation using first-order additive UKF.
     """
     state_dim = m.shape[0]
@@ -141,10 +171,39 @@ def _ukf_condition_on_additive(m, P, h, R, u, y, uparams):
     new_sigma_points = vmap(h, in_axes=(0, None, None))(sigma_points, r0, u)
 
     mu_pred = jnp.sum(new_sigma_points, axis=0) / (2*(lamda+state_dim)) + h(m, r0, u) * lamda / (lamda + state_dim)
-    S = (new_sigma_points - mu_pred).T @ (new_sigma_points - mu_pred) / ( 2 * (lamda+state_dim)) + \
-                (h(m, r0, u)-mu_pred) @ (h(m, r0, u) - mu_pred).T * (lamda / (lamda + state_dim) + 1-uparams.alpha**2+uparams.beta) + R
-    C = (new_sigma_points - mu_pred).T @ (sigma_points - m) / (2*(lamda+state_dim)) 
+    S = jnp.einsum('ij,ik->jk',(new_sigma_points - mu_pred), (new_sigma_points - mu_pred)) / ( 2 * (lamda + state_dim )) + \
+                        (lamda / (lamda + state_dim) + 1 - uparams.alpha**2 + uparams.beta) * jnp.einsum('i,j->ij', h(m, r0, u) - mu_pred, h(m, r0, u) - mu_pred) + R
+    C = jnp.einsum('ij,ik->jk', new_sigma_points - mu_pred, sigma_points[:, :state_dim] - m)  / (2*(lamda+state_dim))
     
+    K = psd_solve(S, C).T
+    posterior_cov = P - K @ S @ K.T
+    posterior_mean = m + K @ (y - mu_pred)
+    ll = _MVN_log_prob(mu_pred, S, y)
+
+    return ll, posterior_mean, posterior_cov
+
+def _ukf_condition_on_nonadditive(m, P, h, R, u, y, uparams, r0=None):
+    r"""Condition a Gaussian potential on a new observation using first-order additive UKF.
+    """
+    state_dim = m.shape[0]
+    noise_dim = r0.shape[0]
+    emission_dim = y.shape[0]
+
+    lamda = uparams.alpha**2 * (state_dim + noise_dim + uparams.kappa) - (state_dim + noise_dim)
+
+    mA = jnp.concatenate((m, r0))
+    PA = jnp.block([[P, jnp.zeros((state_dim, noise_dim))], [jnp.zeros((noise_dim, state_dim)), R]])
+
+    sigma_points = utils._get_sigma_points(mA, PA, lamda)
+    hA = lambda xA, u: h(xA[:state_dim], xA[state_dim:], u)
+    new_sigma_points = vmap(hA, in_axes=(0, None))(sigma_points, u)
+
+    mu_pred = jnp.sum(new_sigma_points, axis=0) / (2 * (lamda + state_dim + noise_dim)) + h(m, r0, u) * lamda / (lamda + state_dim + noise_dim)
+    S = jnp.einsum('ij,ik->jk',(new_sigma_points - mu_pred), (new_sigma_points - mu_pred)) / ( 2 * (lamda + state_dim + noise_dim)) + \
+                        (lamda / (lamda + state_dim + noise_dim) + 1 - uparams.alpha**2 + uparams.beta) * jnp.einsum('i,j->ij', h(m, r0, u) - mu_pred, h(m, r0, u) - mu_pred)
+
+
+    C = jnp.einsum('ij,ik->jk', new_sigma_points - mu_pred, sigma_points[:, :state_dim] - m)  / (2*(lamda+state_dim + noise_dim))
     K = psd_solve(S, C).T
     posterior_cov = P - K @ S @ K.T
     posterior_mean = m + K @ (y - mu_pred)
@@ -177,10 +236,10 @@ def _autocov1(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
     # Delta = utils.sdp_opt2(state_dim, num_particles, P, J, hessian, alpha, eta, tol)
 
     #2
-    Delta = alpha * jnp.eye(state_dim)
+    # Delta = alpha * jnp.eye(state_dim)
 
     #3
-    # Delta = alpha * P
+    Delta = alpha * P
 
     #4 
     # Delta = jnp.minimum(1, alpha * jnp.trace(P) / jnp.sum(jnp.trace(_hessian @ P, axis1=1, axis2=2))) * P
@@ -208,7 +267,7 @@ def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
 
     
     #1a
-    # Lambda = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
+    Lambda = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
     # Lambda = 0.5 * Lambda/jnp.trace(Lambda) - utils.project_to_psd(0.5 * Lambda/jnp.trace(Lambda) - Lambda)
 
 
@@ -217,7 +276,7 @@ def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
 
 
     #2
-    Lambda = alpha * jnp.eye(state_dim)
+    # Lambda = alpha * jnp.eye(state_dim)
 
     #3
     # Lambda = alpha * P
@@ -348,7 +407,7 @@ def unscented_gaussian_sum_filter(
         # PQ = jnp.block([[P, jnp.zeros(state_dim, noise_dim)], [jnp.zeros(noise_dim, state_dim), Q]])        
 
         # Condition on this emission
-        lls, filtered_means, filtered_covs = vmap(_ukf_condition_on_additive, in_axes=(0, 0, None, None, None, None, None))(pred_means, pred_covs, h, R, u, y, uparams)
+        lls, filtered_means, filtered_covs = vmap(_ukf_condition_on_nonadditive, in_axes=(0, 0, None, None, None, None, None, None))(pred_means, pred_covs, h, R, u, y, uparams, r0)
        
        # Compute weights
         lls -= jnp.max(lls)
@@ -357,7 +416,7 @@ def unscented_gaussian_sum_filter(
         weights /= jnp.sum(weights)
 
         # Predict the next state
-        pred_means, pred_covs = vmap(_ukf_predict_additive, in_axes=(0, 0, None, None, None, None))(filtered_means, filtered_covs, f, u, Q, uparams)
+        pred_means, pred_covs = vmap(_ukf_predict_nonadditive, in_axes=(0, 0, None, None, None, None, None))(filtered_means, filtered_covs, f, u, Q, uparams, q0)
 
         # Build carry and output states
         carry = (weights, pred_means, pred_covs)
@@ -602,7 +661,7 @@ def unscented_agsf(
 
         # Predict
         tin = time.time()
-        predicted_means, predicted_covs = vmap(_ukf_predict_additive, in_axes=(0,0,None,None,None,None))(jnp.array(_sum_to_predict.means), jnp.array(_sum_to_predict.covariances), f, u, Q, uparams)
+        predicted_means, predicted_covs = vmap(_ukf_predict_nonadditive, in_axes=(0,0,None,None,None,None,None))(jnp.array(_sum_to_predict.means), jnp.array(_sum_to_predict.covariances), f, u, Q, uparams,q0)
         t_predict = time.time() - tin
 
         # Recast 1
@@ -627,7 +686,7 @@ def unscented_agsf(
 
         # Update
         tin = time.time()
-        lls, updated_means, updated_covs = vmap(_ukf_condition_on_additive, in_axes=(0,0,None,None,None,None,None))(jnp.array(_sum_to_update.means), jnp.array(_sum_to_update.covariances), h, R, u, y, uparams)
+        lls, updated_means, updated_covs = vmap(_ukf_condition_on_nonadditive, in_axes=(0,0,None,None,None,None,None,None))(jnp.array(_sum_to_update.means), jnp.array(_sum_to_update.covariances), h, R, u, y, uparams,r0)
         lls -= jnp.max(lls)
         ls = jnp.exp(lls)
         weights = jnp.multiply(ls, jnp.array(_sum_to_update.weights))
