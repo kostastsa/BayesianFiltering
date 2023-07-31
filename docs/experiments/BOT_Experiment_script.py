@@ -6,8 +6,6 @@ import time
 from jax import numpy as jnp
 from jax import random as jr
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-# import tensorflow as tf
-# tf.test.gpu_device_name()
 
 import gaussfiltax.utils as utils
 import gaussfiltax.inference as gf
@@ -16,9 +14,6 @@ from gaussfiltax.models import ParamsNLSSM, NonlinearSSM, ParamsBPF
 from gaussfiltax.containers import num_prt1, num_prt2
 
 
-import matplotlib.pyplot as plt
-import matplotlib_inline
-matplotlib_inline.backend_inline.set_matplotlib_formats('svg')
 
 
 #Helper functions
