@@ -267,7 +267,7 @@ def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
 
     
     #1a
-    Lambda = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
+    # Lambda = utils.sdp_opt(state_dim, num_particles, P, J, hessian, alpha, tol)
     # Lambda = 0.5 * Lambda/jnp.trace(Lambda) - utils.project_to_psd(0.5 * Lambda/jnp.trace(Lambda) - Lambda)
 
 
@@ -279,7 +279,7 @@ def _autocov2(m, P, jacobian, hessian_tensor, num_particles, bias, u, alpha, eta
     # Lambda = alpha * jnp.eye(state_dim)
 
     #3
-    # Lambda = alpha * P
+    Lambda = alpha * P
 
     #4
     # Lambda = jnp.minimum(1.0, alpha * jnp.trace(P) / jnp.sum(jnp.trace(_hessian @ P, axis1=1, axis2=2)**2)) * P
