@@ -94,7 +94,7 @@ for i in range(Nsim):
     states, emissions = model.sample(params, key0, seq_length, inputs = inputs)
 
     # GSF
-    M = 1
+    M = 5
     tin = time.time()
     posterior_filtered_gsf = gf.gaussian_sum_filter(params, emissions, M, 1, inputs)
     point_estimate_gsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_gsf.means, posterior_filtered_gsf.weights), axis=0)
@@ -112,7 +112,7 @@ for i in range(Nsim):
     # print('       Time taken for UGSF: ', tout - tin)
 
     # AGSF
-    opt_args = (1.0, 0.8)
+    opt_args = (0.8, 0.8)
     num_components = [M, num_prt1, num_prt2]
     tin = time.time()
     posterior_filtered_agsf, aux_outputs = gf.augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
