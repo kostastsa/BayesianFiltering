@@ -94,7 +94,7 @@ for i in range(Nsim):
     states, emissions = model.sample(params, key0, seq_length, inputs = inputs)
 
     # GSF
-    M = 2
+    M = 5
     tin = time.time()
     posterior_filtered_gsf = gf.gaussian_sum_filter(params, emissions, M, 1, inputs)
     point_estimate_gsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_gsf.means, posterior_filtered_gsf.weights), axis=0)
@@ -141,7 +141,7 @@ for i in range(Nsim):
 
     # BPF
     tin = time.time()
-    num_particles = 10000
+    num_particles = 50000
 
     params_bpf = ParamsBPF(
         initial_mean=mu0,
