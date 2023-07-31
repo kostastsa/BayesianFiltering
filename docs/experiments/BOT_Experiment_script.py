@@ -66,7 +66,7 @@ params = ParamsNLSSM(
 )
 
 verbose = False
-Nsim = 100
+Nsim = 10
 gsf_rmse = jnp.zeros(Nsim)
 ugsf_rmse = jnp.zeros(Nsim)
 agsf_rmse = jnp.zeros(Nsim)
@@ -112,7 +112,7 @@ for i in range(Nsim):
     # print('       Time taken for UGSF: ', tout - tin)
 
     # AGSF
-    opt_args = (0.8, 0.01)
+    opt_args = (0.8, 0.8)
     num_components = [M, num_prt1, num_prt2]
     tin = time.time()
     posterior_filtered_agsf, aux_outputs = gf.augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
@@ -141,7 +141,7 @@ for i in range(Nsim):
 
     # BPF
     tin = time.time()
-    num_particles = 100000
+    num_particles = 10000
 
     params_bpf = ParamsBPF(
         initial_mean=mu0,
