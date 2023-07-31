@@ -10,8 +10,8 @@ import gaussfiltax.utils as utils
 from jaxtyping import Array, Float, Int
 from typing import List
 
-num_prt1 = 1
-num_prt2 = 2
+num_prt1 = 5
+num_prt2 = 5
 
 #@register_pytree_node_class
 class GaussianComponent(NamedTuple):
