@@ -1,5 +1,5 @@
 import sys
-sys.path.append(r'/home/kostas_tsampourakis/BayesianFiltering/gaussfiltax')
+sys.path.append(r'/home/kostas_tsampourakis/BayesianFiltering')
 
 import time
 
