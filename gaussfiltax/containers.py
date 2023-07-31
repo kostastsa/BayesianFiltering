@@ -11,7 +11,7 @@ from jaxtyping import Array, Float, Int
 from typing import List
 
 num_prt1 = 1
-num_prt2 = 3
+num_prt2 = 2
 
 #@register_pytree_node_class
 class GaussianComponent(NamedTuple):
