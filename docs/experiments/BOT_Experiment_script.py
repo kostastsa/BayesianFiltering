@@ -15,17 +15,6 @@ from gaussfiltax.containers import num_prt1, num_prt2
 
 
 
-
-#Helper functions
-def bootstrap(key, rmse_array, B):
-    N = rmse_array.shape[0]
-    rmse_boot = jnp.zeros((B,))
-    for b in range(B):
-        key, subkey = jr.split(key)
-        ind = jr.randint(subkey, (N,), 0, N)
-        rmse_boot = rmse_boot.at[b].set(jnp.mean(rmse_array[ind]))
-    return rmse_boot
-
 # Parameters
 state_dim = 4
 state_noise_dim = 2
@@ -113,36 +102,46 @@ for i in range(Nsim):
     t_gsf= tout - tin
     print('       Time taken for GSF: ', tout - tin)
 
-    # U-GSF
-    tin = time.time()
-    uparams = ParamsUKF(1,0,0)
-    posterior_filtered_ugsf = gf.unscented_gaussian_sum_filter(params, uparams, emissions, M, 1, inputs)
-    point_estimate_ugsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_ugsf.means, posterior_filtered_ugsf.weights), axis=0)
-    tout = time.time()
-    t_ugsf= tout - tin
-    print('       Time taken for UGSF: ', tout - tin)
+    # # U-GSF
+    # tin = time.time()
+    # uparams = ParamsUKF(1,0,0)
+    # posterior_filtered_ugsf = gf.unscented_gaussian_sum_filter(params, uparams, emissions, M, 1, inputs)
+    # point_estimate_ugsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_ugsf.means, posterior_filtered_ugsf.weights), axis=0)
+    # tout = time.time()
+    # t_ugsf= tout - tin
+    # print('       Time taken for UGSF: ', tout - tin)
 
     # AGSF
-    opt_args = (0.8, 0.5)
+    opt_args = (0.8, 0.01)
     num_components = [M, num_prt1, num_prt2]
     tin = time.time()
-    posterior_filtered_agsf, aux_outputs = gf.augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)    
+    posterior_filtered_agsf, aux_outputs = gf.augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
     point_estimate_agsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_agsf.means, posterior_filtered_agsf.weights), axis=0)
     tout = time.time()
     t_agsf= tout - tin
     print('       Time taken for AGSF: ', tout - tin)
 
-    # U-AGSF
-    tin = time.time()
-    posterior_filtered_uagsf, aux_outputs = gf.unscented_agsf(params, uparams, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
-    point_estimate_uagsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_uagsf.means, posterior_filtered_uagsf.weights), axis=0)
-    tout = time.time()
-    t_uagsf= tout - tin
-    print('       Time taken for UAGSF: ', tout - tin)
+    # # U-AGSF
+    # tin = time.time()
+    # posterior_filtered_uagsf, aux_outputs = gf.unscented_agsf(params, uparams, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
+    # point_estimate_uagsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_uagsf.means, posterior_filtered_uagsf.weights), axis=0)
+    # tout = time.time()
+    # t_uagsf= tout - tin
+    # print('       Time taken for UAGSF: ', tout - tin)
+
+
+
+    # AGSF Optimal
+    # tin = time.time()
+    # posterior_filtered_agsf_opt, aux_outputs_opt = gf.augmented_gaussian_sum_filter_optimal(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
+    # point_estimate_agsf_opt = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_agsf_opt.means, posterior_filtered_agsf_opt.weights), axis=0)
+    # tout = time.time()
+    # t_agsf_opt= tout - tin
+    # print('       Time taken for AGSF optimal: ', tout - tin)
 
     # BPF
     tin = time.time()
-    num_particles = 800000
+    num_particles = 100000
 
     params_bpf = ParamsBPF(
         initial_mean=mu0,
@@ -156,7 +155,7 @@ for i in range(Nsim):
         emission_distribution_log_prob = glp
     )
 
-    posterior_bpf = gf.bootstrap_particle_filter(params_bpf, emissions, num_particles, key, inputs, 1.0)
+    posterior_bpf = gf.bootstrap_particle_filter(params_bpf, emissions, num_particles, key, inputs)
     point_estimate_bpf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_bpf["particles"], posterior_bpf["weights"]), axis=0)
     tout = time.time()
     t_bpf = tout - tin
@@ -164,29 +163,28 @@ for i in range(Nsim):
 
     # Computation of errors
     gsf_rmse = gsf_rmse.at[i].set(utils.rmse(point_estimate_gsf[:, (0,2)], states[:, (0,2)]))
-    ugsf_rmse = ugsf_rmse.at[i].set(utils.rmse(point_estimate_ugsf[:, (0,2)], states[:, (0,2)]))
+    # ugsf_rmse = ugsf_rmse.at[i].set(utils.rmse(point_estimate_ugsf[:, (0,2)], states[:, (0,2)]))
     agsf_rmse = agsf_rmse.at[i].set(utils.rmse(point_estimate_agsf[:, (0,2)], states[:, (0,2)]))
-    uagsf_rmse = uagsf_rmse.at[i].set(utils.rmse(point_estimate_uagsf[:, (0,2)], states[:, (0,2)]))
+    # uagsf_rmse = uagsf_rmse.at[i].set(utils.rmse(point_estimate_uagsf[:, (0,2)], states[:, (0,2)]))
     bpf_rmse = bpf_rmse.at[i].set(utils.rmse(point_estimate_bpf[:, (0,2)], states[:, (0,2)]))
 
-    print('              GSF RMSE:', gsf_rmse[i])                                                                           
-    print('              UGSF RMSE:', ugsf_rmse[i])
+    print('              GSF RMSE:', gsf_rmse[i])
+    # print('              UGSF RMSE:', ugsf_rmse[i])
     print('              AGSF RMSE:', agsf_rmse[i])
-    print('              UAGSF RMSE:', uagsf_rmse[i])
+    # print('              UAGSF RMSE:', uagsf_rmse[i])
     print('              BPF RMSE:', bpf_rmse[i])
 
     gsf_norm = gsf_norm.at[i].set(jnp.linalg.norm(point_estimate_gsf[:,(0,2)] - states[:,(0,2)], axis = 1))
-    ugsf_norm = ugsf_norm.at[i].set(jnp.linalg.norm(point_estimate_ugsf[:,(0,2)] - states[:,(0,2)], axis = 1))
+    # ugsf_norm = ugsf_norm.at[i].set(jnp.linalg.norm(point_estimate_ugsf[:,(0,2)] - states[:,(0,2)], axis = 1))
     agsf_norm = agsf_norm.at[i].set(jnp.linalg.norm(point_estimate_agsf[:,(0,2)] - states[:,(0,2)], axis = 1))
-    uagsf_norm = uagsf_norm.at[i].set(jnp.linalg.norm(point_estimate_uagsf[:,(0,2)] - states[:,(0,2)], axis = 1))
+    # uagsf_norm = uagsf_norm.at[i].set(jnp.linalg.norm(point_estimate_uagsf[:,(0,2)] - states[:,(0,2)], axis = 1))
     bpf_norm = bpf_norm.at[i].set(jnp.linalg.norm(point_estimate_bpf[:,(0,2)] - states[:,(0,2)], axis = 1))
 
     gsf_time = gsf_time.at[i].set(t_gsf)
-    ugsf_time = ugsf_time.at[i].set(t_ugsf)
+    # ugsf_time = ugsf_time.at[i].set(t_ugsf)
     agsf_time = agsf_time.at[i].set(t_agsf)
-    uagsf_time = uagsf_time.at[i].set(t_uagsf)
+    # uagsf_time = uagsf_time.at[i].set(t_uagsf)
     bpf_time = bpf_time.at[i].set(t_bpf)
-
 
 
 import pandas as pd
