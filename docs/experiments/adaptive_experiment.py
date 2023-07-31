@@ -13,8 +13,11 @@ from gaussfiltax.containers import num_prt1, num_prt2
 
 from gaussfiltax.models import ParamsNLSSM, NonlinearSSM, ParamsBPF
 
+import scienceplots
 import matplotlib.pyplot as plt
 import matplotlib_inline
+
+plt.style.use(['science', 'ieee'])
 matplotlib_inline.backend_inline.set_matplotlib_formats('svg')
 
 
@@ -186,21 +189,27 @@ for i in range(Nsim):
 ind = jnp.argwhere(jnp.isnan(gsf_norm[:,99])).flatten()                                                                                                                                     
 gsf_norm = jnp.delete(gsf_norm, ind, axis = 0)     
 
-print(aux_outputs["Lambdas"].shape)
-
+plt.figure(figsize=(10, 7))
 plt.plot(gsf_norm.sum(axis=0)/(Nsim-len(ind)) , label = 'GSF')
-# plt.plot(ugsf_norm.sum(axis=0)/Nsim, label = 'UGSF')
 plt.plot(agsf_norm.sum(axis=0)/Nsim, label = 'AGSF')
-# plt.plot(uagsf_norm.sum(axis=0)/Nsim, label = 'UAGSF')
 plt.plot(bpf_norm.sum(axis=0)/Nsim, label = 'BPF')
-plt.legend()
+plt.axvline(x=50, color = 'gray', linestyle = 'dashed', label = 'change-point')
+plt.ylabel('error', fontsize=15)
+plt.yticks(fontsize=15)
+plt.xticks(fontsize=0)
+plt.legend(prop = { "size": 15 })
+plt.savefig(r'/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/output/error.eps', format='eps')
 
 # plot Lambdas
-plt.figure(figsize=(10, 1))
+plt.figure(figsize=(10, 2))
 plt.plot(jnp.trace(aux_outputs["Lambdas"], axis1=2, axis2=3).sum(axis=1)/num_components[0]*num_components[1]/state_dim**2)
-plt.title('Lambdas')
-plt.show()
-
+plt.axvline(x=50, color = 'gray', linestyle = 'dashed', label = 'change-point')
+plt.ylabel('$tr(\Lambda)$', fontsize=15)
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.xlabel('time', fontsize=15)
+plt.legend(prop = { "size": 15 })
+plt.savefig(r'/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/output/lambdas.eps', format='eps')
 
 import pandas as pd
 gsf_armse = jnp.mean(gsf_rmse)
