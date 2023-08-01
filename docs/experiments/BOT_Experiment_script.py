@@ -112,7 +112,7 @@ for i in range(Nsim):
     # print('       Time taken for UGSF: ', tout - tin)
 
     # AGSF
-    opt_args = (0.8, 0.8)
+    opt_args = (0.8, 0.5)
     num_components = [M, num_prt1, num_prt2]
     tin = time.time()
     posterior_filtered_agsf, aux_outputs = gf.augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
