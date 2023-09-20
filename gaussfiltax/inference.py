@@ -65,11 +65,11 @@ def _predict(m, P, f, F_x, F_q, Q, q0, u):
         mu_pred (D_hid,): predicted mean.
         Sigma_pred (D_hid,D_hid): predicted covariance.
     """
-    Jac_x = F_x(m, q0, u)
-    Jac_q = F_q(m, q0, u)
+    F_x = F_x(m, q0, u)
+    F_q = F_q(m, q0, u)
     mu_pred = f(m, q0, u)
-    Sigma_pred = Jac_x @ P @ Jac_x.T + Jac_q @ Q @ Jac_q.T
-    return mu_pred, Sigma_pred, Jac_x
+    Sigma_pred = F_x @ P @ F_x.T + F_q @ Q @ F_q.T
+    return mu_pred, Sigma_pred, F_x
 
 def _condition_on(m, P, h, H_x, H_r, R, r0, u, y):
     r"""Condition a Gaussian potential on a new observation.
@@ -493,9 +493,7 @@ def augmented_gaussian_sum_filter(
         # Autocov 1
         tin = time.time()
         nums_to_split = jnp.array([num_components[1]]*num_components[0])
-        # Deltas, nums_to_split = vmap(_autocov1, in_axes=(0, 0, None, None, 0, None, None, None))(filtered_means, filtered_covs, F_x, F_xx, nums_to_split, q0, u, opt_args[0])
-        # Deltas = jnp.array([opt_args[0] * filtered_covs[i] for i in range(num_components[0])])
-        Deltas = jnp.array([opt_args[0] * jnp.eye(filtered_covs[i].shape[0]) for i in range(num_components[0])])
+        Deltas, nums_to_split = vmap(_autocov1, in_axes=(0, 0, None, None, 0, None, None, None))(filtered_means, filtered_covs, F_x, F_xx, nums_to_split, q0, u, opt_args[0])
         t_autocov1 = time.time() - tin
 
         # Branch 1
@@ -520,9 +518,7 @@ def augmented_gaussian_sum_filter(
         # Autocov before update
         tin = time.time()
         nums_to_split = jnp.array([num_components[2]] * num_components[0]*num_components[1])
-        # Lambdas, nums_to_split = vmap(_autocov2, in_axes=(0, 0, None, None, 0, None, None, None))(predicted_means, predicted_covs, H_x, H_xx, nums_to_split, r0, u, opt_args[1])
-        # Lambdas = jnp.array([opt_args[1] * predicted_covs[i] for i in range(num_components[0]*num_components[1])])
-        Lambdas = jnp.array([opt_args[1] * jnp.eye(predicted_covs[i].shape[0]) for i in range(num_components[0]*num_components[1])])
+        Lambdas, nums_to_split = vmap(_autocov2, in_axes=(0, 0, None, None, 0, None, None, None))(predicted_means, predicted_covs, H_x, H_xx, nums_to_split, r0, u, opt_args[1])
         t_autocov2 = time.time() - tin
 
         # Branching before update
