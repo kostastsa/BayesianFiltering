@@ -75,6 +75,11 @@ class TestInference:
         num_components = 5
         posterior_filtered = gf.gaussian_sum_filter(self.params, self.emissions, num_components, 1, inputs)
         return posterior_filtered
+    
+    def test_pgsf(self):
+        num_components = 5
+        posterior_filtered = gf.pgsf(self.params, self.emissions, num_components, 1, inputs)
+        return posterior_filtered
 
     def test_augmented_gaussian_sum_filter(self):
         num_components = [2, 5, 5] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
@@ -100,21 +105,5 @@ class TestInference:
 
 if __name__ == "__main__":
     test = TestInference()
-    posterior_filtered = test.test_unscented_gaussian_sum_filter()
-    point_estimate_ugsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered.means, posterior_filtered.weights), axis=0)
-
-    # print(posterior_filtered.means)
-    # print(posterior_filtered.weights)
-
-    # plt.plot(test.states, label='true')
-    # for m in range(2):
-    #     plt.plot(posterior_filtered.means[m], label='{}'.format(m))
-    # plt.legend()
-    # plt.show()
-    
-    fig, axes = plt.subplots(3, 1, sharex=False, figsize=(10, 7))
-    fig.tight_layout(pad=3.0)
-    axes[0].scatter(test.states[:,0], test.states[:,2], label = 'True', s = 4)
-    axes[0].scatter(point_estimate_ugsf[:,0], point_estimate_ugsf[:,2], label = 'UGSF', s = 4, marker = 'o')
-    axes[0].legend()   
-    plt.show()
+    posterior_filtered = test.test_pgsf()
+    print(posterior_filtered)

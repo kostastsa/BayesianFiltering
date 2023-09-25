@@ -212,7 +212,6 @@ class TestCompile:
             J = F_x(filtered_means[0], q0, u)
             Delta = utils.sdp_opt(state_dim, self.num_components[0], filtered_covs[0], J, hessian, 1.0)
             Deltas = jnp.array([Delta for i in range(self.num_components[0])])
-
             t_autocov1 = time.time() - tin
 
             # Branch 1
@@ -239,6 +238,7 @@ class TestCompile:
             nums_to_split = jnp.array([self.num_components[2]] * self.num_components[0]*self.num_components[1])
             # Lambdas, nums_to_split = vmap(gf._autocov2, in_axes=(0, 0, None, None, 0, None, None, None))(predicted_means, predicted_covs, H_x, H_xx, nums_to_split, r0, u, 1.0)
             Lambdas = jnp.array([1.0 * predicted_covs[i] for i in range(self.num_components[0]*self.num_components[1])])
+            
             t_autocov2 = time.time() - tin
 
             # Branching before update
