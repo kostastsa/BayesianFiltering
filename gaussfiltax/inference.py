@@ -409,8 +409,20 @@ def pgsf(
 #    f, h, F_x, H_x, F_q, H_r = (_process_fn(fn, inputs) for fn in (f, h, F_x, H_x, F_q, H_r))
     inputs = _process_input(inputs, num_timesteps)
 
-    def _step(carry, t):
-        weights, filtered_means, filtered_covs = carry
+    initial_means = MVN(params.initial_mean, params.initial_covariance).sample(num_components, jr.PRNGKey(0))
+    initial_covs = jnp.array([params.initial_covariance for i in range(num_components)])
+    initial_weights = jnp.ones(num_components)/num_components
+
+    state_dim = params.initial_mean.shape[0]
+    filtered_means = jnp.zeros((num_timesteps, num_components, state_dim))
+    filtered_covs = jnp.zeros((num_timesteps, num_components, state_dim, state_dim))
+    weights = jnp.zeros((num_timesteps, num_components))
+
+    filtered_means = filtered_means.at[0].set(initial_means)
+    filtered_covs = filtered_covs.at[0].set(initial_covs)
+    weights = weights.at[0].set(initial_weights)
+
+    for t in range(1, num_timesteps):
 
         # Get parameters and inputs for time index t
         Q = _get_params(params.dynamics_noise_covariance, 2, t)
@@ -420,36 +432,23 @@ def pgsf(
         u = inputs[t]
         y = emissions[t]
 
-        lls, filtered_means, filtered_covs = pmap(_kalman_step, in_axes=(0,0,None,None,None,None,None,None,None,None,None,None,None,None))(filtered_means, filtered_covs, f, F_x, F_q, Q, q0, u, h, H_x, H_r, R, r0, y)
+        p_kalman_step = lambda m, P: _kalman_step(m, P, f, F_x, F_q, Q, q0, u, h, H_x, H_r, R, r0, y)
+        lls, new_means, new_covs = pmap(p_kalman_step)(filtered_means[t-1], filtered_covs[t-1])
+        filtered_means = filtered_means.at[t].set(new_means)
+        filtered_covs = filtered_covs.at[t].set(new_covs)
+        # lls, filtered_means, filtered_covs = pmap(_kalman_step, in_axes=(0,0,None,None,None,None,None,None,None,None,None,None,None,None))(filtered_means, filtered_covs, f, F_x, F_q, Q, q0, u, h, H_x, H_r, R, r0, y)
 
         # Compute weights
         lls -= jnp.max(lls)
         loglik_weights = jnp.exp(lls)
-        weights = jnp.multiply(loglik_weights, weights)
-        weights /= jnp.sum(weights)
+        new_weights = jnp.multiply(loglik_weights, weights[t-1])
+        weights = weights.at[t].set(new_weights/new_weights.sum())
 
-
-        # Build carry and output states
-        carry = (weights, filtered_means, filtered_covs)
-        outputs = {
-            "means": filtered_means,
-            "covariances": filtered_covs,
-            "weights": weights
-        }
-
-        return carry, outputs
-
-    initial_means = MVN(params.initial_mean, params.initial_covariance).sample(num_components, jr.PRNGKey(0))
-    initial_covs = jnp.array([params.initial_covariance for i in range(num_components)])
-    carry = (jnp.ones(num_components)/num_components, initial_means, initial_covs)
-
-    _, outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    outputs = swap_axes_on_values(outputs)
-    posterior_filtered = PosteriorGaussianSumFiltered(
-       **outputs,
+    return PosteriorGaussianSumFiltered(
+        means = filtered_means,
+        covariances = filtered_covs,
+        weights = weights
     )
-
-    return posterior_filtered
 
 def unscented_gaussian_sum_filter(
     params: ParamsNLSSM,

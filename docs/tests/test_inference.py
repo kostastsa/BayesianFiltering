@@ -77,7 +77,7 @@ class TestInference:
         return posterior_filtered
     
     def test_pgsf(self):
-        num_components = 5
+        num_components = 8
         posterior_filtered = gf.pgsf(self.params, self.emissions, num_components, 1, inputs)
         return posterior_filtered
 
