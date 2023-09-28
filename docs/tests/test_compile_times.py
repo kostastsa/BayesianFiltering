@@ -268,7 +268,7 @@ class TestCompile:
             weights = jnp.ones(shape=(self.num_components[0],)) / self.num_components[0]
             t_re =  time.time() - tin
 
-            carry = containers._gaussian_sum_to_components(containers.GaussianSum(list(filtered_means), list(filtered_covs), weights))
+            carry = list(filtered_means, filtered_covs, weights)
             outputs = {
                 "weights": weights,
                 "means": filtered_means,
