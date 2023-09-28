@@ -76,9 +76,9 @@ class TestInference:
         posterior_filtered = gf.gaussian_sum_filter(self.params, self.emissions, num_components, 1, inputs)
         return posterior_filtered
     
-    def test_pgsf(self):
-        num_components = 5
-        posterior_filtered = gf.pgsf(self.params, self.emissions, num_components, 1, inputs)
+    def test_speedy_agsf(self):
+        num_components = [5, 3, 2] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
+        posterior_filtered = gf.speedy_augmented_gaussian_sum_filter(self.params, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=inputs)
         return posterior_filtered
 
     def test_augmented_gaussian_sum_filter(self):
@@ -105,5 +105,9 @@ class TestInference:
 
 if __name__ == "__main__":
     test = TestInference()
-    posterior_filtered = test.test_pgsf()
+    posterior_filtered = test.test_speedy_agsf()
     print(posterior_filtered)
+    # weights = jnp.arange(10) / sum(jnp.arange(10))
+    # new_weights = jnp.tile(weights, (3,1)).T / 3
+    # new_weights = new_weights.reshape(30,1)
+    # print(new_weights)
