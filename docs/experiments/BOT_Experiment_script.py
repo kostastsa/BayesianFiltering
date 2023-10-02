@@ -1,5 +1,5 @@
 import sys
-sys.path.append(r'/home/kostas_tsampourakis/BayesianFiltering')
+sys.path.append(r'/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax')
 
 import time
 
@@ -115,7 +115,7 @@ for i in range(Nsim):
     opt_args = (0.8, 0.5)
     num_components = [M, num_prt1, num_prt2]
     tin = time.time()
-    posterior_filtered_agsf, aux_outputs = gf.augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
+    posterior_filtered_agsf, aux_outputs = gf.speedy_augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
     point_estimate_agsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_agsf.means, posterior_filtered_agsf.weights), axis=0)
     tout = time.time()
     t_agsf= tout - tin
@@ -128,6 +128,7 @@ for i in range(Nsim):
     # tout = time.time()
     # t_uagsf= tout - tin
     # print('       Time taken for UAGSF: ', tout - tin)
+
 
 
 
