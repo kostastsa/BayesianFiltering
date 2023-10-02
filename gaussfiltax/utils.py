@@ -106,6 +106,7 @@ _mat = lambda x, n: jnp.reshape(x, (n, n))
 _matrices_to_vectors = lambda matrix_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n**2, )))(matrix_array)))
 _vectors_to_matrices = lambda vector_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n, n)))(vector_array)))
 
+@jit 
 def sdp_opt(state_dim, N, P, jacobian, hessian, beta, tol=0.1):
     """
     This works by blancing the two terms using alpha
@@ -252,7 +253,11 @@ def _get_sigma_points(m, P, ulambda):
     sigma_points = jnp.concatenate([sigma_plus, sigma_minus], axis=0)
     return sigma_points
     
-    
+def psd_solve(A,b):
+    """A wrapper for coordinating the linalg solvers used in the library for psd matrices."""
+    A = A + 1e-6
+    return jnp.linalg.solve(A,b)    
+
 # def my_sqrtm(A):
 #     """Compute the square root of a matrix."""
 #     T, Z = jnp.schu

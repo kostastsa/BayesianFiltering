@@ -7,13 +7,11 @@ from jax import lax, vmap, pmap, jacfwd, jacrev, debug, device_put, jit
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from typing import List, Optional, NamedTuple, Union
 import gaussfiltax.utils as utils
-from gaussfiltax.utils import _resample
+from gaussfiltax.utils import _resample, psd_solve
 from gaussfiltax.containers import GaussianComponent, GaussianSum, _branches_from_tree1, _branches_from_tree2
 from gaussfiltax import containers
 from jaxtyping import Array, Float, Int
 
-
-from dynamax.utils.utils import psd_solve
 from gaussfiltax.models import ParamsNLSSM, ParamsBPF
 import time
 
@@ -669,16 +667,16 @@ def speedy_augmented_gaussian_sum_filter(
          # Autocov 1
         tin = time.time()
         nums_to_split = jnp.array([num_components[1]]*num_components[0])
-        # Deltas, nums_to_split = vmap(_autocov1, in_axes=(0, 0, None, None, 0, None, None, None))(filtered_means, filtered_covs, F_x, F_xx, nums_to_split, q0, u, 1.0)
+        # Deltas, nums_to_split = vmap(_autocov1, in_axes=(0, 0, None, None, 0, None, None, None))(filtered_means, filtered_covs, F_x, F_xx, nums_to_split, q0, u, opt_args[0])
         Deltas = jnp.array([opt_args[0] * filtered_covs[i] for i in range(num_components[0])])
 
 
         # hessian = F_xx(filtered_means[0], q0, u)
         # J = F_x(filtered_means[0], q0, u)
-        # Delta = utils.sdp_opt(state_dim, num_components[0], filtered_covs[0], J, hessian, 1.0)
+        # Delta = utils.sdp_opt(state_dim, num_components[0], filtered_covs[0], J, hessian, opt_args[0])
         # Deltas = jnp.array([Delta for i in range(num_components[0])])
 
-        t_autocov1 = time.time() - tin
+        # t_autocov1 = time.time() - tin
 
 
         # Compute the z-sample
