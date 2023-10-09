@@ -651,7 +651,6 @@ def speedy_augmented_gaussian_sum_filter(
 #    f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
     inputs = _process_input(inputs, num_timesteps)
 
-    # @jit
     def _step(carry, t):
         filtered_means, filtered_covs, weights = carry
         
@@ -953,6 +952,197 @@ def unscented_agsf(
     initial_weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
     init_components = containers._gaussian_sum_to_components(GaussianSum(initial_means, initial_covs, initial_weights))
     carry = init_components
+
+    carry, (outputs, aux_outputs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    outputs = swap_axes_on_values(outputs)
+    posterior_filtered = PosteriorGaussianSumFiltered(
+       outputs["weights"], 
+       outputs["means"], 
+       outputs["covariances"]
+    )
+    
+    return posterior_filtered, aux_outputs
+
+def speedy_unscented_agsf(
+    params: ParamsNLSSM,
+    uparams: ParamsUKF,
+    emissions: Float[Array, "ntime emission dim"],
+    num_components: Int[Array, "1 3"],
+    rng_key: jr.PRNGKey = jr.PRNGKey(0),
+    num_iter: int = 1,
+    opt_args : Optional[Float[tuple, "1 2"]] = (0.1, 0.1),
+    inputs: Optional[Float[Array, "ntime input dim"]] = None
+) -> PosteriorGaussianSumFiltered:
+    r"""Augmented Gaussian sum filter, which is a mixture of extended Kalman filters to produce the
+    marginal likelihood and filtered state estimates.
+    Args:
+        params: model parameters.
+        emissions: observation sequence.
+        num_components: number of components in Gaussian sum approximation.
+        num_iter: number of linearizations around posterior for update step (default 1).
+        inputs: optional array of inputs.
+        output_fields: list of fields to return in posterior object.
+            These can take the values "filtered_means", "filtered_covariances",
+            "predicted_means", "predicted_covariances", and "weights".
+    Returns:
+        post: posterior object.
+    """
+    num_timesteps = len(emissions)
+
+    # Dynamics and emission functions and their Jacobians
+    f, h = params.dynamics_function, params.emission_function
+    F_x, H_x = jacfwd(f, argnums=0), jacfwd(h, argnums=0)
+    F_q, H_r = jacfwd(f, argnums=1), jacfwd(h, argnums=1)
+    F_xx, H_xx = jit(jacrev(F_x)), jit(jacrev(H_x))
+#    f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
+    inputs = _process_input(inputs, num_timesteps)
+
+    def _step(carry, t):
+        filtered_means, filtered_covs, weights = carry
+        
+        # Get parameters and inputs for time index t
+        Q = _get_params(params.dynamics_noise_covariance, 2, t)
+        q0 = _get_params(params.dynamics_noise_bias, 2, t)
+        R = _get_params(params.emission_noise_covariance, 2, t)
+        r0 = _get_params(params.emission_noise_bias, 2, t)
+        u = inputs[t]
+        y = emissions[t]
+        state_dim = filtered_covs[0].shape[0]
+
+         # Autocov 1
+        tin = time.time()
+        nums_to_split = jnp.array([num_components[1]]*num_components[0])
+        # Deltas, nums_to_split = vmap(_autocov1, in_axes=(0, 0, None, None, 0, None, None, None))(filtered_means, filtered_covs, F_x, F_xx, nums_to_split, q0, u, opt_args[0])
+        Deltas = jnp.array([opt_args[0] * filtered_covs[i] for i in range(num_components[0])])
+
+
+        # hessian = F_xx(filtered_means[0], q0, u)
+        # J = F_x(filtered_means[0], q0, u)
+        # Delta = utils.sdp_opt(state_dim, num_components[0], filtered_covs[0], J, hessian, opt_args[0])
+        # Deltas = jnp.array([Delta for i in range(num_components[0])])
+
+        # t_autocov1 = time.time() - tin
+
+
+        # Compute the z-sample
+
+        key, subkey = jr.split(rng_key)
+        tin = time.time()
+        iid_sample = jr.normal(key, shape=(num_components[0], state_dim, num_components[1]))
+        # print('shape of iid sample', iid_sample.shape)
+        tout = time.time() - tin
+
+        mlt_matrices = vmap(jnp.linalg.cholesky)(filtered_covs-Deltas)
+        # print('shape of mlt matrices', mlt_matrices.shape)
+        centered_sample = vmap(jnp.matmul, in_axes=(0,0))(mlt_matrices, iid_sample)
+        # print('shape of centered sample', centered_sample.shape)
+        # print('shape of filtered_means', filtered_means.shape)
+        z_sample = jnp.expand_dims(filtered_means, axis=2) + centered_sample
+        z_sample = jnp.swapaxes(z_sample, 1, 2)
+        # means_to_predict = jnp.reshape(z_sample, (num_components[0]*num_components[1], state_dim))
+        # print('shape of z sample', z_sample.shape)
+        # print('deltas', Deltas.shape)
+        # print('shape of means to predict', means_to_predict.shape)
+
+        # # Predict
+        tin = time.time()
+        map_predict = lambda means, cov: vmap(_ukf_predict_nonadditive, in_axes=(0,None,None,None,None,None,None))(means, cov, f, u, Q, uparams, q0)
+        predicted_means, predicted_covs = vmap(map_predict, in_axes=(0,0))(z_sample, Deltas)
+        predicted_weights = jnp.tile(weights, (num_components[1],1)).T / num_components[1]
+
+        t_predict = time.time() - tin
+        predicted_means = jnp.reshape(predicted_means, (num_components[0]*num_components[1], state_dim))
+        predicted_covs = jnp.reshape(predicted_covs, (num_components[0]*num_components[1], state_dim, state_dim))
+        predicted_weights = jnp.reshape(predicted_weights, (num_components[0]*num_components[1],))
+        # print('shape of predicted means', predicted_means.shape)
+        # print('shape of predicted covs', predicted_covs.shape)
+        # print('shape of predicted weights', predicted_weights.shape)
+
+        # # Autocov before update
+        tin = time.time()
+        nums_to_split = jnp.array([num_components[2]] * num_components[0]* num_components[1])
+        # Lambdas, nums_to_split = vmap(gf._autocov2, in_axes=(0, 0, None, None, 0, None, None, None))(predicted_means, predicted_covs, H_x, H_xx, nums_to_split, r0, u, 1.0)
+        Lambdas = jnp.array([opt_args[1] * predicted_covs[i] for i in range(num_components[0] * num_components[1])])        
+        t_autocov2 = time.time() - tin
+
+
+        # # Compute the s-sample
+        key,_ = jr.split(key)
+        tin = time.time()
+        s_iid_sample = jr.normal(key, shape=(num_components[0]*num_components[1], state_dim, num_components[2]))
+        # print('shape of iid sample', iid_sample.shape)
+        tout = time.time() - tin
+
+        s_mlt_matrices = vmap(jnp.linalg.cholesky)(predicted_covs-Lambdas)
+        # print('shape of mlt matrices', s_mlt_matrices.shape)
+        s_centered_sample = vmap(jnp.matmul, in_axes=(0,0))(s_mlt_matrices, s_iid_sample)
+        # print('shape of centered sample', centered_sample.shape)
+        # print('shape of predicted_means', predicted_means.shape)
+        s_sample = jnp.expand_dims(predicted_means, axis=2) + s_centered_sample
+        s_sample = jnp.swapaxes(s_sample, 1, 2)
+        # means_to_predict = jnp.reshape(z_sample, (num_components[0]*num_components[1], state_dim))
+        # print('shape of z sample', s_sample.shape)
+        # print('Lambdas', Lambdas.shape)
+
+        # Update
+        tin = time.time()
+        map_condition_on = lambda means, cov: vmap(_ukf_condition_on_nonadditive, in_axes=(0,None,None,None,None,None,None,None))(means, cov, h, R, u, y, uparams, r0)
+        lls, updated_means, updated_covs = vmap(map_condition_on, in_axes=(0,0))(s_sample, Lambdas)
+        updated_weights = jnp.tile(predicted_weights, (num_components[2],1)).T / num_components[2]
+
+        lls -= jnp.max(lls)
+        ls = jnp.exp(lls)
+        weights = jnp.multiply(ls, updated_weights)
+        weights /= jnp.sum(weights)
+        pre_weights = weights
+        t_update = time.time() - tin
+
+        updated_means = jnp.reshape(updated_means, (num_components[0]*num_components[1]*num_components[2], state_dim))
+        updated_covs = jnp.reshape(updated_covs, (num_components[0]*num_components[1]*num_components[2], state_dim, state_dim))
+        weights = jnp.reshape(weights, (num_components[0]*num_components[1]*num_components[2],))
+
+
+        # print('shape of updated means', updated_means.shape)
+        # print('shape of updated covs', updated_covs.shape)
+        # print('shape of updated weights', weights.shape)
+
+
+        # Resampling 
+        tin = time.time()
+        resampled_idx = jr.choice(jr.PRNGKey(0), jnp.arange(weights.shape[0]), shape=(num_components[0], ), p=weights)
+        filtered_means = jnp.take(updated_means, resampled_idx, axis=0)
+        filtered_covs = jnp.take(updated_covs, resampled_idx, axis=0)
+        # filtered_covs = 10*filtered_covs # Covariance re-inflation
+        weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
+        t_re =  time.time() - tin
+
+        # print('shape of filtered means', filtered_means.shape)
+        # print('shape of filtered covs', filtered_covs.shape)
+        # print('shape of weights', weights.shape)
+
+        # Build carry and output states
+        carry = [filtered_means, filtered_covs, weights]
+        outputs = {
+            "weights": weights,
+            "means": filtered_means,
+            "covariances": filtered_covs
+        }
+
+        aux_outputs = {
+            "Deltas": Deltas,
+            "Lambdas": Lambdas,
+            # "timing": jnp.array([t_autocov1, t_branch1, t_predict, t_recast1, t_autocov2, t_branch2, t_update, t_re]),
+            "updated_means": updated_means,
+            "pre_weights": pre_weights
+        }
+
+        return carry, (outputs, aux_outputs)
+
+    
+    initial_means = MVN(params.initial_mean, params.initial_covariance).sample(num_components[0], jr.PRNGKey(0))
+    initial_covs = jnp.array([params.initial_covariance for i in range(num_components[0])])
+    initial_weights = jnp.ones(shape=(num_components[0],)) / num_components[0]
+    carry = [initial_means, initial_covs, initial_weights]
 
     carry, (outputs, aux_outputs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
     outputs = swap_axes_on_values(outputs)

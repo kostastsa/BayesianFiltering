@@ -162,5 +162,3 @@ def _branches_from_tree2(
 
 
 
-# how to assign value to array entry in JAX?
-

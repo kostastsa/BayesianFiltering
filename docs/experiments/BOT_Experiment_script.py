@@ -20,16 +20,16 @@ state_dim = 4
 state_noise_dim = 2
 emission_dim = 2
 emission_noise_dim = 2
-seq_length = 30
+seq_length = 5*100
 mu0 = 1.0 * jnp.array([-0.05, 0.001, 0.7, -0.05])
 q0 = jnp.zeros(state_noise_dim)
 r0 = jnp.zeros(emission_noise_dim)
 Sigma0 = 1.0 * jnp.array([[0.1, 0.0, 0.0, 0.0],[0.0, 0.005, 0.0, 0.0],[0.0, 0.0, 0.1, 0.0],[0.0, 0.0, 0.0, 0.01]])
-Q = 1e-6 * jnp.eye(state_noise_dim)
+Q = 1e-5 * jnp.eye(state_noise_dim)
 R = 25*1e-6 * jnp.eye(emission_noise_dim)
 
 dt = 0.5
-FCV = jnp.array([[1, dt, 0, 0],[0, 1, 0, 0],[0, 0, 1, dt],[0, 0, 0, 1]])
+FCV = 1.0 * jnp.array([[1, dt, 0, 0],[0, 1, 0, 0],[0, 0, 1, dt],[0, 0, 0, 1]])
 acc = 0.5
 Omega = lambda x, acc: 0.1 * acc / jnp.sqrt(x[1]**2 + x[3]**2)
 FCT =  lambda x, a: jnp.array([[1, jnp.sin(dt * Omega(x, a)) / Omega(x, a), 0, -(1-jnp.cos(dt * Omega(x, a))) / Omega(x, a)],
@@ -44,7 +44,8 @@ gBOT = lambda x, r, u: jnp.arctan2(x[2], x[0]) + r
 gBOT2 = lambda x ,r, u: jnp.array([jnp.arctan2(x[2], x[0]), jnp.sqrt(x[0]**2 + x[2]**2)]) + r
 gBOTlp = lambda x, y, u: MVN(loc = gBOT2(x, r0, u), covariance_matrix = R).log_prob(y)
 # inputs = jnp.zeros((seq_length, 1))
-inputs = jnp.array([1]*int(seq_length/3) + [0]*int(seq_length/3) + [2]*int(seq_length/3)) # maneuver inputs
+inputs = jnp.array([1]*int(2*seq_length/5) + [0]*int(seq_length/5) + [2]*int(2*seq_length/5)) # maneuver inputs
+# inputs = jr.choice(jr.PRNGKey(0), jnp.array([0, 1, 2]), shape = (seq_length, 1)) # maneuver inputs
 
 
 f = fManBOT
@@ -66,7 +67,7 @@ params = ParamsNLSSM(
 )
 
 verbose = False
-Nsim = 10
+Nsim = 100
 gsf_rmse = jnp.zeros(Nsim)
 ugsf_rmse = jnp.zeros(Nsim)
 agsf_rmse = jnp.zeros(Nsim)
@@ -94,7 +95,7 @@ for i in range(Nsim):
     states, emissions = model.sample(params, key0, seq_length, inputs = inputs)
 
     # GSF
-    M = 5
+    M = 100
     tin = time.time()
     posterior_filtered_gsf = gf.gaussian_sum_filter(params, emissions, M, 1, inputs)
     point_estimate_gsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_gsf.means, posterior_filtered_gsf.weights), axis=0)
@@ -102,43 +103,34 @@ for i in range(Nsim):
     t_gsf= tout - tin
     print('       Time taken for GSF: ', tout - tin)
 
-    # # U-GSF
-    # tin = time.time()
-    # uparams = ParamsUKF(1,0,0)
-    # posterior_filtered_ugsf = gf.unscented_gaussian_sum_filter(params, uparams, emissions, M, 1, inputs)
-    # point_estimate_ugsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_ugsf.means, posterior_filtered_ugsf.weights), axis=0)
-    # tout = time.time()
-    # t_ugsf= tout - tin
-    # print('       Time taken for UGSF: ', tout - tin)
+    # U-GSF
+    tin = time.time()
+    uparams = ParamsUKF(1,0,0)
+    uparams1 = ParamsUKF(1e-3, 2, 0)
+    posterior_filtered_ugsf = gf.unscented_gaussian_sum_filter(params, uparams, emissions, M, 1, inputs)
+    point_estimate_ugsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_ugsf.means, posterior_filtered_ugsf.weights), axis=0)
+    tout = time.time()
+    t_ugsf= tout - tin
+    print('       Time taken for UGSF: ', tout - tin)
 
     # AGSF
-    opt_args = (0.8, 0.5)
-    num_components = [M, num_prt1, num_prt2]
+    opt_args = (0.9, 0.9)
+    num_components = [100, 2, 2]
     tin = time.time()
-    posterior_filtered_agsf, aux_outputs = gf.speedy_augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
+    posterior_filtered_agsf, aux_outputs = gf.speedy_augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)    
     point_estimate_agsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_agsf.means, posterior_filtered_agsf.weights), axis=0)
     tout = time.time()
     t_agsf= tout - tin
     print('       Time taken for AGSF: ', tout - tin)
 
-    # # U-AGSF
-    # tin = time.time()
+    # U-AGSF
+    tin = time.time()
     # posterior_filtered_uagsf, aux_outputs = gf.unscented_agsf(params, uparams, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
-    # point_estimate_uagsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_uagsf.means, posterior_filtered_uagsf.weights), axis=0)
-    # tout = time.time()
-    # t_uagsf= tout - tin
-    # print('       Time taken for UAGSF: ', tout - tin)
-
-
-
-
-    # AGSF Optimal
-    # tin = time.time()
-    # posterior_filtered_agsf_opt, aux_outputs_opt = gf.augmented_gaussian_sum_filter_optimal(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
-    # point_estimate_agsf_opt = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_agsf_opt.means, posterior_filtered_agsf_opt.weights), axis=0)
-    # tout = time.time()
-    # t_agsf_opt= tout - tin
-    # print('       Time taken for AGSF optimal: ', tout - tin)
+    posterior_filtered_uagsf, aux_outputs = gf.speedy_unscented_agsf(params, uparams, emissions, num_components, key, opt_args, inputs=inputs)
+    point_estimate_uagsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_uagsf.means, posterior_filtered_uagsf.weights), axis=0)
+    tout = time.time()
+    t_uagsf= tout - tin
+    print('       Time taken for UAGSF: ', tout - tin)
 
     # BPF
     tin = time.time()
@@ -156,7 +148,7 @@ for i in range(Nsim):
         emission_distribution_log_prob = glp
     )
 
-    posterior_bpf = gf.bootstrap_particle_filter(params_bpf, emissions, num_particles, key, inputs)
+    posterior_bpf = gf.bootstrap_particle_filter(params_bpf, emissions, num_particles, key, inputs, 1.0)
     point_estimate_bpf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_bpf["particles"], posterior_bpf["weights"]), axis=0)
     tout = time.time()
     t_bpf = tout - tin
@@ -164,27 +156,27 @@ for i in range(Nsim):
 
     # Computation of errors
     gsf_rmse = gsf_rmse.at[i].set(utils.rmse(point_estimate_gsf[:, (0,2)], states[:, (0,2)]))
-    # ugsf_rmse = ugsf_rmse.at[i].set(utils.rmse(point_estimate_ugsf[:, (0,2)], states[:, (0,2)]))
+    ugsf_rmse = ugsf_rmse.at[i].set(utils.rmse(point_estimate_ugsf[:, (0,2)], states[:, (0,2)]))
     agsf_rmse = agsf_rmse.at[i].set(utils.rmse(point_estimate_agsf[:, (0,2)], states[:, (0,2)]))
-    # uagsf_rmse = uagsf_rmse.at[i].set(utils.rmse(point_estimate_uagsf[:, (0,2)], states[:, (0,2)]))
+    uagsf_rmse = uagsf_rmse.at[i].set(utils.rmse(point_estimate_uagsf[:, (0,2)], states[:, (0,2)]))
     bpf_rmse = bpf_rmse.at[i].set(utils.rmse(point_estimate_bpf[:, (0,2)], states[:, (0,2)]))
 
-    print('              GSF RMSE:', gsf_rmse[i])
-    # print('              UGSF RMSE:', ugsf_rmse[i])
+    print('              GSF RMSE:', gsf_rmse[i])                                                                           
+    print('              UGSF RMSE:', ugsf_rmse[i])
     print('              AGSF RMSE:', agsf_rmse[i])
-    # print('              UAGSF RMSE:', uagsf_rmse[i])
+    print('              UAGSF RMSE:', uagsf_rmse[i])
     print('              BPF RMSE:', bpf_rmse[i])
 
     gsf_norm = gsf_norm.at[i].set(jnp.linalg.norm(point_estimate_gsf[:,(0,2)] - states[:,(0,2)], axis = 1))
-    # ugsf_norm = ugsf_norm.at[i].set(jnp.linalg.norm(point_estimate_ugsf[:,(0,2)] - states[:,(0,2)], axis = 1))
+    ugsf_norm = ugsf_norm.at[i].set(jnp.linalg.norm(point_estimate_ugsf[:,(0,2)] - states[:,(0,2)], axis = 1))
     agsf_norm = agsf_norm.at[i].set(jnp.linalg.norm(point_estimate_agsf[:,(0,2)] - states[:,(0,2)], axis = 1))
-    # uagsf_norm = uagsf_norm.at[i].set(jnp.linalg.norm(point_estimate_uagsf[:,(0,2)] - states[:,(0,2)], axis = 1))
+    uagsf_norm = uagsf_norm.at[i].set(jnp.linalg.norm(point_estimate_uagsf[:,(0,2)] - states[:,(0,2)], axis = 1))
     bpf_norm = bpf_norm.at[i].set(jnp.linalg.norm(point_estimate_bpf[:,(0,2)] - states[:,(0,2)], axis = 1))
 
     gsf_time = gsf_time.at[i].set(t_gsf)
-    # ugsf_time = ugsf_time.at[i].set(t_ugsf)
+    ugsf_time = ugsf_time.at[i].set(t_ugsf)
     agsf_time = agsf_time.at[i].set(t_agsf)
-    # uagsf_time = uagsf_time.at[i].set(t_uagsf)
+    uagsf_time = uagsf_time.at[i].set(t_uagsf)
     bpf_time = bpf_time.at[i].set(t_bpf)
 
 
@@ -219,23 +211,29 @@ bpf_armse = jnp.mean(bpf_boot)
 # uagsf_armse = jnp.mean(uagsf_rmse)
 # bpf_armse = jnp.mean(bpf_rmse)
 
-gsf_atime = jnp.mean(gsf_time)
-ugsf_atime = jnp.mean(ugsf_time)
-agsf_atime = jnp.mean(agsf_time)
-uagsf_atime = jnp.mean(uagsf_time)
-bpf_atime = jnp.mean(bpf_time)
+gsf_time_boot = bootstrap(keys[0], gsf_time, B)
+ugsf_time_boot = bootstrap(keys[1], ugsf_time, B)
+agsf_time_boot = bootstrap(keys[2], agsf_time, B)
+uagsf_time_boot = bootstrap(keys[3], uagsf_time, B)
+bpf_time_boot = bootstrap(keys[4], bpf_time, B)
 
-gsf_tab_out = '{:10.2f}±{:10.2f}'.format(gsf_armse, jnp.std(gsf_boot))
-ugsf_tab_out = '{:10.2f}±{:10.2f}'.format(ugsf_armse, jnp.std(ugsf_boot))
-agsf_tab_out = '{:10.2f}±{:10.2f}'.format(agsf_armse, jnp.std(agsf_boot))
-uagsf_tab_out = '{:10.2f}±{:10.2f}'.format(uagsf_armse, jnp.std(uagsf_boot))
-bpf_tab_out = '{:10.2f}±{:10.2f}'.format(bpf_armse, jnp.std(bpf_boot))
+gsf_atime = jnp.mean(gsf_time_boot)
+ugsf_atime = jnp.mean(ugsf_time_boot)
+agsf_atime = jnp.mean(agsf_time_boot)
+uagsf_atime = jnp.mean(uagsf_time_boot)
+bpf_atime = jnp.mean(bpf_time_boot)
 
-gsf_tab_out1 = '{:10.2f}±{:10.2f}'.format(gsf_atime, jnp.std(gsf_time))
-ugsf_tab_out1 = '{:10.2f}±{:10.2f}'.format(ugsf_atime, jnp.std(ugsf_time))
-agsf_tab_out1 = '{:10.2f}±{:10.2f}'.format(agsf_atime, jnp.std(agsf_time))
-uagsf_tab_out1 = '{:10.2f}±{:10.2f}'.format(uagsf_atime, jnp.std(uagsf_time))
-bpf_tab_out1 = '{:10.2f}±{:10.2f}'.format(bpf_atime, jnp.std(bpf_time))
+gsf_tab_out = '{:2.3f}±{:2.3f}'.format(gsf_armse, jnp.std(gsf_boot))
+ugsf_tab_out = '{:2.3f}±{:2.3f}'.format(ugsf_armse, jnp.std(ugsf_boot))
+agsf_tab_out = '{:2.3f}±{:2.3f}'.format(agsf_armse, jnp.std(agsf_boot))
+uagsf_tab_out = '{:2.3f}±{:2.3f}'.format(uagsf_armse, jnp.std(uagsf_boot))
+bpf_tab_out = '{:2.3f}±{:2.3f}'.format(bpf_armse, jnp.std(bpf_boot))
+
+gsf_tab_out1 = '{:2.2f}±{:2.2f}'.format(gsf_atime, jnp.std(gsf_time_boot))
+ugsf_tab_out1 = '{:2.2f}±{:2.2f}'.format(ugsf_atime, jnp.std(ugsf_time_boot))
+agsf_tab_out1 = '{:2.2f}±{:2.2f}'.format(agsf_atime, jnp.std(agsf_time_boot))
+uagsf_tab_out1 = '{:2.2f}±{:2.2f}'.format(uagsf_atime, jnp.std(uagsf_time_boot))
+bpf_tab_out1 = '{:2.2f}±{:2.2f}'.format(bpf_atime, jnp.std(bpf_time_boot))
 
 df = pd.DataFrame(columns = [' ','RMSE','time(s)'])
 # df[' '] = ['GSF', 'AGSF', 'AGSF Optimal', 'BPF']
