@@ -100,12 +100,12 @@ class TestInference:
     def test_unscented_agsf(self):
         num_components = [2, 5, 5] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
         uparams = ParamsUKF(alpha=1e-3, beta=2.0, kappa=0.0)
-        posterior_filtered, aux_outputs = gf.unscented_agsf(self.params, uparams, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=inputs)
+        posterior_filtered, aux_outputs = gf.speedy_unscented_agsf(self.params, uparams, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=inputs)
         return posterior_filtered
 
 if __name__ == "__main__":
     test = TestInference()
-    posterior_filtered = test.test_speedy_agsf()
+    posterior_filtered = test.test_unscented_agsf()
     print(posterior_filtered)
     # weights = jnp.arange(10) / sum(jnp.arange(10))
     # new_weights = jnp.tile(weights, (3,1)).T / 3
