@@ -106,12 +106,11 @@ _mat = lambda x, n: jnp.reshape(x, (n, n))
 _matrices_to_vectors = lambda matrix_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n**2, )))(matrix_array)))
 _vectors_to_matrices = lambda vector_array, n: jnp.array(list(vmap(lambda x : jnp.reshape(x, (n, n)))(vector_array)))
 
-@jit 
+@partial(jit, static_argnums=(0,))
 def sdp_opt(state_dim, N, P, jacobian, hessian, beta, tol=0.1):
     """
     This works by blancing the two terms using alpha
     """
-    tol = 0.1
     # construct 2nd order term
     vec_P = _vec(P, state_dim)
     vec_hessians = _matrices_to_vectors(hessian, state_dim)
@@ -120,7 +119,7 @@ def sdp_opt(state_dim, N, P, jacobian, hessian, beta, tol=0.1):
         low_rank += vec_hessians[i] * vec_hessians[i].T
     lhs = (1/4) * low_rank + jnp.eye(state_dim**2)
     vec_J = _vec(jacobian.T @ jacobian, state_dim)
-    alpha = beta #* (N/4) * jnp.dot(vec_P.T, low_rank @ vec_P) / jnp.dot(vec_P.T, vec_J)
+    alpha = beta * (N/4) * jnp.dot(vec_P.T, low_rank @ vec_P) / jnp.dot(vec_P.T, vec_J)
     aid = alpha * vec_J / N 
 
     # looping step
@@ -130,8 +129,8 @@ def sdp_opt(state_dim, N, P, jacobian, hessian, beta, tol=0.1):
         new_vec_delta = jnp.linalg.solve(lhs, rhs)
         Delta = _mat(new_vec_delta, state_dim)
         Delta = project_to_psd(Delta)
-        Delta = P - project_to_psd(P - Delta)
-        Delta = project_to_psd(Delta)
+        Delta = 0.99 * P - project_to_psd(0.99 * P - Delta)
+        Delta = project_to_psd(Delta) + 0.01 * jnp.eye(state_dim)
         new_vec_delta = _vec(Delta, state_dim)
         new_diff = jnp.linalg.norm(new_vec_delta-vec_delta) / state_dim ** 2
         return (new_vec_delta, new_diff)
@@ -183,8 +182,8 @@ def mse(x_est, x_base):
 
 def rmse(x_est, x_base):
     T = x_est.shape[0]
-    sum_sq = np.sum((x_est - x_base) ** 2)
-    return np.sqrt(sum_sq / T)
+    sum_sq = jnp.sum((x_est - x_base) ** 2)
+    return jnp.sqrt(sum_sq / T)
 
 def resample(weights, num_samples):
     _flattened_weights = weights.flatten()
@@ -258,12 +257,31 @@ def psd_solve(A,b):
     A = A + 1e-6
     return jnp.linalg.solve(A,b)    
 
-# def my_sqrtm(A):
-#     """Compute the square root of a matrix."""
-#     T, Z = jnp.schu
-#         else:
-#         T, Z = schur(A, output='complex')
-#     failflag = False
-#     try:
-#         R = _sqrtm_triu(T, blocksize=blocksize)
-#         ZH = np.conjugate(Z).T
+def pcrlb(key, model, params, seq_length, nsim, inputs):
+    # sample nsim state trajectories
+    keys = jr.split(key, nsim)
+    states, _ = vmap(model.sample, in_axes=(None, 0, None, None))(params, key, seq_length, inputs = inputs)
+    return states
+
+def bootstrap(key, rmse_array, B):
+    N = rmse_array.shape[0]
+    rmse_boot = jnp.zeros((B,))
+    for b in range(B):
+        key, subkey = jr.split(key)
+        ind = jr.randint(subkey, (N,), 0, N)
+        rmse_boot = rmse_boot.at[b].set(jnp.mean(rmse_array[ind]))
+    return rmse_boot
+
+def vec_clean_and_rmse(array, key, B, Nsim):
+    success_pct = []
+    rmse_array = []
+    std_array = []
+    keys = jr.split(key, array.shape[1])    
+    for i in range(array.shape[1]):
+        ind = jnp.argwhere(jnp.isnan(array[:,i]))
+        clean_array = jnp.delete(array[:,i], ind)
+        clean_array = bootstrap(keys[i], clean_array, B)
+        rmse_array.append(jnp.mean(clean_array))
+        std_array.append(jnp.std(clean_array))
+        success_pct.append(int(100 - 100*len(ind) / Nsim))
+    return success_pct, rmse_array, std_array

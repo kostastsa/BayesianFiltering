@@ -2,6 +2,7 @@ import sys
 sys.path.append(r'/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax')
 
 import time
+import pandas as pd
 
 from jax import numpy as jnp
 from jax import random as jr
@@ -29,8 +30,8 @@ Q = 1e-5 * jnp.eye(state_noise_dim)
 R = 25*1e-6 * jnp.eye(emission_noise_dim)
 
 dt = 0.5
-FCV = 1.0 * jnp.array([[1, dt, 0, 0],[0, 1, 0, 0],[0, 0, 1, dt],[0, 0, 0, 1]])
-acc = 0.5
+FCV = 1.00 * jnp.array([[1, dt, 0, 0],[0, 1, 0, 0],[0, 0, 1, dt],[0, 0, 0, 1]])
+acc =  0.5
 Omega = lambda x, acc: 0.1 * acc / jnp.sqrt(x[1]**2 + x[3]**2)
 FCT =  lambda x, a: jnp.array([[1, jnp.sin(dt * Omega(x, a)) / Omega(x, a), 0, -(1-jnp.cos(dt * Omega(x, a))) / Omega(x, a)],
                             [0, jnp.cos(dt * Omega(x, a)), 0, -jnp.sin(dt * Omega(x, a))],
@@ -45,7 +46,7 @@ gBOT2 = lambda x ,r, u: jnp.array([jnp.arctan2(x[2], x[0]), jnp.sqrt(x[0]**2 + x
 gBOTlp = lambda x, y, u: MVN(loc = gBOT2(x, r0, u), covariance_matrix = R).log_prob(y)
 # inputs = jnp.zeros((seq_length, 1))
 inputs = jnp.array([1]*int(2*seq_length/5) + [0]*int(seq_length/5) + [2]*int(2*seq_length/5)) # maneuver inputs
-# inputs = jr.choice(jr.PRNGKey(0), jnp.array([0, 1, 2]), shape = (seq_length, 1)) # maneuver inputs
+# inputs = jr.choice(jr.PRNGKey(0), jnp.array([0, 1, 2]), shape = (seq_length, 1)) # random inputs
 
 
 f = fManBOT
@@ -95,7 +96,7 @@ for i in range(Nsim):
     states, emissions = model.sample(params, key0, seq_length, inputs = inputs)
 
     # GSF
-    M = 100
+    M = 2
     tin = time.time()
     posterior_filtered_gsf = gf.gaussian_sum_filter(params, emissions, M, 1, inputs)
     point_estimate_gsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_gsf.means, posterior_filtered_gsf.weights), axis=0)
@@ -115,7 +116,7 @@ for i in range(Nsim):
 
     # AGSF
     opt_args = (0.9, 0.9)
-    num_components = [100, 2, 2]
+    num_components = [10, 5, 5]
     tin = time.time()
     posterior_filtered_agsf, aux_outputs = gf.speedy_augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)    
     point_estimate_agsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_agsf.means, posterior_filtered_agsf.weights), axis=0)
@@ -123,7 +124,7 @@ for i in range(Nsim):
     t_agsf= tout - tin
     print('       Time taken for AGSF: ', tout - tin)
 
-    # U-AGSF
+     # U-AGSF
     tin = time.time()
     # posterior_filtered_uagsf, aux_outputs = gf.unscented_agsf(params, uparams, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
     posterior_filtered_uagsf, aux_outputs = gf.speedy_unscented_agsf(params, uparams, emissions, num_components, key, opt_args, inputs=inputs)
@@ -134,7 +135,7 @@ for i in range(Nsim):
 
     # BPF
     tin = time.time()
-    num_particles = 50000
+    num_particles = 100000
 
     params_bpf = ParamsBPF(
         initial_mean=mu0,
@@ -180,7 +181,18 @@ for i in range(Nsim):
     bpf_time = bpf_time.at[i].set(t_bpf)
 
 
-import pandas as pd
+# Create a DataFrame with the RMSE variables
+rmse_df = pd.DataFrame({
+    'GSF_RMSE': gsf_rmse,
+    'UGSF_RMSE': ugsf_rmse,
+    'AGSF_RMSE': agsf_rmse,
+    'UAGSF_RMSE': uagsf_rmse,
+    'BPF_RMSE': bpf_rmse
+})
+
+# Save the DataFrame to a CSV file
+rmse_df.to_csv('/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/docs/experiments/rmse.csv', index=False)
+
 def bootstrap(key, rmse_array, B):
     N = rmse_array.shape[0]
     rmse_boot = jnp.zeros((B,))
