@@ -18,39 +18,73 @@ from gaussfiltax.utils import sdp_opt
 
 import matplotlib.pyplot as plt
 
+# # Parameters
+# state_dim = 4
+# state_noise_dim = 2
+# emission_dim = 1
+# emission_noise_dim = 1
+# seq_length = 30
+# # mu0 = 1.0 * jnp.array([-0.05, 0.001, 0.7, -0.05])
+# mu0 = jnp.ones(state_dim)
+# q0 = jnp.zeros(state_noise_dim)
+# r0 = jnp.zeros(emission_noise_dim)
+# Sigma0 = 1.0 * jnp.array([[0.1, 0.0, 0.0, 0.0],[0.0, 0.005, 0.0, 0.0],[0.0, 0.0, 0.1, 0.0],[0.0, 0.0, 0.0, 0.01]])
+# Q = 1 * jnp.eye(state_noise_dim)
+# R = 25*1e-6 * jnp.eye(emission_noise_dim)
+
+# dt = 0.5
+# FCV = jnp.array([[1, dt, 0, 0],[0, 1, 0, 0],[0, 0, 1, dt],[0, 0, 0, 1]])
+# acc = 0.5
+# Omega = lambda x, acc: 0.1 * acc / jnp.sqrt(x[1]**2 + x[3]**2)
+# FCT =  lambda x, a: jnp.array([[1, jnp.sin(dt * Omega(x, a)) / Omega(x, a), 0, -(1-jnp.cos(dt * Omega(x, a))) / Omega(x, a)],
+#                             [0, jnp.cos(dt * Omega(x, a)), 0, -jnp.sin(dt * Omega(x, a))],
+#                             [0, (1-jnp.cos(dt * Omega(x, a))) / Omega(x, a), 1, jnp.sin(dt * Omega(x, a)) / Omega(x, a)],
+#                             [0, jnp.sin(dt * Omega(x, a)), 0, jnp.cos(dt * Omega(x, a))]])
+
+# G = jnp.array([[0.5, 0],[1, 0],[0, 0.5],[0, 1]])
+# fBOT = lambda x, q, u: FCV @ x + G @ q
+# fManBOT = lambda x, q, u: (0.5*(u-1)*(u-2)*FCV - u*(u-2)*FCT(x, acc) + 0.5*u*(u-1) * FCT(x, -acc)) @ x + G @ q
+# gBOT = lambda x, r, u: jnp.arctan2(x[2], x[0]) + r
+# gBOTlp = lambda x, y, u: MVN(loc = gBOT(x, 0.0, u), covariance_matrix = R).log_prob(y)
+# # inputs = jnp.zeros((seq_length, 1))
+# inputs = jnp.array([1]*int(seq_length/3) + [0]*int(seq_length/3) + [2]*int(seq_length/3)) # maneuver inputs
+
+# f = fManBOT
+# g = gBOT
+
 # Parameters
-state_dim = 4
-state_noise_dim = 2
-emission_dim = 1
-emission_noise_dim = 1
-seq_length = 30
-# mu0 = 1.0 * jnp.array([-0.05, 0.001, 0.7, -0.05])
-mu0 = jnp.ones(state_dim)
+state_dim = 3
+state_noise_dim = 3
+emission_dim = 3
+emission_noise_dim = 3
+seq_length = 100
+mu0 = 0.0 * jnp.zeros(state_dim)
 q0 = jnp.zeros(state_noise_dim)
-r0 = jnp.zeros(emission_noise_dim)
-Sigma0 = 1.0 * jnp.array([[0.1, 0.0, 0.0, 0.0],[0.0, 0.005, 0.0, 0.0],[0.0, 0.0, 0.1, 0.0],[0.0, 0.0, 0.0, 0.01]])
-Q = 1 * jnp.eye(state_noise_dim)
-R = 25*1e-6 * jnp.eye(emission_noise_dim)
+r0 = 0.1 * jnp.ones(emission_noise_dim)
+Sigma0 = 1.0 * jnp.eye(state_dim)
+Q = 20.0 * jnp.eye(state_noise_dim)
+R = 0.1 * jnp.eye(emission_noise_dim)
 
-dt = 0.5
-FCV = jnp.array([[1, dt, 0, 0],[0, 1, 0, 0],[0, 0, 1, dt],[0, 0, 0, 1]])
-acc = 0.5
-Omega = lambda x, acc: 0.1 * acc / jnp.sqrt(x[1]**2 + x[3]**2)
-FCT =  lambda x, a: jnp.array([[1, jnp.sin(dt * Omega(x, a)) / Omega(x, a), 0, -(1-jnp.cos(dt * Omega(x, a))) / Omega(x, a)],
-                            [0, jnp.cos(dt * Omega(x, a)), 0, -jnp.sin(dt * Omega(x, a))],
-                            [0, (1-jnp.cos(dt * Omega(x, a))) / Omega(x, a), 1, jnp.sin(dt * Omega(x, a)) / Omega(x, a)],
-                            [0, jnp.sin(dt * Omega(x, a)), 0, jnp.cos(dt * Omega(x, a))]])
+# Model functions
+Phi = 0.8 * jnp.eye(state_dim)
+fmsv = lambda x, q, u: Phi @ x + q #((1-u) + 0.3*u)*q
 
-G = jnp.array([[0.5, 0],[1, 0],[0, 0.5],[0, 1]])
-fBOT = lambda x, q, u: FCV @ x + G @ q
-fManBOT = lambda x, q, u: (0.5*(u-1)*(u-2)*FCV - u*(u-2)*FCT(x, acc) + 0.5*u*(u-1) * FCT(x, -acc)) @ x + G @ q
-gBOT = lambda x, r, u: jnp.arctan2(x[2], x[0]) + r
-gBOTlp = lambda x, y, u: MVN(loc = gBOT(x, 0.0, u), covariance_matrix = R).log_prob(y)
-# inputs = jnp.zeros((seq_length, 1))
-inputs = jnp.array([1]*int(seq_length/3) + [0]*int(seq_length/3) + [2]*int(seq_length/3)) # maneuver inputs
+sigma = 5.0
+beta = 0.5
+H0 = 0.1 * jnp.eye(emission_dim, state_dim)
+glmsv = lambda x, r, u: u * beta * jnp.multiply(jnp.exp(x / sigma), r) + (1-u) * (H0 @ x + r)
+def lmsvlp(x,y,u):
+    M = u * beta * jnp.diag(jnp.exp(x / sigma)) + (1-u) * jnp.eye(emission_dim)
+    return MVN(loc = glmsv(x, r0, u), covariance_matrix = M @ R @ M.T).log_prob(y)
 
-f = fManBOT
-g = gBOT
+# Inputs
+inputs = jnp.array([0]*int(seq_length/2) + [1]*int(seq_length/2)) # off - on
+# inputs = jnp.zeros(seq_length) # off
+# inputs = jnp.ones(seq_length) # on
+
+f = fmsv
+g = glmsv
+glp = lmsvlp
 
 class TestInference:
     
@@ -77,18 +111,13 @@ class TestInference:
         return posterior_filtered
     
     def test_speedy_agsf(self):
-        num_components = [5, 3, 2] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
-        posterior_filtered = gf.speedy_augmented_gaussian_sum_filter(self.params, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=inputs)
+        num_components = [5, 3, 2]
+        posterior_filtered, aux_outputs = gf.speedy_augmented_gaussian_sum_filter(self.params, self.emissions, num_components, opt_args = (0.9, 1.0), inputs=inputs)
         return posterior_filtered
 
     def test_augmented_gaussian_sum_filter(self):
         num_components = [2, 5, 5] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
         posterior_filtered, aux_outputs = gf.augmented_gaussian_sum_filter(self.params, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=inputs)
-        return posterior_filtered
-
-    def test_augmented_gaussian_sum_filter_optimal(self):
-        num_components = [5, 5, 5] # has to be set correctly OW "TypeError: Cannot interpret '<function <lambda> at 0x12eae3ee0>' as a data type". Check internal containers._branch_from_node
-        posterior_filtered, aux_outputs = gf.augmented_gaussian_sum_filter_optimal(self.params, self.emissions, num_components, opt_args = (0.1, 0.1), inputs=inputs)
         return posterior_filtered
     
     def test_unscented_gaussian_sum_filter(self):
@@ -105,9 +134,45 @@ class TestInference:
 
 if __name__ == "__main__":
     test = TestInference()
-    posterior_filtered = test.test_unscented_agsf()
-    print(posterior_filtered)
-    # weights = jnp.arange(10) / sum(jnp.arange(10))
-    # new_weights = jnp.tile(weights, (3,1)).T / 3
-    # new_weights = new_weights.reshape(30,1)
-    # print(new_weights)
+    # posterior_filtered = test.test_speedy_agsf()
+    # print(posterior_filtered)
+
+
+    # Parameters
+    state_dim = 3
+    state_noise_dim = 3
+    emission_dim = 3
+    emission_noise_dim = 3
+    seq_length = 100
+    mu0 = 0.0 * jnp.zeros(state_dim)
+    q0 = jnp.zeros(state_noise_dim)
+    r0 = 1*jnp.ones(emission_noise_dim)
+    Sigma0 = 1.0 * jnp.eye(state_dim)
+    Q = 20.0 * jnp.eye(state_noise_dim)
+    R = 0.1 * jnp.eye(emission_noise_dim)
+
+    # Model functions
+    Phi = 0.8 * jnp.eye(state_dim)
+    fmsv = lambda x, q, u: Phi @ x + q #((1-u) + 0.3*u)*q
+
+    sigma = 5.0
+    beta = 0.5
+    H0 = jnp.eye(emission_dim, state_dim)
+    glmsv = lambda x, r, u: u * beta * jnp.multiply(jnp.exp(x / sigma), r) + (1-u) * (H0 @ x + r)
+
+    F_x = jacfwd(g, argnums=0)
+    F_xx = jit(jacrev(F_x))
+
+    alpha = 1e-4
+    u = 1.0
+    m = jr.multivariate_normal(jr.PRNGKey(0), 10*jnp.ones(3), jnp.eye(3))
+    P = 10*jnp.eye(3)
+    hessian = F_xx(m, r0, u)
+    J = F_x(m,r0,u)
+
+    # print(hessian)
+    # print(J)
+    # print(utils.sdp_opt(3, 10, P, J, hessian, 100, 0.01))
+    # print(jnp.minimum(1.0, alpha * jnp.trace(P) / jnp.sum(jnp.trace(hessian @ P, axis1=1, axis2=2)**2)))
+    Lambda = jnp.minimum(.95, alpha * jnp.trace(P @ J.T @ J) / jnp.sum(jnp.trace(hessian @ P, axis1=1, axis2=2)**2)) * P
+    print(J)
