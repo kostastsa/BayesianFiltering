@@ -1,0 +1,66 @@
+experiment
+
+{
+
+	sim: covinfl
+	{
+		emission_dim: 1,
+		num_timesteps: 100,
+		a: 10,
+		b: 0.1
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 1,
+		n_iters: 1
+
+	}
+}
+
+experiment
+
+{
+
+	sim: covinfl
+	{
+		emission_dim: 1,
+		num_timesteps: 100,
+		a: 10,
+		b: 0.1
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 10,
+		n_iters: 1
+
+	}
+}
+
+experiment
+
+{
+
+	sim: covinfl
+	{
+		emission_dim: 1,
+		num_timesteps: 100,
+		a: 10,
+		b: 0.1
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 100,
+		n_iters: 1
+
+	}
+}
+

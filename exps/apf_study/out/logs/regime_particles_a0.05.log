@@ -1,0 +1,18 @@
+done r=2.5 q=1e-06
+done r=0.025 q=1e-06
+done r=2.5e-05 q=1e-06
+
+particles library only (numpy data). M=1000, T=500, seeds=60, acc=0.05. MSE = weighted mean, summed over states, averaged over time.
+ratio = median over seeds of APF/BPF (below 1: APF better). wins = seeds with APF MSE below BPF MSE. nan = runs left out.
+
+-- resampling: multinomial
+     r       q |   med BPF   med APF  ratio      wins       p nan |     sd_d    sd_ll  ess1  ess2  BPF res  APF res
+   2.5   1e-06 |     0.577     0.876   1.17    24/60    0.155   0 | 6.86e-04 1.97e-01  0.75  0.75     0.04     0.05
+ 0.025   1e-06 |    0.0395    0.0362   0.99    30/60    1.000   0 | 1.24e-02 6.81e-01  0.69  0.69     0.15     0.15
+2.5e-05   1e-06 |      48.2      18.9   0.75    29/52    0.488   8 | 2.48e+01 1.23e+02  0.73  0.01     1.00     1.00
+
+-- resampling: systematic
+     r       q |   med BPF   med APF  ratio      wins       p nan |     sd_d    sd_ll  ess1  ess2  BPF res  APF res
+   2.5   1e-06 |     0.684     0.637   0.94    33/60    0.519   0 |                                   0.05     0.04
+ 0.025   1e-06 |    0.0296    0.0252   0.94    36/60    0.155   0 |                                   0.15     0.14
+2.5e-05   1e-06 |      45.8      24.1   0.58    33/53    0.098   7 |                                   1.00     1.00

@@ -1,0 +1,57 @@
+experiment
+
+{
+
+	sim: covinfl
+	{
+		emission_dim: 1,
+		num_timesteps: 100,
+		a: 10,
+		b: 0.1
+	},
+
+	inf: bpf
+	{
+		num_prt: 100,
+		ess: 0.5
+	}
+}
+
+experiment
+
+{
+
+	sim: covinfl
+	{
+		emission_dim: 1,
+		num_timesteps: 100,
+		a: 10,
+		b: 0.1
+	},
+
+	inf: bpf
+	{
+		num_prt: 500,
+		ess: 0.5
+	}
+}
+
+experiment
+
+{
+
+	sim: covinfl
+	{
+		emission_dim: 1,
+		num_timesteps: 100,
+		a: 10,
+		b: 0.1
+	},
+
+	inf: bpf
+	{
+		num_prt: 1000,
+		ess: 0.5
+	}
+}
+

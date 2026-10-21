@@ -1,0 +1,18 @@
+
+=== q=1e-6, r=2.5 (paper): 30 data sets, 12 runs each, M=1000 ===
+filter | median MSE ours  particles | geo. mean ratio ours<part.      p |   logL diff (ours-part.)     se     t | sd logL ours  particles
+bpf    |          0.5371     0.6375 |           0.993     15/30   1.000 |                    11.39     19   0.6 |          222        308
+apf    |          0.5011     0.5308 |           0.988     15/30   1.000 |                    16.58     38   0.4 |          251        297
+APF/BPF median-MSE ratio:  ours 0.933   particles 0.833
+
+=== q=1e-4, r=0.025: 30 data sets, 12 runs each, M=1000 ===
+filter | median MSE ours  particles | geo. mean ratio ours<part.      p |   logL diff (ours-part.)     se     t | sd logL ours  particles
+bpf    |          0.1673     0.1678 |           1.002     15/30   1.000 |                   -219.4 6.1e+02  -0.4 |     1.17e+04   1.04e+04
+apf    |          0.1559     0.1663 |           0.947     17/30   0.585 |                    129.4 2.6e+02   0.5 |      5.4e+03   4.24e+03
+APF/BPF median-MSE ratio:  ours 0.932   particles 0.991
+
+=== q=1e-2, r=0.025: 30 data sets, 12 runs each, M=1000 ===
+filter | median MSE ours  particles | geo. mean ratio ours<part.      p |   logL diff (ours-part.)     se     t | sd logL ours  particles
+bpf    |           68.38      69.86 |           0.964     14/30   0.856 |                    361.4 5.4e+02   0.7 |     6.67e+03   9.58e+03
+apf    |           59.18      56.62 |           0.992     15/30   1.000 |                    129.8 1.5e+02   0.9 |     5.63e+03   6.02e+03
+APF/BPF median-MSE ratio:  ours 0.865   particles 0.810

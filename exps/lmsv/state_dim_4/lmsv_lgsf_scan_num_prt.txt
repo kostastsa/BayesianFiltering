@@ -1,0 +1,72 @@
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 10,
+		n_iters: 1
+
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 100,
+		n_iters: 1
+
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 1000,
+		n_iters: 1
+
+	}
+}
+

@@ -1,0 +1,84 @@
+experiment
+
+{
+
+	sim: covinfl
+	{
+		emission_dim: 1,
+		num_timesteps: 100,
+		a: 10,
+		b: 0.1
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 2,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.95,
+		ac2: prop,
+		r2: 0.95
+
+	}
+}
+
+experiment
+
+{
+
+	sim: covinfl
+	{
+		emission_dim: 1,
+		num_timesteps: 100,
+		a: 10,
+		b: 0.1
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.95,
+		ac2: prop,
+		r2: 0.95
+
+	}
+}
+
+experiment
+
+{
+
+	sim: covinfl
+	{
+		emission_dim: 1,
+		num_timesteps: 100,
+		a: 10,
+		b: 0.1
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.95,
+		ac2: prop,
+		r2: 0.95
+
+	}
+}
+

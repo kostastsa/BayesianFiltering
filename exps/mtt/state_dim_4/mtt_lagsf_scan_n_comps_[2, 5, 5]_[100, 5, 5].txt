@@ -1,0 +1,81 @@
+experiment
+
+{
+
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 2,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	}
+}
+
+experiment
+
+{
+
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	}
+}
+
+experiment
+
+{
+
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	}
+}
+

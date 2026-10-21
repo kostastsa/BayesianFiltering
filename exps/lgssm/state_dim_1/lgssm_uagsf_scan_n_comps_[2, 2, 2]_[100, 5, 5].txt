@@ -1,0 +1,99 @@
+experiment
+
+{
+
+	sim: lgssm
+
+	{
+
+		state_dim: 1,
+		emission_dim: 1,
+		num_timesteps: 100
+
+	},
+
+	inf: uagsf
+
+	{
+
+		M: 2,
+		N: 2,
+		L: 2,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	}
+}
+
+experiment
+
+{
+
+	sim: lgssm
+
+	{
+
+		state_dim: 1,
+		emission_dim: 1,
+		num_timesteps: 100
+
+	},
+
+	inf: uagsf
+
+	{
+
+		M: 5,
+		N: 10,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	}
+}
+
+experiment
+
+{
+
+	sim: lgssm
+
+	{
+
+		state_dim: 1,
+		emission_dim: 1,
+		num_timesteps: 100
+
+	},
+
+	inf: uagsf
+
+	{
+
+		M: 5,
+		N: 100,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	}
+}
+
