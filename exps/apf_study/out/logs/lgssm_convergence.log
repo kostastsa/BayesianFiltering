@@ -1,0 +1,23 @@
+Kalman filter: ll = -76.097, T = 50, runs per M: 20
+filter                  M | RMSE mean | mean(ll-ll_KF)   sd ll | log mean exp(ll) - ll_KF
+BPF                   100 |    0.1052 |        -0.9997  1.2269 |                  -0.2897
+BPF                   300 |    0.0585 |        -0.0225  0.5100 |                   0.0965
+BPF                  1000 |    0.0318 |        -0.0120  0.3770 |                   0.0748
+BPF                  3000 |    0.0193 |        -0.0018  0.2086 |                   0.0195
+BPF                 10000 |    0.0104 |        -0.0356  0.1139 |                  -0.0293
+BPF                 30000 |    0.0060 |        -0.0137  0.0964 |                  -0.0093
+APF (ESS rule)        100 |    0.0814 |        -0.4691  0.8638 |                  -0.1546
+APF (ESS rule)        300 |    0.0509 |        -0.0607  0.4782 |                   0.0461
+APF (ESS rule)       1000 |    0.0277 |        -0.1255  0.2214 |                  -0.1017
+APF (ESS rule)       3000 |    0.0155 |        -0.0607  0.1521 |                  -0.0498
+APF (ESS rule)      10000 |    0.0092 |        -0.0060  0.1110 |                   0.0001
+APF (ESS rule)      30000 |    0.0054 |        -0.0117  0.0581 |                  -0.0102
+APF (every step)      100 |    0.0959 |        -0.4533  1.1207 |                   0.0273
+APF (every step)      300 |    0.0596 |        -0.2123  0.6544 |                  -0.0282
+APF (every step)     1000 |    0.0298 |        -0.1002  0.2458 |                  -0.0728
+APF (every step)     3000 |    0.0179 |        -0.0059  0.2335 |                   0.0218
+APF (every step)    10000 |    0.0100 |         0.0380  0.1203 |                   0.0453
+APF (every step)    30000 |    0.0057 |         0.0139  0.0564 |                   0.0154
+BPF: slope of log RMSE against log M = -0.50 (Monte Carlo rate: -0.5)
+APF (ESS rule): slope of log RMSE against log M = -0.48 (Monte Carlo rate: -0.5)
+APF (every step): slope of log RMSE against log M = -0.50 (Monte Carlo rate: -0.5)

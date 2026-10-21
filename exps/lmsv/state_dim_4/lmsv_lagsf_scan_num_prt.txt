@@ -1,0 +1,90 @@
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.95,
+		ac2: auto,
+		r2: 0.4
+
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.95,
+		ac2: auto,
+		r2: 0.4
+
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 1000,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.95,
+		ac2: auto,
+		r2: 0.4
+
+	}
+}
+

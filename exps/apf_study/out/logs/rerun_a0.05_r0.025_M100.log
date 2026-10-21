@@ -1,0 +1,5 @@
+a=0.05 sigma2=0.025 M=100 bpf       n=100  mean     80.65 sd     196.8  median     1.172  lost(>1)  50  lost(>10)  39  [4 s]
+a=0.05 sigma2=0.025 M=100 apf       n=100  mean     107.2 sd     251.7  median    0.5304  lost(>1)  45  lost(>10)  37  [4 s]
+a=0.05 sigma2=0.025 M=100 apf_every n=100  mean     95.03 sd     232.1  median     4.696  lost(>1)  59  lost(>10)  42  [3 s]
+a=0.05 sigma2=0.025 M=100 bpf_every n=100  mean     77.69 sd     169.5  median     4.473  lost(>1)  57  lost(>10)  43  [2 s]
+a=0.05 sigma2=0.025 M=100 bpf_pre   n=100  mean     80.66 sd     196.9  median     1.172  lost(>1)  50  lost(>10)  39  [2 s]

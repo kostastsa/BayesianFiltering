@@ -1,0 +1,72 @@
+experiment
+
+{
+
+	sim: lgssm
+
+	{
+
+		state_dim: 1,
+		emission_dim: 1,
+		num_timesteps: 100
+
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 1,
+		n_iters: 1
+
+	}
+}
+
+experiment
+
+{
+
+	sim: lgssm
+
+	{
+
+		state_dim: 1,
+		emission_dim: 1,
+		num_timesteps: 100
+
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 100,
+		n_iters: 1
+
+	}
+}
+
+experiment
+
+{
+
+	sim: lgssm
+
+	{
+
+		state_dim: 1,
+		emission_dim: 1,
+		num_timesteps: 100
+
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 1000,
+		n_iters: 1
+
+	}
+}
+

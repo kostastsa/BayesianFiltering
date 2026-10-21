@@ -1,0 +1,10 @@
+done r=2.5 q=1e-06
+done r=0.025 q=1e-06
+done r=2.5e-05 q=1e-06
+
+M=1000, T=500, seeds=60, acc=0.05. MSE = weighted mean, summed over states, averaged over time.
+ratio = median over seeds of APF/BPF (below 1: APF better). wins = seeds with APF MSE below BPF MSE.
+     r       q |   med BPF   med APF  ratio      wins       p |     sd_d    sd_ll  ess1  ess2  BPF res  APF res
+   2.5   1e-06 |     0.713     0.641   1.10    25/60    0.245 | 6.33e-04 1.92e-01  0.75  0.75     0.05     0.05
+ 0.025   1e-06 |    0.0247    0.0282   1.03    28/60    0.699 | 5.63e-03 5.16e-01  0.69  0.69     0.14     0.14
+2.5e-05   1e-06 |      28.8      4.62   0.47    42/60    0.003 | 1.78e+01 1.14e+02  0.68  0.01     1.00     0.30

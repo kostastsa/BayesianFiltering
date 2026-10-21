@@ -1,0 +1,80 @@
+experiment
+
+{
+
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.05,
+		sigma2: 0.025
+	},
+
+	inf: apf
+	{
+		num_prt: 100,
+		ess: 0.5
+	}
+}
+
+experiment
+
+{
+
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.05,
+		sigma2: 0.025
+	},
+
+	inf: apf
+	{
+		num_prt: 1000,
+		ess: 0.5
+	}
+}
+
+experiment
+
+{
+
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.05,
+		sigma2: 0.025
+	},
+
+	inf: apf
+	{
+		num_prt: 10000,
+		ess: 0.5
+	}
+}
+
+experiment
+
+{
+
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.05,
+		sigma2: 0.025
+	},
+
+	inf: apf
+	{
+		num_prt: 100000,
+		ess: 0.5
+	}
+}
+

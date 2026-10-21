@@ -1,0 +1,63 @@
+experiment
+
+{
+
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 1,
+		n_iters: 1
+
+	}
+}
+
+experiment
+
+{
+
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 100,
+		n_iters: 1
+
+	}
+}
+
+experiment
+
+{
+
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 1000,
+		n_iters: 1
+
+	}
+}
+

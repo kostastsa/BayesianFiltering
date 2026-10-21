@@ -1,0 +1,63 @@
+experiment
+
+{
+
+	sim: lgssm
+
+	{
+
+		state_dim: 1,
+		emission_dim: 1,
+		num_timesteps: 100
+
+	},
+
+	inf: bpf
+	{
+		num_prt: 100,
+		ess: 0.5
+	}
+}
+
+experiment
+
+{
+
+	sim: lgssm
+
+	{
+
+		state_dim: 1,
+		emission_dim: 1,
+		num_timesteps: 100
+
+	},
+
+	inf: bpf
+	{
+		num_prt: 1000,
+		ess: 0.5
+	}
+}
+
+experiment
+
+{
+
+	sim: lgssm
+
+	{
+
+		state_dim: 1,
+		emission_dim: 1,
+		num_timesteps: 100
+
+	},
+
+	inf: bpf
+	{
+		num_prt: 10000,
+		ess: 0.5
+	}
+}
+

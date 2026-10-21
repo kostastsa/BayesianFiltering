@@ -1,0 +1,11 @@
+M=1000, T=500, seeds=60, acc=0.5, u[0]=1
+(A) repo convention of pf.py, (B) aligned with simulate(). ratio = geo. mean over seeds of MSE(B)/MSE(A), wins = seeds with B < A.
+     r       q | BPF: med A    med B  ratio     wins      p | APF: med A    med B  ratio     wins      p | APF/BPF in A   in B
+   2.5   1e-06 |       1.54     1.07   0.92   31/60   0.897 |      0.757     1.04   1.04   29/60   0.897 |         0.76   0.89
+ 0.025   1e-06 |     0.0434   0.0453   0.74   36/60   0.155 |     0.0491   0.0587   0.79   34/60   0.366 |         1.00   1.04
+2.5e-05   1e-06 |      0.975    0.588   1.10   31/60   0.897 |     0.0346   0.0102   0.36   29/54   0.683 |         0.71   0.23
+
+Prior mismatch of (A). Squared Mahalanobis distance to N(m0, P0), mean over seeds (4 = mean of a chi-square with 4 df):
+  true x_0 : mean 4.51, median 3.94
+  z*       : mean 5.44, median 4.25   (z* = the initial particle that reproduces the data path in (A))
+  seeds with z* farther from the prior than x_0: 38/60; with squared distance > 9.49 (95% quantile): x_0 5, z* 7 of 60
