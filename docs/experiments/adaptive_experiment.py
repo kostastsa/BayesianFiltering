@@ -4,6 +4,7 @@ sys.path.append(r'/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfi
 from jax import numpy as jnp
 from jax import random as jr
 from jax import vmap
+import pandas as pd
 
 import gaussfiltax.utils as utils
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
@@ -22,44 +23,36 @@ plt.style.use(['science', 'ieee'])
 matplotlib_inline.backend_inline.set_matplotlib_formats('svg')
 
 
-#Helper functions
-def bootstrap(key, rmse_array, B):
-    N = rmse_array.shape[0]
-    rmse_boot = jnp.zeros((B,))
-    for b in range(B):
-        key, subkey = jr.split(key)
-        ind = jr.randint(subkey, (N,), 0, N)
-        rmse_boot = rmse_boot.at[b].set(jnp.mean(rmse_array[ind]))
-    return rmse_boot
-
 # Parameters
 state_dim = 10
 state_noise_dim = 10
 emission_dim = 10
 emission_noise_dim = 10
-seq_length = 200
+seq_length = 140
 mu0 = 0.0 * jnp.zeros(state_dim)
 q0 = jnp.zeros(state_noise_dim)
 r0 = 0.0001 * jnp.ones(emission_noise_dim)
 Sigma0 = 1.0 * jnp.eye(state_dim)
 Q = 10.0 * jnp.eye(state_noise_dim)
-R = 0.1 * jnp.eye(emission_noise_dim)
+R = 1e-1 * jnp.eye(emission_noise_dim)
 
 # Model functions
 Phi = 0.8 * jnp.eye(state_dim)
-fmsv = lambda x, q, u: Phi @ x + q #((1-u) + 0.3*u)*q
+fmsv = lambda x, q, u: Phi @ x + q
 
-sigma = 5.0
+sigma = 4.0
 beta = 0.5
 H0 = jnp.eye(emission_dim, state_dim)
 glmsv = lambda x, r, u: u * beta * jnp.multiply(jnp.exp(x / sigma), r) + (1-u) * (H0 @ x + r)
+
 def lmsvlp(x,y,u):
     M = u * beta * jnp.diag(jnp.exp(x / sigma)) + (1-u) * jnp.eye(emission_dim)
     return MVN(loc = glmsv(x, r0, u), covariance_matrix = M @ R @ M.T).log_prob(y)
 
 # Inputs
 # inputs = jnp.array([0]*int(seq_length/2) + [1]*int(seq_length/2)) # off - on
-inputs = vmap(lambda x: jnp.sin(0.1 * x)**2)(jnp.arange(seq_length)) # sine
+# inputs = vmap(lambda x: jnp.sin(0.1 * x)**2)(jnp.arange(seq_length)) # sine_sq
+inputs = vmap(lambda x: (1 - jnp.sin(0.2 * x))/2)(jnp.arange(seq_length)) # sine
 # inputs = jr.uniform(jr.PRNGKey(0), (seq_length,))
 # inputs = jnp.zeros(seq_length) # off
 # inputs = jnp.ones(seq_length) # on
@@ -73,6 +66,7 @@ glp = lmsvlp
 
 # initialization
 model = NonlinearSSM(state_dim, state_noise_dim, emission_dim, emission_noise_dim)
+
 params = ParamsNLSSM(
     initial_mean=mu0,
     initial_covariance=Sigma0,
@@ -84,141 +78,246 @@ params = ParamsNLSSM(
     emission_noise_covariance=R,
 )
 
+params_bpf = ParamsBPF(
+    initial_mean=mu0,
+    initial_covariance=Sigma0,
+    dynamics_function=f,
+    dynamics_noise_bias=q0,
+    dynamics_noise_covariance=Q,
+    emission_function=g,
+    emission_noise_bias=r0,
+    emission_noise_covariance=R,
+    emission_distribution_log_prob = glp
+)
 
 verbose = False
-Nsim = 5
-gsf_rmse = jnp.zeros(Nsim)
-ugsf_rmse = jnp.zeros(Nsim)
-agsf_rmse = jnp.zeros(Nsim)
-uagsf_rmse = jnp.zeros(Nsim)
+Nsim = 20
+gsf_mse = jnp.zeros(Nsim)
+ugsf_mse = jnp.zeros(Nsim)
+agsf_mse = jnp.zeros(Nsim)
+uagsf_mse = jnp.zeros(Nsim)
+bpf_mse = jnp.zeros(Nsim)
+apf_mse = jnp.zeros(Nsim)
+gspf_mse = jnp.zeros(Nsim)
 
-bpf_rmse = jnp.zeros(Nsim)
 gsf_norm = jnp.zeros((Nsim, seq_length))
 ugsf_norm = jnp.zeros((Nsim, seq_length))
 agsf_norm = jnp.zeros((Nsim, seq_length))
 uagsf_norm = jnp.zeros((Nsim, seq_length))
 bpf_norm = jnp.zeros((Nsim, seq_length))
+apf_norm = jnp.zeros((Nsim, seq_length))
+gspf_norm = jnp.zeros((Nsim, seq_length))
 
 gsf_time = jnp.zeros(Nsim)
 ugsf_time = jnp.zeros(Nsim)
 agsf_time = jnp.zeros(Nsim)
 uagsf_time = jnp.zeros(Nsim)
 bpf_time = jnp.zeros(Nsim)
-
-gsf_bin_error = jnp.zeros(Nsim)
-agsf_bin_error = jnp.zeros(Nsim)
-uagsf_bin_error = jnp.zeros(Nsim)
-bpf_bin_error = jnp.zeros(Nsim)
-
+apf_time = jnp.zeros(Nsim)
+gspf_time = jnp.zeros(Nsim)
 
 next_key = jr.PRNGKey(0)
+
 for i in range(Nsim):
+
     print('sim {}/{}'.format(i+1, Nsim))
     # Generate Data
-    keys = jr.split(next_key, 5)
-    next_key = keys[4]
-    states, emissions = model.sample(params, keys[0], seq_length, inputs = inputs)
+    print('next_key: ', next_key)
+    key0, key, next_key = jr.split(next_key, 3)
+    print('key0: ', key0)
+    print('key: ', key)
+    states, emissions = model.sample(params, key0, seq_length, inputs = inputs)
 
     # GSF
-    M = 1000
+    M = 10
     tin = time.time()
-    posterior_filtered_gsf = gf.gaussian_sum_filter(params, emissions, M, 1, inputs)
+    posterior_filtered_gsf = gf.gaussian_sum_filter(params, emissions, M, 1, key, inputs)
     point_estimate_gsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_gsf.means, posterior_filtered_gsf.weights), axis=0)
-    t_gsf = time.time() - tin
-    print('       Time taken for GSF: ', t_gsf)
-
-    # # U-GSF
-    uparams = ParamsUKF(1,0,0)
-    tin = time.time()
-    posterior_filtered_ugsf = gf.gaussian_sum_filter(params, emissions, M, 1, inputs)
-    point_estimate_ugsf =  jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_ugsf.means, posterior_filtered_ugsf.weights), axis=0)
     tout = time.time()
-    t_ugsf = tout - tin
-    print('       Time taken for UGSF: ', t_ugsf)
+    t_gsf= tout - tin
+    print('       Time taken for GSF: ', tout - tin)
+
+    # U-GSF
+    tin = time.time()
+    uparams = ParamsUKF(1,0,0)
+    posterior_filtered_ugsf = gf.unscented_gaussian_sum_filter(params, uparams, emissions, M, 1, key, inputs)
+    point_estimate_ugsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_ugsf.means, posterior_filtered_ugsf.weights), axis=0)
+    tout = time.time()
+    t_ugsf= tout - tin
+    print('       Time taken for UGSF: ', tout - tin)
 
     # AGSF
-    opt_args = (0.8, 0.1)
+    opt_args = (0.9, 1e-6)
+    num_components = [100, 5, 5]
     tin = time.time()
-    num_components = [10, 2, 2]
-    posterior_filtered_agsf, aux_outputs = gf.speedy_augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = keys[1], opt_args = opt_args, inputs=inputs)    
+    posterior_filtered_agsf, aux_outputs_agsf = gf.speedy_augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)    
     point_estimate_agsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_agsf.means, posterior_filtered_agsf.weights), axis=0)
-    t_agsf = time.time() - tin
-    print('       Time taken for AGSF: ', t_agsf)
+    tout = time.time()
+    t_agsf= tout - tin
+    print('       Time taken for AGSF: ', tout - tin)
 
-    # # U-AGSF
+    # U-AGSF
     tin = time.time()
-    posterior_filtered_uagsf, aux_outputs = gf.speedy_augmented_gaussian_sum_filter(params, emissions, num_components, rng_key = keys[2], opt_args = opt_args, inputs=inputs)
+    # opt_args = (0.9, 1.0)
+    # posterior_filtered_uagsf, aux_outputs = gf.unscented_agsf(params, uparams, emissions, num_components, rng_key = key, opt_args = opt_args, inputs=inputs)
+    posterior_filtered_uagsf, aux_outputs_uagsf = gf.speedy_unscented_agsf(params, uparams, emissions, num_components, key, opt_args, inputs=inputs)
     point_estimate_uagsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_uagsf.means, posterior_filtered_uagsf.weights), axis=0)
     tout = time.time()
-    t_uagsf = tout - tin
-    print('       Time taken for UAGSF: ', t_uagsf)
+    t_uagsf= tout - tin
+    print('       Time taken for UAGSF: ', tout - tin)
 
     # BPF
     tin = time.time()
-    num_particles = 10000
-
-    params_bpf = ParamsBPF(
-        initial_mean=mu0,
-        initial_covariance=Sigma0,
-        dynamics_function=f,
-        dynamics_noise_bias=q0,
-        dynamics_noise_covariance=Q,
-        emission_function=g,
-        emission_noise_bias=r0,
-        emission_noise_covariance=R,
-        emission_distribution_log_prob = glp
-    )
-
-    posterior_bpf = gf.bootstrap_particle_filter(params_bpf, emissions, num_particles, keys[3], inputs)
+    num_particles = 50000
+    posterior_bpf = gf.bootstrap_particle_filter(params_bpf, emissions, num_particles, key, inputs)
     point_estimate_bpf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_bpf["particles"], posterior_bpf["weights"]), axis=0)
-    t_bpf  = time.time() - tin
-    print('       Time taken for BPF: ', t_bpf)
+    tout = time.time()
+    t_bpf = tout - tin
+    print('       Time taken for BPF: ', tout - tin)
+
+    # APF
+    # tin = time.time()
+    # posterior_apf = gf.auxiliary_particle_filter(params_bpf, emissions, num_particles, key, inputs)
+    # point_estimate_apf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_apf["particles"], posterior_apf["weights"]), axis=0)
+    # tout = time.time()
+    # t_apf = tout - tin
+    # print('       Time taken for APF: ', tout - tin)
+
+    # GS-PF
+    # num_comp = 1
+    # num_prt = 100
+    # tin = time.time()
+    # posterior_gspf = gf.gaussian_sum_particle_filter(params_bpf, emissions, num_comp, num_prt, key, inputs)
+    # point_estimate_gspf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_gspf.means, posterior_gspf.weights), axis=0)
+    # tout = time.time()
+    # t_gspf = tout - tin
+    # print('       Time taken for GSPF: ', tout - tin)
+
 
     # Computation of errors
-    gsf_rmse = gsf_rmse.at[i].set(utils.rmse(point_estimate_gsf, states))
-    ugsf_rmse = ugsf_rmse.at[i].set(utils.rmse(point_estimate_ugsf, states))
-    agsf_rmse = agsf_rmse.at[i].set(utils.rmse(point_estimate_agsf, states))
-    uagsf_rmse = uagsf_rmse.at[i].set(utils.rmse(point_estimate_uagsf, states))
-    bpf_rmse = bpf_rmse.at[i].set(utils.rmse(point_estimate_bpf, states))
 
-    ## Compute average binned error
-    gsf_bin_error = gsf_bin_error.at[i].set((utils.rmse(point_estimate_gsf[0:int(seq_length/2)], states[0:int(seq_length/2)]) \
-                                            + utils.rmse(point_estimate_gsf[int(seq_length/2)+1:], states[int(seq_length/2)+1:])) / 2)
-    agsf_bin_error = agsf_bin_error.at[i].set((utils.rmse(point_estimate_agsf[0:int(seq_length/2)], states[0:int(seq_length/2)]) \
-                                            + utils.rmse(point_estimate_agsf[int(seq_length/2)+1:], states[int(seq_length/2)+1:])) / 2)
-    uagsf_bin_error = uagsf_bin_error.at[i].set((utils.rmse(point_estimate_uagsf[0:int(seq_length/2)], states[0:int(seq_length/2)]) \
-                                            + utils.rmse(point_estimate_uagsf[int(seq_length/2)+1:], states[int(seq_length/2)+1:])) / 2)
-    bpf_bin_error = bpf_bin_error.at[i].set((utils.rmse(point_estimate_bpf[0:int(seq_length/2)], states[0:int(seq_length/2)]) \
-                                            + utils.rmse(point_estimate_bpf[int(seq_length/2)+1:], states[int(seq_length/2)+1:])) / 2)
+    gsf_norm = gsf_norm.at[i].set(jnp.linalg.norm(point_estimate_gsf[:,(0,2)] - states[:,(0,2)], axis = 1))
+    ugsf_norm = ugsf_norm.at[i].set(jnp.linalg.norm(point_estimate_ugsf[:,(0,2)] - states[:,(0,2)], axis = 1))
+    agsf_norm = agsf_norm.at[i].set(jnp.linalg.norm(point_estimate_agsf[:,(0,2)] - states[:,(0,2)], axis = 1))
+    uagsf_norm = uagsf_norm.at[i].set(jnp.linalg.norm(point_estimate_uagsf[:,(0,2)] - states[:,(0,2)], axis = 1))
+    bpf_norm = bpf_norm.at[i].set(jnp.linalg.norm(point_estimate_bpf[:,(0,2)] - states[:,(0,2)], axis = 1))
+    # apf_norm = apf_norm.at[i].set(jnp.linalg.norm(point_estimate_apf[:,(0,2)] - states[:,(0,2)], axis = 1))
+    # gspf_norm = gspf_norm.at[i].set(jnp.linalg.norm(point_estimate_gspf[:,(0,2)] - states[:,(0,2)], axis = 1))
 
+    gsf_mse = gsf_mse.at[i].set(jnp.mean(gsf_norm[i]))
+    ugsf_mse = ugsf_mse.at[i].set(jnp.mean(ugsf_norm[i]))
+    agsf_mse = agsf_mse.at[i].set(jnp.mean(agsf_norm[i]))
+    uagsf_mse = uagsf_mse.at[i].set(jnp.mean(uagsf_norm[i]))
+    bpf_mse = bpf_mse.at[i].set(jnp.mean(bpf_norm[i]))
+    # apf_mse = apf_mse.at[i].set(jnp.mean(apf_norm[i]))
+    # gspf_mse = gspf_mse.at[i].set(jnp.mean(gspf_norm[i]))
 
     gsf_time = gsf_time.at[i].set(t_gsf)
     ugsf_time = ugsf_time.at[i].set(t_ugsf)
     agsf_time = agsf_time.at[i].set(t_agsf)
     uagsf_time = uagsf_time.at[i].set(t_uagsf)
     bpf_time = bpf_time.at[i].set(t_bpf)
+    # apf_time = apf_time.at[i].set(t_apf)
+    # gspf_time = gspf_time.at[i].set(t_gspf)
 
-    print('              GSF RMSE:', gsf_rmse[i])
-    print('              UGSF RMSE:', ugsf_rmse[i])                                                                           
-    print('              AGSF RMSE:', agsf_rmse[i])
-    print('              UAGSF RMSE:', uagsf_rmse[i])
-    print('              BPF RMSE:', bpf_rmse[i])
 
-    gsf_norm = gsf_norm.at[i].set(jnp.linalg.norm(point_estimate_gsf - states, axis = 1))
-    ugsf_norm = ugsf_norm.at[i].set(jnp.linalg.norm(point_estimate_ugsf - states, axis = 1))
-    agsf_norm = agsf_norm.at[i].set(jnp.linalg.norm(point_estimate_agsf - states, axis = 1))
-    uagsf_norm = uagsf_norm.at[i].set(jnp.linalg.norm(point_estimate_uagsf - states, axis = 1))
-    bpf_norm = bpf_norm.at[i].set(jnp.linalg.norm(point_estimate_bpf - states, axis = 1))
+# Remove NaNs and compute success percentage
+ind_gsf = jnp.unique(jnp.argwhere(jnp.isnan(gsf_mse)))
+gsf_mse = jnp.delete(gsf_mse, ind_gsf, axis = 0)
+gsf_norm = jnp.delete(gsf_norm, ind_gsf, axis = 0)
+gsf_success_pct = int(100 - 100*len(ind_gsf) / Nsim)
 
-ind = jnp.argwhere(jnp.isnan(gsf_norm[:,99])).flatten()
-gsf_norm = jnp.delete(gsf_norm, ind, axis = 0)     
+ind_ugsf = jnp.unique(jnp.argwhere(jnp.isnan(ugsf_mse)))
+ugsf_mse = jnp.delete(ugsf_mse, ind_ugsf, axis = 0)
+ugsf_norm = jnp.delete(ugsf_norm, ind_ugsf, axis = 0)
+ugsf_success_pct = int(100 - 100* len(ind_ugsf) / Nsim)
+
+ind_agsf = jnp.unique(jnp.argwhere(jnp.isnan(agsf_mse)))
+agsf_mse = jnp.delete(agsf_mse, ind_agsf, axis = 0)
+agsf_norm = jnp.delete(agsf_norm, ind_agsf, axis = 0)
+agsf_success_pct = int(100 - 100*len(ind_agsf) / Nsim)
+
+ind_uagsf = jnp.unique(jnp.argwhere(jnp.isnan(uagsf_mse)))
+uagsf_mse = jnp.delete(uagsf_mse, ind_uagsf, axis = 0)
+uagsf_norm = jnp.delete(uagsf_norm, ind_uagsf, axis = 0)
+uagsf_success_pct = int(100 - 100*len(ind_uagsf) / Nsim)
+
+ind_bpf = jnp.unique(jnp.argwhere(jnp.isnan(bpf_mse)))
+bpf_mse = jnp.delete(bpf_mse, ind_bpf, axis = 0)
+bpf_norm = jnp.delete(bpf_norm, ind_bpf, axis = 0)
+bpf_success_pct = int(100 - 100*len(ind_bpf) / Nsim)
+
+# ind_apf = jnp.unique(jnp.argwhere(jnp.isnan(apf_mse)))
+# apf_mse = jnp.delete(apf_mse, ind_apf, axis = 0)
+# apf_norm = jnp.delete(apf_norm, ind_apf, axis = 0)
+# apf_success_pct = int(100 - 100*len(ind_apf) / Nsim)
+
+# ind_gspf = jnp.unique(jnp.argwhere(jnp.isnan(gspf_mse)))
+# gspf_mse = jnp.delete(gspf_mse, ind_gspf, axis = 0)
+# gspf_norm = jnp.delete(gspf_norm, ind_gspf, axis = 0)
+# gspf_success_pct = int(100 - 100*len(ind_gspf) / Nsim)
+
+
+keys = jr.split(jr.PRNGKey(0), 7)
+B = 100
+gsf_boot = utils.bootstrap(keys[0], gsf_mse, B)
+ugsf_boot = utils.bootstrap(keys[1], ugsf_mse, B)
+agsf_boot = utils.bootstrap(keys[2], agsf_mse, B)
+uagsf_boot = utils.bootstrap(keys[3], uagsf_mse, B)
+bpf_boot = utils.bootstrap(keys[4], bpf_mse, B)
+# apf_boot = utils.bootstrap(keys[5], apf_mse, B)
+# gspf_boot = utils.bootstrap(keys[6], gspf_mse, B)
+
+gsf_amse = jnp.mean(gsf_boot)
+ugsf_amse = jnp.mean(ugsf_boot)
+agsf_amse = jnp.mean(agsf_boot)
+uagsf_amse = jnp.mean(uagsf_boot)
+bpf_amse = jnp.mean(bpf_boot)
+# apf_amse = jnp.mean(apf_boot)
+# gspf_amse = jnp.mean(gspf_boot)
+
+gsf_atime = jnp.mean(gsf_time)
+ugsf_atime = jnp.mean(ugsf_time)
+agsf_atime = jnp.mean(agsf_time)
+uagsf_atime = jnp.mean(uagsf_time)
+bpf_atime = jnp.mean(bpf_time)
+# apf_atime = jnp.mean(apf_time)
+# gspf_atime = jnp.mean(gspf_time)
+
+gsf_tab_out = '${:2.3f}\pm{:2.3f}({}\%)$'.format(gsf_amse, jnp.std(gsf_boot), gsf_success_pct)
+ugsf_tab_out = '${:2.3f}\pm{:2.3f}({}\%)$'.format(ugsf_amse, jnp.std(ugsf_boot), ugsf_success_pct)
+agsf_tab_out = '${:2.3f}\pm{:2.3f}({}\%)$'.format(agsf_amse, jnp.std(agsf_boot), agsf_success_pct)
+uagsf_tab_out = '${:2.3f}\pm{:2.3f}({}\%)$'.format(uagsf_amse, jnp.std(uagsf_boot), uagsf_success_pct)
+bpf_tab_out = '${:2.3f}\pm{:2.3f}({}\%)$'.format(bpf_amse, jnp.std(bpf_boot), bpf_success_pct)
+# apf_tab_out = '${:2.3f}\pm{:2.3f}({}\%)$'.format(apf_amse, jnp.std(apf_boot), apf_success_pct)
+# gspf_tab_out = '${:2.3f}\pm{:2.3f}({}\%)$'.format(gspf_amse, jnp.std(gspf_boot), gspf_success_pct)
+
+gsf_tab_out1 = '${:2.2f}\pm{:2.2f}$'.format(gsf_atime, jnp.std(gsf_time))
+ugsf_tab_out1 = '${:2.2f}\pm{:2.2f}$'.format(ugsf_atime, jnp.std(ugsf_time))
+agsf_tab_out1 = '${:2.2f}\pm{:2.2f}$'.format(agsf_atime, jnp.std(agsf_time))
+uagsf_tab_out1 = '${:2.2f}\pm{:2.2f}$'.format(uagsf_atime, jnp.std(uagsf_time))
+bpf_tab_out1 = '${:2.2f}\pm{:2.2f}$'.format(bpf_atime, jnp.std(bpf_time))
+# apf_tab_out1 = '${:2.2f}\pm{:2.2f}$'.format(apf_atime, jnp.std(apf_time))
+# gspf_tab_out1 = '${:2.2f}\pm{:2.2f}$'.format(gspf_atime, jnp.std(gspf_time))
+
+df = pd.DataFrame(columns = [' ','RMSE','time(s)'])
+# df[' '] = ['GSF', 'AGSF', 'AGSF Optimal', 'BPF']
+# df['RMSE'] = [gsf_tab_out, agsf_tab_out, agsf_opt_tab_out, bpf_tab_out]
+# df['time(s)'] = [gsf_tab_out1, agsf_tab_out1, agsf_opt_tab_out1, bpf_tab_out1]
+df[' '] = ['GSF','UGSF', 'AGSF', 'UAGSF', 'BPF']
+df['RMSE'] = [gsf_tab_out, ugsf_tab_out, agsf_tab_out, uagsf_tab_out, bpf_tab_out]
+df['time(s)'] = [gsf_tab_out1, ugsf_tab_out1, agsf_tab_out1, uagsf_tab_out1, bpf_tab_out1]
+print(df.to_latex(index=False))
+df
 
 plt.figure(figsize=(10, 7))
-plt.plot(gsf_norm.sum(axis=0)/(Nsim-len(ind)) , label = 'L-GSF')
-# plt.plot(ugsf_norm.sum(axis=0)/Nsim, label = 'UGSF')
-plt.plot(agsf_norm.sum(axis=0)/Nsim, label = 'L-AGSF')
-plt.plot(uagsf_norm.sum(axis=0)/Nsim, label = 'U-AGSF')
-plt.plot(bpf_norm.sum(axis=0)/Nsim, label = 'BPF')
+plt.plot(jnp.mean(gsf_norm, axis=0), linestyle = 'dashed', label = 'GSF')
+plt.plot(jnp.mean(ugsf_norm, axis=0), linestyle = 'dotted', label = 'UGSF')
+plt.plot(jnp.mean(agsf_norm, axis=0), label = 'L-AGSF')
+plt.plot(jnp.mean(uagsf_norm, axis=0), label = 'U-AGSF')
+plt.plot(jnp.mean(bpf_norm, axis=0), label = 'BPF')
+# plt.plot(apf_norm.sum(axis=0)/Nsim, label = 'APF')
+# plt.plot(gspf_norm.sum(axis=0)/Nsim, label = 'GS-PF')
 # plt.axvline(x=seq_length/2, color = 'gray', linestyle = 'dashed', label = 'change-point')
 plt.ylabel('error', fontsize=15)
 # plt.xlabel('time', fontsize=15)
@@ -229,74 +328,25 @@ plt.savefig(r'/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax
 
 # plot Lambdas
 plt.figure(figsize=(10, 2))
-plt.plot(jnp.trace(aux_outputs["Lambdas"], axis1=2, axis2=3).sum(axis=1)/num_components[0]*num_components[1]/state_dim**2)
-# plt.axvline(x=seq_length/2, color = 'gray', linestyle = 'dashed', label = 'change-point')
+plt.plot(jnp.mean(jnp.trace(aux_outputs_agsf['Deltas'], axis1=2, axis2=3),axis=1), label = 'Deltas AGSF')
+plt.plot(jnp.mean(jnp.trace(aux_outputs_uagsf['Deltas'], axis1=2, axis2=3),axis=1), label = 'Deltas UAGSF')
+plt.plot(jnp.mean(jnp.trace(aux_outputs_agsf['Lambdas'], axis1=2, axis2=3),axis=1), label = 'Lambdas AGSF')
+plt.plot(jnp.mean(jnp.trace(aux_outputs_uagsf['Lambdas'], axis1=2, axis2=3),axis=1), label = 'Lambdas UAGSF')
 plt.ylabel('$tr(\Lambda)$', fontsize=15)
 plt.xticks(fontsize=15)
 plt.yticks(fontsize=15)
 plt.xlabel('time', fontsize=15)
-plt.legend(prop = { "size": 15 })
-plt.savefig(r'/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/output/lambdas.eps', format='eps')
+plt.legend(prop = { "size": 10 })
+plt.savefig(r'/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/output/covs.eps', format='eps')
 
-import pandas as pd
-
-keys = jr.split(jr.PRNGKey(0), 5)
-B = 100
-gsf_boot = bootstrap(keys[0], gsf_rmse, B)
-ugsf_boot = bootstrap(keys[1], ugsf_rmse, B)
-agsf_boot = bootstrap(keys[2], agsf_rmse, B)
-uagsf_boot = bootstrap(keys[3], uagsf_rmse, B)
-bpf_boot = bootstrap(keys[4], bpf_rmse, B)
-
-gsf_bin_boot = bootstrap(keys[0], gsf_bin_error, B)
-agsf_bin_boot = bootstrap(keys[1], agsf_bin_error, B)
-uagsf_bin_boot = bootstrap(keys[2], uagsf_bin_error, B)
-bpf_bin_boot = bootstrap(keys[3], bpf_bin_error, B)
-
-gsf_armse = jnp.mean(gsf_boot)
-ugsf_armse = jnp.mean(ugsf_boot)
-agsf_armse = jnp.mean(agsf_boot)
-uagsf_armse = jnp.mean(uagsf_boot)
-bpf_armse = jnp.mean(bpf_boot)
-
-gsf_bin_armse = jnp.mean(gsf_bin_boot)
-agsf_bin_armse = jnp.mean(agsf_bin_boot)
-uagsf_bin_armse = jnp.mean(uagsf_bin_boot)
-bpf_bin_armse = jnp.mean(bpf_bin_boot)
-
-gsf_time_boot = bootstrap(keys[0], gsf_time, B)
-ugsf_time_boot = bootstrap(keys[1], ugsf_time, B)
-agsf_time_boot = bootstrap(keys[2], agsf_time, B)
-uagsf_time_boot = bootstrap(keys[3], uagsf_time, B)
-bpf_time_boot = bootstrap(keys[4], bpf_time, B)
-
-gsf_atime = jnp.mean(gsf_time_boot)
-ugsf_atime = jnp.mean(ugsf_time_boot)
-agsf_atime = jnp.mean(agsf_time_boot)
-uagsf_atime = jnp.mean(uagsf_time_boot)
-bpf_atime = jnp.mean(bpf_time_boot)
-
-gsf_tab_out = '{:2.3f}±{:2.3f}'.format(gsf_armse, jnp.std(gsf_boot))
-ugsf_tab_out = '{:2.3f}±{:2.3f}'.format(ugsf_armse, jnp.std(ugsf_boot))
-agsf_tab_out = '{:2.3f}±{:2.3f}'.format(agsf_armse, jnp.std(agsf_boot))
-uagsf_tab_out = '{:2.3f}±{:2.3f}'.format(uagsf_armse, jnp.std(uagsf_boot))
-bpf_tab_out = '{:2.3f}±{:2.3f}'.format(bpf_armse, jnp.std(bpf_boot))
-
-gsf_bin_tab_out = '{:2.3f}±{:2.3f}'.format(gsf_bin_armse, jnp.std(gsf_bin_boot))
-agsf_bin_tab_out = '{:2.3f}±{:2.3f}'.format(agsf_bin_armse, jnp.std(agsf_bin_boot))
-uagsf_bin_tab_out = '{:2.3f}±{:2.3f}'.format(uagsf_bin_armse, jnp.std(uagsf_bin_boot))
-bpf_bin_tab_out = '{:2.3f}±{:2.3f}'.format(bpf_bin_armse, jnp.std(bpf_bin_boot))
-
-gsf_tab_out1 = '{:2.2f}±{:2.2f}'.format(gsf_atime, jnp.std(gsf_time_boot))
-ugsf_tab_out1 = '{:2.2f}±{:2.2f}'.format(ugsf_atime, jnp.std(ugsf_time_boot))
-agsf_tab_out1 = '{:2.2f}±{:2.2f}'.format(agsf_atime, jnp.std(agsf_time_boot))
-uagsf_tab_out1 = '{:2.2f}±{:2.2f}'.format(uagsf_atime, jnp.std(uagsf_time_boot))
-bpf_tab_out1 = '{:2.2f}±{:2.2f}'.format(bpf_atime, jnp.std(bpf_time_boot))
-
-df = pd.DataFrame(columns = [' ','RMSE', 'Bin RMSE','time(s)'])
-df[' '] = ['GSF','UGSF', 'AGSF', 'UAGSF', 'BPF']
-df['RMSE'] = [gsf_tab_out, ugsf_tab_out, agsf_tab_out, uagsf_tab_out, bpf_tab_out]
-df['Bin RMSE'] = [gsf_bin_tab_out, 0, agsf_bin_tab_out, uagsf_bin_tab_out, bpf_bin_tab_out]
-df['time(s)'] = [gsf_tab_out1, ugsf_tab_out1, agsf_tab_out1, uagsf_tab_out1, bpf_tab_out1]
-print(df.to_latex(index=False))
-
+# plot rhos
+plt.figure(figsize=(10, 2))
+plt.plot(jnp.mean(aux_outputs_agsf['rho2s'],axis=1), label = r'AGSF')
+plt.plot(jnp.mean(aux_outputs_uagsf['rho2s'],axis=1), label = r'UAGSF')
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.xlabel('time', fontsize=15)
+plt.ylabel(r'$\rho_2$', fontsize=15)
+plt.legend(prop = { "size": 11 })
+# plt.axvline(x=seq_length/2, color = 'gray', linestyle = 'dashed', label = 'change-point')
+plt.savefig(r'/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/output/rhos.eps', format='eps')

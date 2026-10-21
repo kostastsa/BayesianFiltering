@@ -1,0 +1,34 @@
+\begin{minipage}[t]{0.5\linewidth}
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{llccc}
+\toprule
+& \textsc{parameters} & MSE & LPE & Runtime (s) \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{L-GSF}} & $M=10$ & $52.69\pm1.29$ & $6.61\pm0.04$ & $0.54\pm9.09\times 10^{-3}\,\mathrm{s}$ \\
+  & $M=100$ & $53.21\pm2.59$ & $6.54\pm0.06$ & $0.63\pm0.01\,\mathrm{s}$ \\
+  & $M=1000$ & $53.63\pm1.48$ & $6.64\pm0.03$ & $0.70\pm8.96\times 10^{-3}\,\mathrm{s}$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{U-GSF}} & $M=10$ & $49.90\pm1.36$ & $6.55\pm0.03$ & $0.69\pm0.03\,\mathrm{s}$ \\
+  & $M=100$ & $52.27\pm2.12$ & $7.90\pm0.89$ & $0.86\pm0.08\,\mathrm{s}$ \\
+  & $M=1000$ & $50.32\pm1.26$ & $6.55\pm0.03$ & $0.98\pm0.05\,\mathrm{s}$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{\hspace{0.6em}L-AGSF\hspace{0.6em}}} & $M=10, N=5, L=5$ & $18.65\pm0.48$ & $5.65\pm0.03$ & $0.99\pm0.09\,\mathrm{s}$ \\
+  & $M=100, N=5, L=5$ & $15.48\pm0.28$ & $5.47\pm0.02$ & $1.15\pm0.08\,\mathrm{s}$ \\
+  & $M=1000, N=5, L=5$ & $14.59\pm0.26$ & $5.44\pm0.02$ & $1.08\pm0.05\,\mathrm{s}$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{\hspace{0.6em}U-AGSF\hspace{0.6em}}} & $M=10, N=5, L=5$ & $17.46\pm0.39$ & $5.58\pm0.02$ & $1.10\pm0.02\,\mathrm{s}$ \\
+  & $M=100, N=5, L=5$ & $15.10\pm0.35$ & $5.46\pm0.02$ & $1.13\pm0.02\,\mathrm{s}$ \\
+  & $M=1000, N=5, L=5$ & $14.46\pm0.32$ & $5.42\pm0.01$ & $1.23\pm0.01\,\mathrm{s}$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{BPF}} & $M=100$ & $21.77\pm0.78$ & $2.07\times 10^{6}\pm8.56\times 10^{4}$ & $0.87\pm0.07\,\mathrm{s}$ \\
+  & $M=1000$ & $15.77\pm0.29$ & $4.69\times 10^{5}\pm2.39\times 10^{4}$ & $0.87\pm0.04\,\mathrm{s}$ \\
+  & $M=10000$ & $14.87\pm0.40$ & $1.20\times 10^{5}\pm5.03\times 10^{3}$ & $0.79\pm0.03\,\mathrm{s}$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{APF}} & $M=100$ & $20.79\pm0.39$ & $1.72\times 10^{6}\pm3.94\times 10^{4}$ & $0.92\pm0.07\,\mathrm{s}$ \\
+  & $M=1000$ & $16.24\pm0.22$ & $3.33\times 10^{5}\pm1.42\times 10^{4}$ & $0.87\pm0.03\,\mathrm{s}$ \\
+  & $M=10000$ & $15.44\pm0.39$ & $1.01\times 10^{5}\pm1.27\times 10^{4}$ & $0.87\pm0.02\,\mathrm{s}$ \\
+\bottomrule
+\end{tabular}
+\end{minipage}
