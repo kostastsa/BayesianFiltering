@@ -1,0 +1,36 @@
+\begin{minipage}[t]{0.5\linewidth}
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{llcc}
+\toprule
+& \textsc{parameters} & MSE & LPE \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{L-GSF}} & $M=1 (EKF)$ & $0.21\pm0.15$ & $9.42\times 10^{3}\pm6.17\times 10^{3}$ \\
+  & $M=100$ & $0.44\pm0.43$ & $1.77\times 10^{4}\pm1.33\times 10^{4}$ \\
+  & $M=1000$ & $0.02\pm6.56\times 10^{-3}$ & $1.08\times 10^{3}\pm138.07$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{U-GSF}} & $M=1 (UKF)$ & $0.02\pm5.39\times 10^{-3}$ & $713.35\pm293.59$ \\
+  & $M=100$ & $0.06\pm0.04$ & $144.36\pm79.03$ \\
+  & $M=1000$ & $7.10\times 10^{-3}\pm1.42\times 10^{-3}$ & $73.93\pm39.61$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{\hspace{0.6em}L-AGSF\hspace{0.6em}}} & $M=2, N=5, L=5$ & $0.06\pm9.83\times 10^{-3}$ & $-3.34\pm0.06$ \\
+  & $M=10, N=5, L=5$ & $0.02\pm1.40\times 10^{-3}$ & $-3.44\pm0.03$ \\
+  & $M=100, N=5, L=5$ & $0.01\pm1.67\times 10^{-3}$ & $-3.44\pm0.02$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{\hspace{0.6em}U-AGSF\hspace{0.6em}}} & $M=2, N=5, L=5$ & $0.02\pm2.26\times 10^{-3}$ & $-6.87\pm0.24$ \\
+  & $M=10, N=5, L=5$ & $0.01\pm1.27\times 10^{-3}$ & $-7.21\pm0.16$ \\
+  & $M=100, N=5, L=5$ & $0.01\pm1.08\times 10^{-3}$ & $-7.00\pm0.17$ \\
+\midrule
+\multirow{4}{*}{\rotatebox[origin=c]{90}{BPF}} & $M=100$ & $40.64\pm21.23$ & $1.81\times 10^{7}\pm1.09\times 10^{7}$ \\
+  & $M=1000$ & $74.06\pm37.09$ & $3.82\times 10^{7}\pm2.15\times 10^{7}$ \\
+  & $M=10000$ & $74.21\pm33.05$ & $3.71\times 10^{7}\pm1.48\times 10^{7}$ \\
+  & $M=100000$ & $21.13\pm12.32$ & $1.10\times 10^{7}\pm6.84\times 10^{6}$ \\
+\midrule
+\multirow{4}{*}{\rotatebox[origin=c]{90}{APF}} & $M=100$ & $116.62\pm34.29$ & $5.94\times 10^{7}\pm1.59\times 10^{7}$ \\
+  & $M=1000$ & $158.41\pm101.61$ & $6.97\times 10^{7}\pm4.64\times 10^{7}$ \\
+  & $M=10000$ & $62.74\pm38.49$ & $3.45\times 10^{7}\pm2.10\times 10^{7}$ \\
+  & $M=100000$ & $0.94\pm1.03$ & $4.66\times 10^{5}\pm3.94\times 10^{5}$ \\
+\bottomrule
+\end{tabular}
+\end{minipage}

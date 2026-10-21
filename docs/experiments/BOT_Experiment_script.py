@@ -2,16 +2,16 @@ import sys
 sys.path.append(r'/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax')
 
 import time
-import pandas as pd
+import pandas as pd #type: ignore
 
-from jax import numpy as jnp
-from jax import random as jr
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
+from jax import numpy as jnp #type: ignore
+from jax import random as jr #type: ignore
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN #type: ignore
 
 import gaussfiltax.utils as utils
-import gaussfiltax.inference as gf
-from gaussfiltax.inference import ParamsUKF, _ukf_predict_nonadditive
-from gaussfiltax.models import ParamsNLSSM, NonlinearSSM, ParamsBPF
+import gaussfiltax.inference as gf #type: ignore
+from gaussfiltax.inference import ParamsUKF, _ukf_predict_nonadditive #type: ignore
+from gaussfiltax.models import ParamsNLSSM, NonlinearSSM, ParamsBPF #type: ignore
 from gaussfiltax.containers import num_prt1, num_prt2
 
 
@@ -27,7 +27,7 @@ q0 = jnp.zeros(state_noise_dim)
 r0 = jnp.zeros(emission_noise_dim)
 Sigma0 = 1.0 * jnp.array([[0.1, 0.0, 0.0, 0.0],[0.0, 0.005, 0.0, 0.0],[0.0, 0.0, 0.1, 0.0],[0.0, 0.0, 0.0, 0.01]])
 Q = 1e-5 * jnp.eye(state_noise_dim)
-R = 25*1e-6 * jnp.eye(emission_noise_dim)
+R = 25 * 1e-6 * jnp.eye(emission_noise_dim)
 
 dt = 0.5
 FCV = 1.00 * jnp.array([[1, dt, 0, 0],[0, 1, 0, 0],[0, 0, 1, dt],[0, 0, 0, 1]])
@@ -56,6 +56,7 @@ glp = gBOTlp
 
 # initialization
 model = NonlinearSSM(state_dim, state_noise_dim, emission_dim, emission_noise_dim)
+
 params = ParamsNLSSM(
     initial_mean=mu0,
     initial_covariance=Sigma0,
@@ -65,6 +66,18 @@ params = ParamsNLSSM(
     emission_function=g,
     emission_noise_bias= r0,
     emission_noise_covariance=R,
+)
+
+params_bpf = ParamsBPF(
+    initial_mean=mu0,
+    initial_covariance=Sigma0,
+    dynamics_function=f,
+    dynamics_noise_bias=q0,
+    dynamics_noise_covariance=Q,
+    emission_function=g,
+    emission_noise_bias=r0,
+    emission_noise_covariance=R,
+    emission_distribution_log_prob = glp
 )
 
 verbose = False
@@ -86,19 +99,21 @@ ugsf_time = jnp.zeros(Nsim)
 agsf_time = jnp.zeros(Nsim)
 uagsf_time = jnp.zeros(Nsim)
 bpf_time = jnp.zeros(Nsim)
-next_key = jr.PRNGKey(1)
+
+key = jr.PRNGKey(1)
+
 for i in range(Nsim):
+
     print('sim {}/{}'.format(i+1, Nsim))
     # Generate Data
-    key0, key, next_key = jr.split(next_key, 3)
-    print('key0: ', key0)
-    print('key: ', key)
-    states, emissions = model.sample(params, key0, seq_length, inputs = inputs)
+    key, subkey = jr.split(key)
+    states, emissions = model.sample(params, subkey, seq_length, inputs = inputs)
 
     # GSF
     M = 2
     tin = time.time()
-    posterior_filtered_gsf = gf.gaussian_sum_filter(params, emissions, M, 1, inputs)
+    key, subkey = jr.split(key)
+    posterior_filtered_gsf = gf.gaussian_sum_filter(params, emissions, M, 1, subkey, inputs)
     point_estimate_gsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_gsf.means, posterior_filtered_gsf.weights), axis=0)
     tout = time.time()
     t_gsf= tout - tin
@@ -106,9 +121,10 @@ for i in range(Nsim):
 
     # U-GSF
     tin = time.time()
-    uparams = ParamsUKF(1,0,0)
+    uparams = ParamsUKF(1, 0, 0)
     uparams1 = ParamsUKF(1e-3, 2, 0)
-    posterior_filtered_ugsf = gf.unscented_gaussian_sum_filter(params, uparams, emissions, M, 1, inputs)
+    key, subkey = jr.split(key)
+    posterior_filtered_ugsf = gf.unscented_gaussian_sum_filter(params, uparams, emissions, M, 1, subkey, inputs)
     point_estimate_ugsf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_filtered_ugsf.means, posterior_filtered_ugsf.weights), axis=0)
     tout = time.time()
     t_ugsf= tout - tin
@@ -136,18 +152,6 @@ for i in range(Nsim):
     # BPF
     tin = time.time()
     num_particles = 100000
-
-    params_bpf = ParamsBPF(
-        initial_mean=mu0,
-        initial_covariance=Sigma0,
-        dynamics_function=f,
-        dynamics_noise_bias=q0,
-        dynamics_noise_covariance=Q,
-        emission_function=g,
-        emission_noise_bias=r0,
-        emission_noise_covariance=R,
-        emission_distribution_log_prob = glp
-    )
 
     posterior_bpf = gf.bootstrap_particle_filter(params_bpf, emissions, num_particles, key, inputs, 1.0)
     point_estimate_bpf = jnp.sum(jnp.einsum('ijk,ij->ijk', posterior_bpf["particles"], posterior_bpf["weights"]), axis=0)
