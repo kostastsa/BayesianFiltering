@@ -1,13 +1,11 @@
-import jax.numpy as jnp
-import jax.random as jr
-import jax.tree_util as jtu
-from jax.tree_util import register_pytree_node_class
+import jax.numpy as jnp # type: ignore
+import jax.random as jr # type: ignore
+import jax.tree_util as jtu # type: ignore
+from jax.tree_util import register_pytree_node_class # type: ignore
 from functools import partial
-from jax import lax, vmap, jacfwd, jacrev, debug, device_put, jit
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN # type: ignore
 from typing import List, Optional, NamedTuple, Union
-import gaussfiltax.utils as utils
-from jaxtyping import Array, Float, Int
+from jaxtyping import Array, Float, Int # type: ignore
 from typing import List
 
 num_prt1 = 2
@@ -89,8 +87,8 @@ def _branches_from_node1(
 
 def _branches_from_tree1(
     components,
-    split_covs_array:Float[Array, "num_components D_hid D_hid"],
-    num_branch_array:Int[Array, "num_components"],
+    split_covs_array:Float[Array, '...'],
+    num_branch_array:Int[Array, '...'],
     key:jr.PRNGKey = jr.PRNGKey(0)
     ):
     r"""Branch out a Gaussian sum.
@@ -139,8 +137,8 @@ def _branches_from_node2(
 
 def _branches_from_tree2(
     components,
-    split_covs_array:Float[Array, "num_components D_hid D_hid"],
-    num_branch_array:Int[Array, "num_components"],
+    split_covs_array:Float[Array, '...'],
+    num_branch_array:Int[Array, '...'],
     key:jr.PRNGKey = jr.PRNGKey(0)
     ):
     r"""Branch out a Gaussian sum.

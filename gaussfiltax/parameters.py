@@ -1,19 +1,21 @@
-import jax.numpy as jnp
-from jax import lax
-from jax.tree_util import tree_reduce, tree_map, register_pytree_node_class
-import tensorflow_probability.substrates.jax.bijectors as tfb
-from typing import Optional, Union
-from typing_extensions import Protocol
-from jaxtyping import Array, Float
+import jax.numpy as jnp # type: ignore
+from typing import List
+import tensorflow_probability.substrates.jax.distributions as tfd # type: ignore
+import tensorflow_probability.substrates.jax.bijectors as tfb # type: ignore
+from util.bijectors import VecToCorrMat, RealToPSDBijector
+from typing import Optional, runtime_checkable
+from typing_extensions import Protocol # type: ignore
+import abc
+from jax.tree_util import register_pytree_node_class # type: ignore
 
-from gaussfiltax.types import PRNGKey, Scalar
-
+@runtime_checkable
 class ParameterSet(Protocol):
     """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.
 
     """
     pass
 
+@runtime_checkable
 class PropertySet(Protocol):
     """A matching :class:`NamedTuple` with :class:`ParameterProperties` stored in the leaf nodes.
 
@@ -36,87 +38,213 @@ class ParameterProperties:
     def __init__(self,
                  trainable: bool = True,
                  constrainer: Optional[tfb.Bijector] = None) -> None:
+
         self.trainable = trainable
         self.constrainer = constrainer
 
     def tree_flatten(self):
+
         return (), (self.trainable, self.constrainer)
 
     @classmethod
     def tree_unflatten(cls, aux_data, children):
+
         return cls(*aux_data)
 
+    def __repr__(self):
 
-def to_unconstrained(params: ParameterSet, props: PropertySet) -> ParameterSet:
-    """Convert the constrained parameters to unconstrained form.
-
-    Args:
-        params: (nested) named tuple whose leaf values are DeviceArrays containing
-                              parameter values.
-        props: matching named tuple whose leaf values are ParameterProperties,
-                containing an optional bijector that converts to unconstrained form,
-                and a boolean flag specifying if the parameter is trainable or not.
-
-    Returns:
-        unc_params: named tuple containing parameters in unconstrained form.
-
-    """
-    to_unc = lambda value, prop: prop.constrainer.inverse(value) \
-        if prop.constrainer is not None else value
-    is_leaf = lambda node: isinstance(node, (ParameterProperties,))
-    return tree_map(to_unc, params, props, is_leaf=is_leaf)
+        return f"ParameterProperties(trainable={self.trainable}, constrainer={self.constrainer})"
 
 
-def from_unconstrained(unc_params: ParameterSet, props: PropertySet) -> ParameterSet:
-    """Convert the unconstrained parameters to constrained form.
+class ParamNode():
+        
+        def __init__(self, 
+                    value: jnp.ndarray,
+                    is_constrained: bool=False):
+            
+            self.value = value
+            self.is_constrained = is_constrained
 
-    Args:
-        unc_params: (nested) named tuple whose leaf values are DeviceArrays containing
-                              unconstrained parameter values.
-        props: matching named tuple whose leaf values are ParameterProperties,
-                containing an optional bijector that converts to unconstrained form,
-                and a boolean flag specifying if the parameter is trainable or not.
+        def __str__(self):
 
-    Returns:
-        params: named tuple containing parameters in constrained form.
-                 If a parameter is marked with trainable=False (frozen) in the properties structure,
-                 it will be tagged with a "stop gradient". Thus the gradient of any loss function computed
-                 using these frozen constrained parameters will be zero.
-
-    """
-    def from_unc(unc_value, prop):
-        value = prop.constrainer(unc_value) if prop.constrainer is not None else unc_value
-        value = lax.stop_gradient(value) if not prop.trainable else value
-        return value
-
-    is_leaf = lambda node: isinstance(node, (ParameterProperties,))
-    return tree_map(from_unc, unc_params, props, is_leaf=is_leaf)
+            return f"value={self.value}, is_constrained={self.is_constrained}"
 
 
-def log_det_jac_constrain(params: ParameterSet, props: PropertySet) -> Scalar:
-    """Log determinant of the Jacobian matrix evaluated at the unconstrained parameters.
+class ParamField():
 
-    Let x be the unconstrained parameter and f(x) be the constrained parameter, so
-    that in code, `props.constrainer` is the Bijector f. To perform Hamiltonian
-    Monte Carlo (HMC) on the unconstrained parameters we need the log determinant of
-    the forward Jacobian, |df(x) / dx|. In math, this falls out as follows:
+    def __init__(self, 
+                 values_list: List[jnp.ndarray],
+                 param_names: List[str], 
+                 is_constrained_list: List[bool]):
 
-    ..math:
-        log p(x) = log p(f(x)) + log |df(x) / dx|
+        for i, value in enumerate(values_list):
 
-    Args:
-        params: PyTree whose leaf values are DeviceArrays
-        props: matching PyTree whose leaf values are ParameterProperties
+            setattr(self, param_names[i], ParamNode(value, is_constrained_list[i]))
 
-    Returns:
-        logdet: the log determinant of the forward Jacobian.
-    """
-    unc_params = to_unconstrained(params, props)
-    def _compute_logdet(unc_value, prop):
-        logdet = prop.constrainer.forward_log_det_jacobian(unc_value).sum() \
-            if prop.constrainer is not None else 0.0
-        return logdet if prop.trainable else 0.0
+    def __str__(self):
 
-    is_leaf = lambda node: isinstance(node, (ParameterProperties,))
-    logdets = tree_map(_compute_logdet, unc_params, props, is_leaf=is_leaf)
-    return tree_reduce(jnp.add, logdets, 0.0)
+        str = ''
+
+        for key in self.__dict__:
+
+            str += f"{key}={getattr(self, key).__class__.__name__}({self.__dict__[key]}), "
+
+        return str[:-2]
+    
+
+class Field():
+
+    def __init__(self, 
+                 values_list: List[jnp.ndarray],
+                 param_names: List[str]=None):
+
+
+        for i, value in enumerate(values_list):
+
+            if param_names is not None:
+
+                setattr(self, param_names[i], value)
+
+            else:
+
+                setattr(self, f"param_{i}", value)
+
+    def __str__(self):
+
+        str = ''
+
+        for key in self.__dict__:
+
+            str += f"{key}={getattr(self, key).__class__.__name__}({self.__dict__[key]}), "
+
+        return str[:-2]
+
+
+class ParamSSM():
+
+    def __init__(self, 
+                 initial: ParamField, 
+                 dynamics: ParamField, 
+                 emissions: ParamField):
+
+        self.initial = initial
+        self.dynamics = dynamics
+        self.emissions = emissions
+
+    def __str__(self):
+
+        str = f'{self.__class__.__name__}('
+
+        for key in ['initial', 'dynamics', 'emissions']:
+
+            str += f"{key}={getattr(self, key).__class__.__name__}({self.__dict__[key]})"
+
+        return str[:-2]
+
+    def pprint(self):
+
+        str = f'{self.__class__.__name__}(\n'
+
+        for key in ['initial', 'dynamics', 'emissions']:
+
+            str += f"\t {key}={getattr(self, key).__class__.__name__}(\n"
+
+            for subkey in getattr(self, key).__dict__:
+
+                str += f"\t \t{subkey}({getattr(getattr(self, key), subkey)}), \n"
+
+            str += '\t\t ) \n'
+
+        str += '\t )'
+
+        return str
+
+    def to_unconstrained(self, props):
+
+        for field_name in ['initial', 'dynamics', 'emissions']:
+
+            field = getattr(self, field_name)
+            props_field = getattr(props, field_name)
+
+            for subfield_name in field.__dict__:
+
+                subfield = getattr(field, subfield_name)
+                props_subfield = getattr(props_field, subfield_name)
+                constrainer = props_subfield.props.constrainer
+
+                if constrainer is not None:
+
+                    setattr(subfield, 'is_constrained', False)
+
+                    if isinstance(constrainer, tfb.bijector._AutoCompositeTensorBijectorMeta):
+
+                        setattr(subfield, 'value', constrainer().inverse(subfield.value))
+
+                    elif isinstance(constrainer, tfb.Exp) or isinstance(constrainer, VecToCorrMat):
+
+                        setattr(subfield, 'value', constrainer.inverse(subfield.value))
+
+                    else: 
+                        
+                        raise ValueError(f"Unknown constrainer type: {type(constrainer)}")
+
+    def from_unconstrained(self, props):
+
+        for field_name in ['initial', 'dynamics', 'emissions']:
+
+            field = getattr(self, field_name)
+            props_field = getattr(props, field_name)
+
+            for subfield_name in field.__dict__:
+
+                subfield = getattr(field, subfield_name)
+                props_subfield = getattr(props_field, subfield_name)
+
+                if not subfield.is_constrained:
+
+                    constrainer = props_subfield.props.constrainer
+                    setattr(subfield, 'is_constrained', True)
+
+                    if constrainer is not None:
+
+                        if isinstance(constrainer, tfb.Exp) or isinstance(constrainer, VecToCorrMat):
+
+                            setattr(subfield, 'value', constrainer.forward(subfield.value))
+
+                        else:
+
+                            setattr(subfield, 'value', constrainer()(subfield.value))
+
+    def _get_names(self):
+
+        names_tree = []
+
+        for field_name in ['initial', 'dynamics', 'emissions']:
+
+            field = getattr(self, field_name)
+            names_list = []
+
+            for subfield_name in field.__dict__:
+
+                names_list.append(subfield_name)
+
+            names_tree.append(names_list)
+
+        return names_tree
+    
+    def _is_constrained_tree(self):
+
+        is_constrained_tree = []
+
+        for field_name in ['initial', 'dynamics', 'emissions']:
+
+            field = getattr(self, field_name)
+            is_constrained_list = []
+
+            for subfield_name in field.__dict__:
+
+                is_constrained_list.append(getattr(getattr(field, subfield_name), 'is_constrained'))
+
+            is_constrained_tree.append(is_constrained_list)
+
+        return is_constrained_tree
