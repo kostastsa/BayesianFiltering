@@ -1,16 +1,15 @@
-from jaxtyping import Array, Float
+from jaxtyping import Array, Float #type: ignore 
 from typing import NamedTuple, Optional, Union, Callable, Tuple
-import tensorflow_probability.substrates.jax as tfp
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-import tensorflow_probability.substrates.jax.distributions as tfd
-from gaussfiltax.ssm import SSM
-from gaussfiltax.parameters import ParameterSet, PropertySet
-from gaussfiltax.types import PRNGKey, Scalar
-import jax
-from jax import jit, lax, vmap
-from jax.tree_util import tree_map
-import jax.numpy as jnp
-import jax.random as jr
+import tensorflow_probability.substrates.jax as tfp #type: ignore 
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN #type: ignore 
+import tensorflow_probability.substrates.jax.distributions as tfd #type: ignore
+from ssm import SSM
+from parameters import ParameterSet, PropertySet
+from util.types import PRNGKey, Scalar
+from jax import lax #type: ignore
+from jax.tree_util import tree_map #type: ignore
+import jax.numpy as jnp #type: ignore
+import jax.random as jr #type: ignore
 
 
 tfd = tfp.distributions
@@ -41,16 +40,14 @@ class ParamsNLSSM(NamedTuple):
 
     """
 
-    initial_mean: Float[Array, "state_dim"]
-    initial_covariance: Float[Array, "state_dim state_dim"]
+    initial_mean: Float[Array, '...']
+    initial_covariance: Float[Array, '...']
     dynamics_function: Union[FnStateToState, FnStateAndInputToState]
-    dynamics_noise_bias: Float[Array, "state_noise_dim"]
-    dynamics_noise_covariance: Float[Array, "state_noise_dim state_noise_dim"]
+    dynamics_noise_bias: Float[Array, '...']
+    dynamics_noise_covariance: Float[Array, '...']
     emission_function: Union[FnStateToEmission, FnStateAndInputToEmission]
-    emission_noise_bias: Float[Array, "emission_noise_dim"] 
-    emission_noise_covariance: Float[Array, "emission_noise_dim emission_noise_dim"]
-
-
+    emission_noise_bias: Float[Array, '...'] 
+    emission_noise_covariance: Float[Array, '...']
 
 class ParamsBPF(NamedTuple):
     """Parameters for a BPF model.
@@ -69,14 +66,14 @@ class ParamsBPF(NamedTuple):
     :param initial_covariance: $S$
 
     """
-    initial_mean: Float[Array, "state_dim"]
-    initial_covariance: Float[Array, "state_dim state_dim"]
+    initial_mean: Float[Array, '...']
+    initial_covariance: Float[Array, '...']
     dynamics_function: Union[FnStateToState, FnStateAndInputToState]
-    dynamics_noise_bias: Float[Array, "state_noise_dim"]
-    dynamics_noise_covariance: Float[Array, "state_noise_dim state_noise_dim"]
+    dynamics_noise_bias: Float[Array, '...']
+    dynamics_noise_covariance: Float[Array, '...']
     emission_function: Union[FnStateToEmission, FnStateAndInputToEmission]
-    emission_noise_bias: Float[Array, "emission_noise_dim"] 
-    emission_noise_covariance: Float[Array, "emission_noise_dim emission_noise_dim"]
+    emission_noise_bias: Float[Array, '...'] 
+    emission_noise_covariance: Float[Array, '...']
     emission_distribution_log_prob: Callable
 
     def sample_dynamics_distribution(self, key, x, u):
@@ -126,16 +123,16 @@ class NonlinearGaussianSSM(SSM):
     def initial_distribution(
         self,
         params: ParamsNLSSM,
-        inputs: Optional[Float[Array, "input_dim"]] = None
-    ) -> tfd.Distribution:
+        inputs: Optional[Float[Array, '...']] = None
+    ):
         return MVN(params.initial_mean, params.initial_covariance)
 
     def transition_distribution(
         self,
         params: ParamsNLSSM,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]] = None
-    ) -> tfd.Distribution:
+        state: Float[Array, '...'],
+        inputs: Optional[Float[Array, '...']] = None
+    ):
         f = params.dynamics_function
         if inputs is None:
             mean = f(state)
@@ -146,16 +143,15 @@ class NonlinearGaussianSSM(SSM):
     def emission_distribution(
         self,
         params: ParamsNLSSM,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]] = None
-     ) -> tfd.Distribution:
+        state: Float[Array, '...'],
+        inputs: Optional[Float[Array, '...']] = None
+     ):
         h = params.emission_function
         if inputs is None:
             mean = h(state)
         else:
             mean = h(state, inputs)
         return MVN(mean, params.emission_noise_covariance)
-    
 
 class NonlinearSSM(SSM):
     """
@@ -190,6 +186,7 @@ class NonlinearSSM(SSM):
 
 
     def __init__(self, state_dim: int, state_noise_dim:int,  emission_dim: int, emission_noise_dim:int, input_dim: int = 0):
+
         self.state_dim = state_dim
         self.state_noise_dim = state_noise_dim
         self.emission_dim = emission_dim
@@ -198,53 +195,67 @@ class NonlinearSSM(SSM):
 
     @property
     def emission_shape(self):
+
         return (self.emission_dim,)
 
     @property
     def inputs_shape(self):
+
         return (self.input_dim,) if self.input_dim > 0 else None
 
     def initial_distribution(
         self,
         params: ParamsNLSSM,
-        inputs: Optional[Float[Array, "input_dim"]] = None
-    ) -> tfd.Distribution:
+        inputs: Optional[Float[Array, '...']] = None
+    ):
+
         return MVN(params.initial_mean, params.initial_covariance)
 
     def transition_distribution(
         self,
         params: ParamsNLSSM,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]] = None
-    ) -> tfd.Distribution:
+        state: Float[Array, '...'],
+        inputs: Optional[Float[Array, '...']] = None
+    ):
         f = params.dynamics_function
+
         if inputs is None:
+
             mean = f(state)
+
         else:
+
             mean = f(state, inputs)
+
         return MVN(mean, params.dynamics_noise_covariance)
 
     def emission_distribution(
         self,
         params: ParamsNLSSM,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]] = None
-     ) -> tfd.Distribution:
+        state: Float[Array, '...'],
+        inputs: Optional[Float[Array, '...']] = None
+     ):
+
         h = params.emission_function
+
         if inputs is None:
+
             mean = h(state)
+
         else:
+
             mean = h(state, inputs)
+
         return MVN(mean, params.emission_noise_covariance)
     
     def sample(
         self,
         params: ParameterSet,
-        key: PRNGKey,
+        key: PRNGKey, # type: ignore
         num_timesteps: int,
-        inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> Tuple[Float[Array, "num_timesteps state_dim"],
-              Float[Array, "num_timesteps emission_dim"]]:
+        inputs: Optional[Float[Array, '...']]=None
+    ) -> Tuple[Float[Array, '...'],
+              Float[Array, '...']]:
         r"""Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$ and (optionally) inputs $u_{1:T}$.
 
         Args:
@@ -262,12 +273,14 @@ class NonlinearSSM(SSM):
         h = params.emission_function
 
         def _step(prev_state, args):
+
             key, inpt = args
             key1, key2 = jr.split(key, 2)
             q = MVN(params.dynamics_noise_bias, params.dynamics_noise_covariance).sample(seed=key1)
             r = MVN(params.emission_noise_bias, params.emission_noise_covariance).sample(seed=key2)
             state = f(prev_state, q, inpt)
             emission = h(state, r, inpt)
+
             return state, (state, emission)
 
         # Sample the initial state
@@ -286,4 +299,5 @@ class NonlinearSSM(SSM):
         expand_and_cat = lambda x0, x1T: jnp.concatenate((jnp.expand_dims(x0, 0), x1T))
         states = tree_map(expand_and_cat, initial_state, next_states)
         emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
+
         return states, emissions
