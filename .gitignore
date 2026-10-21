@@ -1,0 +1,13 @@
+# Experiment results (large, not in git)
+data.nosync/
+
+# Claude Code worktrees
+.claude/
+
+# Python caches and editor backups
+__pycache__/
+*.pyc
+*~
+
+# Large notebook with embedded outputs
+notebooks/Experiment A.ipynb
