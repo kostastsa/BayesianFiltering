@@ -2,6 +2,8 @@
 
 These scripts check the auxiliary particle filter (APF) of `gaussfiltax/filters/pf.py` and compare it with the bootstrap particle filter (BPF). Run each script in the folder `out/`.
 
+This folder is scratch code (CLAUDE.md rule 5). It was in `exps/apf_study/` until 30-Oct-2026. The scripts are copies from commit `5e6843b`. The logs that were not in git are lost. Do not report a result from this folder as an experiment result. The table scripts in steps 4 and 5 below must move into `gaussfiltax/` and `main.py` before the tables go into the paper again.
+
 ## Tables I and III (reported results)
 
 The BPF and APF rows of Tables I and III come from `main.py`, not from the scripts below.
@@ -9,8 +11,8 @@ The BPF and APF rows of Tables I and III come from `main.py`, not from the scrip
 1. `python gaussfiltax/create_exps.py` writes the descriptor files `exps/mtt/state_dim_4/a_<a>_sigma2_<sigma2>/mtt_{bpf,apf,apf_ess2}_scan_num_prt.txt`.
 2. `./run_tables_I_III.zsh 1 30 0.5` and `./run_tables_I_III.zsh 1 30 0.05` run the trials and the metrics (30 trials, seed 1000 + trial number). `SEED_BASE=2000 ./run_tables_I_III.zsh 1 30 <a> apf_ess2` runs the APF that resamples at every step.
 3. `python gaussfiltax/main.py errors --no-plots 1 30 <descriptor files>` writes `Error summary.txt` for all trials.
-4. `python exps/apf_study/tables_I_III.py` writes `tables_I_III_rows.tex` (rows of the two tables).
-5. `python exps/apf_study/compare_apf_bpf_api.py` writes `apf_vs_bpf_api.tex` and `apf_ess2_api.tex` (Appendix D.4: medians, lost trials, tests).
+4. `python scratch/apf_study/tables_I_III.py` writes `tables_I_III_rows.tex` (rows of the two tables).
+5. `python scratch/apf_study/compare_apf_bpf_api.py` writes `apf_vs_bpf_api.tex` and `apf_ess2_api.tex` (Appendix D.4: medians, lost trials, tests).
 
 The two scripts in steps 4 and 5 read the files that `main.py errors` saves. They compute no error measure. The logs of the runs are in `data.nosync/logs/`.
 
