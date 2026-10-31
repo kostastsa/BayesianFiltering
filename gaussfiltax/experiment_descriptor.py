@@ -818,12 +818,70 @@ class APF_Descriptor():
         return os.path.join('pf', 'apf', self.get_id())
 
 
+class DataDescriptor():
+    """Optional 'data' block of an experiment: run the filter on the stored data of another experiment with the same
+    simulator settings, instead of simulating new data. 'from' is the folder of that experiment below the simulator folder
+    (for example pf/apf/numprt_1000_ess_0.5). Trial t uses the data of trial ((t - 1) mod trials) + 1 of that experiment,
+    so trials 1..R*trials are R runs on each data set."""
+
+    def __init__(self, str=None):
+
+        self.src = None
+        self.trials = None
+        self.name = 'data'
+
+        try:
+
+            self.parse(str)
+
+        except:
+
+            pass
+
+    def pprint(self):
+
+        str = 'data\n'
+        str += '\t{\n'
+        str += '\t\tfrom: {0},\n'.format(self.src)
+        str += '\t\ttrials: {0}\n'.format(self.trials)
+        str += '\t}'
+
+        return str
+
+    def create_desc(self, src, trials):
+
+        str = 'data: data\n'
+        str += '\t{\n'
+        str += '\t\tfrom: {0},\n'.format(src)
+        str += '\t\ttrials: {0}\n'.format(trials)
+        str += '\t}'
+
+        return str
+
+    def parse(self, str):
+
+        str = util.misc.remove_whitespace(str)
+        m = re.match(r'data\{from:([^,]*),trials:(.*)\}\Z', str)
+
+        self.src = m.group(1)
+        self.trials = int(m.group(2))
+
+    def data_trial(self, trial):
+
+        return (trial - 1) % self.trials + 1
+
+    def get_dir(self):
+
+        return 'data_' + self.src.replace('/', '_')
+
+
 class ExperimentDescriptor:
 
     def __init__(self, str=None):
 
         self.sim = None
         self.inf = None
+        self.data = None
         self.str = str
 
         try:
@@ -840,18 +898,23 @@ class ExperimentDescriptor:
         str += '{\n'
         str += '\tsim: {0},\n'.format(self.sim.pprint())
         str += '\n'
-        str += '\tinf: {0}\n'.format(self.inf.pprint())
-        str += '}\n'
+        str += '\tinf: {0}'.format(self.inf.pprint())
+        if self.data is not None:
+            str += ',\n\n\tdata: {0}'.format(self.data.pprint())
+        str += '\n}\n'
 
         return str
 
-    def create_desc(self, sim_desc, inf_desc):
+    def create_desc(self, sim_desc, inf_desc, data_desc=None):
 
         str = 'experiment\n\n'
         str += '{\n\n\t'
         str += sim_desc
         str += ',\n\n\t'
         str += inf_desc
+        if data_desc is not None:
+            str += ',\n\n\t'
+            str += data_desc
         str += '\n}'
         str += '\n'
 
@@ -863,7 +926,7 @@ class ExperimentDescriptor:
         '''
 
         str = util.misc.remove_whitespace(str)
-        m = re.match(r'experiment\{sim:(.*),inf:(.*)\}\Z', str)
+        m = re.match(r'experiment\{sim:(.*),inf:(.*?)(?:,data:(data\{[^{}]*\}))?\}\Z', str)
 
         if m is None:
 
@@ -871,8 +934,12 @@ class ExperimentDescriptor:
 
         self.sim = SimulatorDescriptor.get_descriptor(m.group(1))
         self.inf = InferenceDescriptor.get_descriptor(m.group(2))
+        self.data = DataDescriptor(m.group(3)) if m.group(3) else None
 
     def get_dir(self):
+
+        if self.data is not None:
+            return os.path.join(self.sim.get_dir(), self.data.get_dir(), self.inf.get_dir())
 
         return os.path.join(self.sim.get_dir(), self.inf.get_dir())
 

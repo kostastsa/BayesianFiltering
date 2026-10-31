@@ -60,6 +60,7 @@ def create_descs(
     sim_desc,
     alg,
     scan_params=None,
+    data_desc=None,
 ):
     """
     Create experiment descriptors for a given algorithm with flexible parameter scanning.
@@ -73,6 +74,8 @@ def create_descs(
     scan_params : dict, optional
         Dictionary specifying parameters to scan. Format: {param_name: [list of values]}.
         If None, uses DEFAULT_SCAN_PARAMS[alg].
+    data_desc : str, optional
+        Data block (ed.DataDescriptor().create_desc): run on the stored data of another experiment.
         
     Returns
     -------
@@ -157,7 +160,7 @@ def create_descs(
             print(f'unknown algorithm: {alg}')
             return '', ('', None, None)
         
-        exp_descs += ed.ExperimentDescriptor().create_desc(sim_desc, inf_desc)
+        exp_descs += ed.ExperimentDescriptor().create_desc(sim_desc, inf_desc, data_desc)
         exp_descs += '\n'
     
     # Determine scan info for naming: use first scanned parameter
@@ -182,7 +185,9 @@ if __name__ == '__main__':
 
     # Files that are written. 'apf_ess2' is the APF that resamples the ancestors at every step (ess 2.0: the ESS is always below 2 M),
     # the rule of the first version of the paper.
-    algs_to_write = ['bpf', 'apf', 'apf_ess2']
+    # 'bpf_samedata' and 'apf_samedata' run again on the data of the 30 trials of the runs with 1000 particles (data block):
+    # trials 1..30 R give R runs on each data set (check of the implementation against the particles library).
+    algs_to_write = ['bpf', 'apf', 'apf_ess2', 'bpf_samedata', 'apf_samedata']
 
     # mtt only: the (a, sigma2) settings. Each setting has its own folder of descriptor files and its own results folder.
     # (None, None) keeps the defaults of simulators/mtt.py (a = 0.05, sigma2 = 2.5) and writes to the folder state_dim_4.
@@ -276,16 +281,20 @@ if __name__ == '__main__':
                                        ('uagsf', 'uagsf', custom_scan_params_uagsf),
                                        ('bpf', 'bpf', custom_scan_params_bpf),
                                        ('apf', 'apf', custom_scan_params_bpf),
-                                       ('apf_ess2', 'apf', {'num_prt': [1000], 'ess': [2.0]})]:
+                                       ('apf_ess2', 'apf', {'num_prt': [1000], 'ess': [2.0]}),
+                                       ('bpf_samedata', 'bpf', {'num_prt': [1000], 'ess': [0.5]}),
+                                       ('apf_samedata', 'apf', {'num_prt': [1000], 'ess': [0.5]})]:
 
             if name not in algs_to_write:
 
                 continue
 
+            data_desc = ed.DataDescriptor().create_desc(f'pf/{alg}/numprt_1000_ess_0.5', 30) if name.endswith('_samedata') else None
             exp_descs, (scan_param, scan_init, scan_fin) = create_descs(
                 sim_desc=sim_desc,
                 alg=alg,
-                scan_params=scan_params
+                scan_params=scan_params,
+                data_desc=data_desc
             )
 
             os.makedirs(out_dir, exist_ok=True)

@@ -105,6 +105,8 @@ def run_trials(args):
             
             exp_dir = os.path.join(misc.get_root(), 'experiments', exp_desc.get_dir())
             trial_dir = os.path.join(exp_dir, str(trial))
+            # one split for every trial, also for a trial that is skipped: a trial gets the same key after a restart
+            key, subkey = jr.split(key)
 
             if os.path.exists(trial_dir + '/results.pkl'):
 
@@ -128,7 +130,6 @@ def run_trials(args):
 
                     os.rmdir(trial_dir)
 
-                key, subkey = jr.split(key)
                 out = runner.run(trial=trial, plot_sims=True, key=subkey, seed=seed)
 
             except misc.AlreadyExistingExperiment:
