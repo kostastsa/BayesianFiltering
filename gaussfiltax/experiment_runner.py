@@ -146,6 +146,9 @@ class ExperimentRunner:
         ssm = sim_setup['ssm']
         props = sim_setup['props']
 
+        if self.exp_desc.data is not None and not isinstance(inf_desc, (ed.BPF_Descriptor, ed.APF_Descriptor)):
+            raise NotImplementedError('the data block is implemented for bpf and apf only')
+
         try:
 
             if isinstance(self.exp_desc.inf, ed.LGSF_Descriptor):
@@ -166,11 +169,11 @@ class ExperimentRunner:
 
             elif isinstance(self.exp_desc.inf, ed.BPF_Descriptor):
 
-                self._run_bpf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed)
+                self._run_bpf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, self._load_data(trial))
 
             elif isinstance(self.exp_desc.inf, ed.APF_Descriptor):
 
-                self._run_apf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed)
+                self._run_apf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, self._load_data(trial))
             else:
                 raise TypeError('unknown inference descriptor')
 
@@ -179,6 +182,19 @@ class ExperimentRunner:
             print('EXPERIMENT FAILED')
 
             raise
+
+    def _load_data(self, trial):
+        """(states, observations, true_ps) of the stored experiment in the data block of the descriptor, or None."""
+
+        data_desc = self.exp_desc.data
+        if data_desc is None:
+            return None
+
+        src = os.path.join(misc.get_root(), 'experiments', self.exp_desc.sim.get_dir(), data_desc.src, str(data_desc.data_trial(trial)), 'gt')
+        states, observations, true_ps = util.io.load(src)
+        assert states.shape[0] == self.exp_desc.sim.num_timesteps, f'{src}: {states.shape[0]} steps, the descriptor has {self.exp_desc.sim.num_timesteps}'
+
+        return states, observations, true_ps
 
     def _run_lgsf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed):
         """
@@ -371,7 +387,7 @@ class ExperimentRunner:
             jax.clear_caches()
             gc.collect()
 
-    def _run_bpf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed):
+    def _run_bpf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, data=None):
 
         """
         Runs the ABC experiments.
@@ -383,7 +399,10 @@ class ExperimentRunner:
         inputs = self.sim.get_inputs(subkey, sim_desc.num_timesteps)
         true_ps = sample_prior(jr.PRNGKey(0), props, 1)[0]
         key, subkey = jr.split(key)
-        states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        if data is None:
+            states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        else:
+            states, observations, true_ps = data
 
         if plot_sims:
             _plot_states_observations(states, observations, exp_dir)
@@ -415,7 +434,7 @@ class ExperimentRunner:
             jax.clear_caches()
             gc.collect()
 
-    def _run_apf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed):
+    def _run_apf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, data=None):
 
         from filters import pf
 
@@ -423,7 +442,10 @@ class ExperimentRunner:
         inputs = self.sim.get_inputs(subkey, sim_desc.num_timesteps)
         true_ps = sample_prior(jr.PRNGKey(0), props, 1)[0]
         key, subkey = jr.split(key)
-        states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        if data is None:
+            states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        else:
+            states, observations, true_ps = data
 
         if plot_sims:
             _plot_states_observations(states, observations, exp_dir)

@@ -128,6 +128,10 @@ def describe(desc):
     tag = f'{sim.name} · state {sim.state_dim} · obs {sim.emission_dim} · T={sim.num_timesteps}'
     if sim.name == 'covinfl':
         tag += f' · a {sim.a} · b {sim.b}'
+    elif sim.name == 'mtt' and getattr(sim, 'a', None) is not None:
+        tag += f' · a {sim.a} · sigma2 {sim.sigma2}'
+    if getattr(desc, 'data', None) is not None:
+        tag += f' · data of {desc.data.src} ({desc.data.trials} sets)'
     return label, tag
 
 
