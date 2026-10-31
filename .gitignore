@@ -11,3 +11,6 @@ __pycache__/
 
 # Large notebook with embedded outputs
 notebooks/Experiment A.ipynb
+
+# Large outputs of scratch checks (made again by their scripts)
+scratch/particles_check/out/particles_*.npz

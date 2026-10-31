@@ -1,0 +1,13 @@
+\begin{tabular}{llcccccc}
+\toprule
+ & & \multicolumn{2}{c}{Median MSE} & \multicolumn{2}{c}{Lost tracks} & & \\
+$\sigma^2$ & Filter & Ours & \texttt{particles} & Ours & \texttt{particles} & $p$ (lost) & $p$ (sign) \\
+\midrule
+2.5 & BPF & 0.907 & 0.889 & 10.7\% & 10.3\% & 0.87 & 1.00 \\
+2.5 & APF & 1.255 & 1.180 & 11.7\% & 9.7\% & 0.14 & 0.01 \\
+0.025 & BPF & 0.038 & 0.038 & 14.8\% & 15.1\% & 0.93 & 0.58 \\
+0.025 & APF & 0.041 & 0.048 & 16.0\% & 16.3\% & 0.88 & 0.10 \\
+2.5e-05 & BPF & 0.079 & 0.086 & 30.3\% & 31.7\% & 0.40 & 1.00 \\
+2.5e-05 & APF & 0.012 & 0.012 & 28.7\% & 26.4\% & 0.14 & 1.00 \\
+\bottomrule
+\end{tabular}
