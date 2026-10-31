@@ -23,6 +23,9 @@ These rules apply to every task.
 2. **Fix old code that fails.** Some modules are from an older layout (see "Known stale code"). If code that you need raises an error, find the cause and correct the code in place. Do not copy it, do not work around it, and do not delete it. Keep the fix small. Tell the user what you changed.
 3. **Run experiments only through `main.py`.** Describe the experiment in a descriptor file. Run it with `main.py trials`. Do not write a new script, notebook, or loop that runs a filter for a reported result. `standalone_filter_runner.py` is for quick debugging only.
 4. **Report results only with the implemented metrics.** Use `main.py errors` and `main.py ensemble`. These use the functions in `util/numerics.py`. Do not define a new error measure in a script. If you need a new metric, add it to `util/numerics.py` with the same interface as the others (see "Metrics") and connect it to `main.py`.
+5. **Put new code in one of two places.**
+   - New experiment code (a filter, a simulator, a metric, a table, a plot): add it to the package `gaussfiltax/` and call it through `main.py`.
+   - A custom script for a side question (a check, a diagnostic, a comparison with an external library): put it in a new directory `scratch/<topic>/`. Do not put it in `exps/`. Do not report its output as an experiment result.
 
 ## Commands
 
@@ -48,6 +51,10 @@ python gaussfiltax/create_exps.py
 
 # Exp. A, BPF and APF rows of Tables I and III of the paper (see "Large runs")
 ./run_tables_I_III.zsh 1 30 0.5      # Table I, a = 0.5
+
+# R runs of the BPF or APF on each of the 30 stored data sets (data block, see "Descriptor syntax"), for the check against
+# the particles library in scratch/particles_check. Give each call its own SEED_BASE. Write sigma2 as in the folder names.
+SEED_BASE=5000 ./run_samedata.zsh 20 0.5 0.025,2.5,2.5e-05 apf
 
 # Tests that run without pytest
 python tests/test_pf_vs_kalman.py
@@ -121,6 +128,15 @@ experiment
 - `n_comps`: number of Gaussian components. `n_iters`: number of relinearizations in the update step. `alpha`, `beta`, `kappa`: parameters of the unscented transform.
 - AGSF: `M` components stay after each step. Each component splits into `N` points before the prediction and `L` points before the update. The filter then resamples the `M·N·L` candidates down to `M`. `ac1` is the split rule for the prediction and `ac2` is the rule for the update. The value is `prop` or `auto`. `r1` and `r2` set the covariance of the new components as a fraction of the covariance P (`prop`) or as the scale of the automatic rule (`auto`).
 - BPF and APF: `num_prt` particles. The filter resamples when the effective sample size is below `ess × num_prt`.
+- Optional `data` block after `inf` (BPF and APF only): the filter runs on the stored data of another experiment with the same `sim` block. The data is not simulated again. Only the filter key changes. Trial t uses the data of trial ((t - 1) mod `trials`) + 1 of the folder `from`. Thus trials 1 to R × `trials` are R runs on each data set. The results go to `<sim folder>/data_<from with _ for />/<inf folder>`. `create_exps.py` writes these files as `*_samedata_*`.
+
+```
+    data: data
+    {
+        from: pf/apf/numprt_1000_ess_0.5,
+        trials: 30
+    }
+```
 
 ### Simulators (`simulators/`)
 
@@ -200,6 +216,8 @@ One `results.pkl` of a BPF or APF run with 100000 particles and 500 steps has 1.
 - `run_tables_I_III.zsh FIRST LAST A [NAMES]` runs one trial number at a time: `trials` (seed 1000 + trial number), `errors --no-plots`, and then it deletes `results.pkl` of the runs with 10000 and 100000 particles. The metrics, `gt.pkl` and the other small files stay.
 - If `results.pkl` is not there, `errors` reads the saved `lpe.pkl`, `bs.pkl`, `me.pkl` and `mse.pkl` of the trial. Run `errors FIRST LAST <files>` at the end to write `Error summary.txt` for all trials.
 - Do not run `trials` again for a trial that has no `results.pkl`. It deletes the trial folder and runs the trial again.
+- `main.py trials` splits the key one time for each trial, also for a trial that it skips. Thus a trial gets the same key after a restart with the same seed. (Before 30-Oct-2026, the key was split only for trials that ran.)
+- `main.py trials` splits the key again for each descriptor. Thus the BPF and APF runs of one trial number have different data. Use a data block to run a filter on the same data.
 - A different seed for each trial number gives different data for each trial. Use a new seed base (environment variable `SEED_BASE`) if you add trials to a finished set. Otherwise the new trials repeat the data of the old trials.
 
 ## Metrics
@@ -242,7 +260,7 @@ The experiment code came from the `neuralssm` project and from older versions of
 - **`runtime.txt`**: The runner measures the time of the call of `filter.run` without `block_until_ready`. JAX can return before the computation ends. For 100000 particles the call returns after 0.8 s and the result is ready after 3.3 s. Do not use the value to compare run times (task A3). Add `jax.block_until_ready(results)` in the `_run_*` methods first.
 - **`test_lgsf_sqrt.py`** (repository root): It fails with `ImportError`, because `simulators/lgssm.py` has no `get_constrained_bijectors`.
 - **`docs/`, `notebooks/`, `ALA/`, `build/`, `dist/`**: Older exploratory code. The API there can differ from the current one.
-- **`exps/apf_study/`**: One-off scripts for one study (see its `README.md`). Do not use them as a template for new experiments.
+- **`scratch/apf_study/`**: Scratch scripts of the APF study of 21-Oct-2026 (see its `README.md`). They are checks and diagnostics, and some use the `particles` library. Do not use them as a template for new experiments.
 
 ## Hardcoded paths
 
