@@ -1,8 +1,8 @@
 """BPF and APF rows of Tables I (a = 0.5) and III (a = 0.05) of the paper, from the files that 'main.py errors' writes.
 
-Usage (repository root):  python exps/apf_study/tables_I_III.py
+Usage (repository root):  python scratch/apf_study/tables_I_III.py
 It reads data.nosync/experiments/mtt/<setting>/pf/{bpf,apf}/numprt_<M>_ess_0.5/Error summary.txt. It runs no filter and computes no metric.
-Output: exps/apf_study/tables_I_III_rows.tex (the rows in the format of the paper) and a text summary (median MSE, lost trials) on the screen.
+Output: scratch/apf_study/tables_I_III_rows.tex (the rows in the format of the paper) and a text summary (median MSE, lost trials) on the screen.
 """
 import os
 import re

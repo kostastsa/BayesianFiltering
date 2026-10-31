@@ -1,4 +1,4 @@
-"""Summary of the files rerun_a{a}_r{sigma2}_M{M}.npz that expA_rerun.py writes (run it in exps/apf_study/out).
+"""Summary of the files rerun_a{a}_r{sigma2}_M{M}.npz that expA_rerun.py writes (run it in scratch/apf_study/out).
 
 Usage: python3 ../summarize_rerun.py
 For each setting: mean +- sd, median and the number of runs that lose track (MSE > 10) of the BPF and the APF, and the

@@ -1,6 +1,6 @@
 """APF against BPF in the runs of Tables I and III (30 trials for each setting), from the per-trial MSE that 'main.py errors' saved.
 
-Usage (repository root):  python exps/apf_study/compare_apf_bpf_api.py
+Usage (repository root):  python scratch/apf_study/compare_apf_bpf_api.py
 The BPF and the APF see different data (main.py gives every descriptor its own random key), so the tests are for two independent samples:
   - Mann-Whitney U test (two-sided) on the MSE of the 30 trials,
   - Fisher exact test (two-sided) on the number of lost trials (MSE > 10).

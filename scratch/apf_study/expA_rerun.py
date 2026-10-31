@@ -1,7 +1,7 @@
 """Exp. A (mtt): BPF and APF of filters/pf.py in the settings of Tables I and III.
 
 Usage: [FILTERS=bpf,apf,...] python3 expA_rerun.py a sigma2 M n_sims
-Run it in exps/apf_study/out. It saves rerun_a{a}_r{sigma2}_M{M}.npz and prints one summary line per filter.
+Run it in scratch/apf_study/out. It saves rerun_a{a}_r{sigma2}_M{M}.npz and prints one summary line per filter.
 
 Settings: Q = 1e-6 I, R = sigma2 I, T = 500, the turn parameter a (mtt.acc), N_sim data sets (PRNGKey(100 + s)).
 All filters see the same data and the same initial particles (filter key PRNGKey(1000 + s)).

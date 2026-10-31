@@ -1,4 +1,4 @@
-"""Tables of the APF study, from the result files in exps/apf_study/out. Run it in that folder:  python3 ../make_tables.py
+"""Tables of the APF study, from the result files in scratch/apf_study/out. Run it in that folder:  python3 ../make_tables.py
 
 Writes apf_tables.tex (LaTeX rows for the supplementary material) and prints the same numbers as text.
 Table 1  (our code, M = 1000, 100 data sets): MSE and runs that lose track, BPF, APF and APF with the old rule; paired APF/BPF.
