@@ -52,6 +52,9 @@ python gaussfiltax/create_exps.py
 # Exp. A, BPF and APF rows of Tables I and III of the paper (see "Large runs")
 ./run_tables_I_III.zsh 1 30 0.5      # Table I, a = 0.5
 
+# Exp. A, GSF and AGSF rows of Tables I and III (task T1, 20 trials)
+SEED_BASE=2000 ./run_tables_I_III.zsh 1 20 0.5 lgsf_table,ugsf_table,lagsf_table,uagsf_table
+
 # R runs of the BPF or APF on each of the 30 stored data sets (data block, see "Descriptor syntax"), for the check against
 # the particles library in scratch/particles_check. Give each call its own SEED_BASE. Write sigma2 as in the folder names.
 SEED_BASE=5000 ./run_samedata.zsh 20 0.5 0.025,2.5,2.5e-05 apf
@@ -59,6 +62,7 @@ SEED_BASE=5000 ./run_samedata.zsh 20 0.5 0.025,2.5,2.5e-05 apf
 # Tests that run without pytest
 python tests/test_pf_vs_kalman.py
 python tests/test_numerics_weights.py
+python tests/test_gsf_weights.py
 python test_sqrt_filter.py
 ```
 
@@ -257,7 +261,7 @@ The experiment code came from the `neuralssm` project and from older versions of
 - **`gaussfilt.py`, `gausssumfilt.py`, `particlefilt.py`, `static_utils.py`, `mean_estimators.py`**: Older API. They import `gaussfiltax.utils` or `utils`, which moved to `util/`. The experiment code does not use them.
 - **`ssm.py`, `models.py`, `_parameters.py`, `simulation.py`, `nonlinearities.py`** in `gaussfiltax/`: Older API. The experiments use `simulators/ssm.py` and `parameters.py`.
 - **`util/numerics.py`**: `bootstrap` is defined twice. The second definition (the one in use) returns a vector of `B` means. `sdev` uses names that are not defined. It imports `jax.tree_map`, which is deprecated (use `jax.tree_util.tree_map`). `util/ml.py` imports `theano`. `misc.find_epsilon` is from `neuralssm` and is not used.
-- **`runtime.txt`**: The runner measures the time of the call of `filter.run` without `block_until_ready`. JAX can return before the computation ends. For 100000 particles the call returns after 0.8 s and the result is ready after 3.3 s. Do not use the value to compare run times (task A3). Add `jax.block_until_ready(results)` in the `_run_*` methods first.
+- **`runtime.txt`**: Since 01-Nov-2026 the `_run_*` methods call `jax.block_until_ready` before the time measurement (task K1). Runs before this date measured only the dispatch of the call. The value also includes the JIT compile time, because the runner clears the caches after each trial. To compare run times (task A3), measure the compile time separately or use a warm-up call.
 - **`test_lgsf_sqrt.py`** (repository root): It fails with `ImportError`, because `simulators/lgssm.py` has no `get_constrained_bijectors`.
 - **`docs/`, `notebooks/`, `ALA/`, `build/`, `dist/`**: Older exploratory code. The API there can differ from the current one.
 - **`scratch/apf_study/`**: Scratch scripts of the APF study of 21-Oct-2026 (see its `README.md`). They are checks and diagnostics, and some use the `particles` library. Do not use them as a template for new experiments.
@@ -284,3 +288,9 @@ Write technical documentation and instructions (procedures, READMEs, warnings, h
 - **Descriptions**: maximum 25 words per sentence. One topic per paragraph. Maximum six sentences per paragraph. Give information gradually, with key words and phrases for structure.
 - **Safety**: WARNING for risk of injury or death, CAUTION for risk of damage (WARNING if both). Start with a clear command or condition, then explain the risk or result.
 - **Punctuation**: no semicolons. Hyphens only to join directly related words. Parentheses only for references, step or item identifiers, abbreviations, singular/plural, explanations, alternatives. A number, a number with its unit, an abbreviation, an identifier, quoted text, a label, or a proper noun counts as one word. Text in parentheses counts as one word.
+
+## Tracking: tasks and decisions
+
+Tracker: /Users/kostastsampourakis/Desktop/TSP Resubmission review (owner: exps)
+
+The project has a tracker (the `track` skill): `TODO.md` (tasks, read **Now** first), `DECISIONS.md` (decisions, read **Open decisions** first) and `MAP.md` (reviewer points). The tracker is in the folder of the `Tracker:` line, not in this repository. Write all tracker text in STE and run the STE checker after each change. Change only the rows of this session (owner `exps`). Record each decision in the same turn in which the user decides.

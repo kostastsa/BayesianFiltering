@@ -80,10 +80,10 @@ class LGSF():
             # Condition on this emission using square root filter
             lls, filtered_means, filtered_sqrt_covs, _, _ = vmap(_sqrt_condition_on, in_axes=(0, 0, None, None, None, None, None, None, None))(pred_means, pred_sqrt_covs, emission_fn, H_x, H_r, R, r0, u, y)
 
-            # Compute weights
-            lls -= jnp.max(lls)
-            loglik_weights = jnp.exp(lls)
-            weights = jnp.multiply(loglik_weights, weights)
+            # Compute weights in the log domain: if the likelihood of every component with a nonzero weight underflows
+            # after a shift by max(lls) alone, the linear-domain product is 0 for all components and the weights are NaN.
+            log_weights = jnp.log(weights) + lls
+            weights = jnp.exp(log_weights - jnp.max(log_weights))
             weights /= jnp.sum(weights)
 
             # Predict the next state using square root filter
@@ -175,10 +175,10 @@ class UGSF():
             # Condition on this emission using square root UKF
             lls, filtered_means, filtered_sqrt_covs = vmap(_ukf_sqrt_condition_on_nonadditive, in_axes=(0, 0, None, None, None, None, None, None, None, None))(pred_means, pred_sqrt_covs, emission_fn, R, u, y, alpha, beta, kappa, r0)
 
-            # Compute weights
-            lls -= jnp.max(lls)
-            loglik_weights = jnp.exp(lls)
-            weights = jnp.multiply(loglik_weights, weights)
+            # Compute weights in the log domain: if the likelihood of every component with a nonzero weight underflows
+            # after a shift by max(lls) alone, the linear-domain product is 0 for all components and the weights are NaN.
+            log_weights = jnp.log(weights) + lls
+            weights = jnp.exp(log_weights - jnp.max(log_weights))
             weights /= jnp.sum(weights)
 
             # Predict the next state using square root UKF
