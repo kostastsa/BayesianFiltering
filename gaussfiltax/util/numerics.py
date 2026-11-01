@@ -5,6 +5,7 @@ import optax
 import jax
 import jax.scipy.stats as jss # type: ignore
 from jax.scipy.special import logsumexp as lse # type: ignore
+from jax.experimental import enable_x64 # type: ignore
 import jax.scipy.stats as stats # type: ignore
 import jax.scipy as scipy # type: ignore
 from jax import jit # type: ignore
@@ -38,11 +39,13 @@ def log_prob_t(means, covs, true_state, weights=None, eps: float = 1e-6):
     log_w = -jnp.log(n_comps) if weights is None else jnp.log(weights)
     ds = means - true_state
     covs = 0.5 * (covs + jnp.swapaxes(covs, -1, -2))
-    covs = covs + eps * jnp.eye(covs.shape[-1])
-    inv_covs = jnp.linalg.inv(covs)
-    ds = jnp.einsum('ij, ijk, ik -> i', ds, inv_covs, ds)
-    ds = -0.5 * ds
-    ds = ds - 0.5 * jnp.log(jnp.linalg.det(2 * jnp.pi * covs))
+    # Eigenvalues max(lam, 0) + eps: for a PSD matrix this is cov + eps I. A saved covariance (S S^T in float32) can be
+    # slightly indefinite through rounding, and then cov + eps I has a negative determinant and the LPE is NaN.
+    lams, vecs = jnp.linalg.eigh(covs)
+    lams = jnp.maximum(lams, 0.0) + eps
+    proj = jnp.einsum('ikj, ik -> ij', vecs, ds)
+    ds = -0.5 * jnp.sum(proj**2 / lams, axis=-1)
+    ds = ds - 0.5 * jnp.sum(jnp.log(2 * jnp.pi * lams), axis=-1)
     logp = lse(ds + log_w)
 
     return logp
@@ -115,9 +118,16 @@ def log_prob_error(data, inf, true_states):
     means, covs = get_means_covs(data, inf)
     weights = get_weights(data, inf)
     n_steps = true_states.shape[0]
-    lp_errs = lax.map(lambda t: -log_prob_t(means[:, t], covs[:, t], true_states[t], weights[:, t]), jnp.arange(n_steps))
 
-    return jnp.mean(lp_errs), lp_errs
+    # Each time step in float64: the component covariances can have a condition number above 1e8 (Exp. A, Q = 1e-6 I),
+    # and then the float32 determinant can be <= 0, which makes the LPE NaN. The arrays stay float32 to save memory.
+    f64 = lambda x: jnp.asarray(x, dtype=jnp.float64)
+    with enable_x64():
+        lp_errs = lax.map(lambda t: -log_prob_t(f64(means[:, t]), f64(covs[:, t]), f64(true_states[t]), f64(weights[:, t])),
+                          jnp.arange(n_steps))
+        lpe = jnp.mean(lp_errs)
+
+    return lpe, lp_errs
 
 
 def bias(data, inf, true_states):

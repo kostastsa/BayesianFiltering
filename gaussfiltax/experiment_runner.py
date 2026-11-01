@@ -225,6 +225,7 @@ class ExperimentRunner:
                             inf_desc.n_iters,
                             subkey,
                             inputs)
+            jax.block_until_ready(results)  # wait for the computation, not only the dispatch
             elapsed_time = time.time() - start_time
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
@@ -271,6 +272,7 @@ class ExperimentRunner:
                             inf_desc.beta,
                             inf_desc.kappa,
                             inputs)
+            jax.block_until_ready(results)  # wait for the computation, not only the dispatch
             elapsed_time = time.time() - start_time
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
@@ -321,6 +323,7 @@ class ExperimentRunner:
                                 inf_desc.n_iters,
                                 inputs
             )
+            jax.block_until_ready((results, aux_out))  # wait for the computation, not only the dispatch
             elapsed_time = time.time() - start_time
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
@@ -374,6 +377,7 @@ class ExperimentRunner:
                                 inf_desc.kappa,
                                 inputs
             )
+            jax.block_until_ready((results, aux_out))  # wait for the computation, not only the dispatch
             elapsed_time = time.time() - start_time
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
@@ -421,6 +425,7 @@ class ExperimentRunner:
                             inputs,
                             inf_desc.ess
                             )
+            jax.block_until_ready(results)  # wait for the computation, not only the dispatch
             elapsed_time = time.time() - start_time
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
@@ -464,6 +469,7 @@ class ExperimentRunner:
                             inputs,
                             inf_desc.ess
                             )
+            jax.block_until_ready(results)  # wait for the computation, not only the dispatch
             elapsed_time = time.time() - start_time
             
             util.io.save(results, os.path.join(exp_dir, 'results'))

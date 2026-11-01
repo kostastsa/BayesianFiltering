@@ -53,9 +53,27 @@ def test_mixture_weights_are_used():
     assert abs(float(lpe) + float(logp)) < 1e-4
 
 
+def test_log_prob_error_of_a_slightly_indefinite_covariance():
+    # A saved covariance S S^T (float32) can have a small negative eigenvalue through rounding. Before 01-Nov-2026 the LPE
+    # used det(cov + eps I), which is negative here, and returned NaN. Eigenvalues max(lam, 0) + eps give a finite value.
+    good = jnp.diag(jnp.array([850.0, 1.0]))
+    bad = jnp.diag(jnp.array([850.0, -2e-6]))
+    means = jnp.zeros((2, 1, 2))
+    covs = jnp.stack([good, bad])[:, None]
+    out = {'means': means, 'covariances': covs, 'weights': jnp.array([[0.999], [0.001]])}
+    lpe, _ = numerics.log_prob_error(out, 'lgsf', jnp.array([[0.5, 0.1]]))
+    assert bool(jnp.isfinite(lpe)), f'LPE {float(lpe)}'
+    # The PSD component alone gives the same value as cov + eps I.
+    out1 = {'means': means[:1], 'covariances': covs[:1], 'weights': jnp.array([[1.0]])}
+    lpe1, _ = numerics.log_prob_error(out1, 'lgsf', jnp.array([[0.5, 0.1]]))
+    ref = -jss.multivariate_normal.logpdf(jnp.array([0.5, 0.1]), jnp.zeros(2), good + EPS * jnp.eye(2))
+    assert abs(float(lpe1) - float(ref)) < 1e-4, f'{float(lpe1)} against {float(ref)}'
+
+
 if __name__ == '__main__':
     test_mse_and_bias_use_weights()
     test_equal_weights_give_the_plain_mean()
     test_log_prob_error_of_a_weighted_cloud()
     test_mixture_weights_are_used()
+    test_log_prob_error_of_a_slightly_indefinite_covariance()
     print('The metrics use the weights.')

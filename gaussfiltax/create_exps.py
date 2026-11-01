@@ -187,7 +187,9 @@ if __name__ == '__main__':
     # the rule of the first version of the paper.
     # 'bpf_samedata' and 'apf_samedata' run again on the data of the 30 trials of the runs with 1000 particles (data block):
     # trials 1..30 R give R runs on each data set (check of the implementation against the particles library).
-    algs_to_write = ['bpf', 'apf', 'apf_ess2', 'bpf_samedata', 'apf_samedata']
+    # '*_table' are the GSF and AGSF rows of Tables I and III of the paper (task T1).
+    # Earlier sets: ['bpf', 'apf', 'apf_ess2', 'bpf_samedata', 'apf_samedata'].
+    algs_to_write = ['lgsf_table', 'ugsf_table', 'lagsf_table', 'uagsf_table']
 
     # mtt only: the (a, sigma2) settings. Each setting has its own folder of descriptor files and its own results folder.
     # (None, None) keeps the defaults of simulators/mtt.py (a = 0.05, sigma2 = 2.5) and writes to the folder state_dim_4.
@@ -266,6 +268,15 @@ if __name__ == '__main__':
         'ess': [0.5],
     }
 
+    # GSF and AGSF rows of Tables I and III (Exp. A): M = 1, 100, 1000 components for the GSF, and
+    # M = 2, 10, 100 with N = L = 5 and rho1 = rho2 = 0.9 (rule 'prop') for the AGSF.
+    table_params_gsf = {'n_comps': [1, 100, 1000], 'n_iters': [1]}
+    table_params_ugsf = {**table_params_gsf, 'alpha': [1.0], 'beta': [0.0], 'kappa': [0.0]}
+    table_params_agsf = {'M': [2, 10, 100], 'N': [5], 'L': [5], 'n_iters': [1]}
+    table_split = {'ac1': ['prop'], 'r1': [0.9], 'ac2': ['prop'], 'r2': [0.9]}
+    table_params_lagsf = {**table_params_agsf, **table_split}
+    table_params_uagsf = {**table_params_agsf, 'alpha': [1.0], 'beta': [0.0], 'kappa': [0.0], **table_split}
+
     for a, sigma2 in (mtt_settings if ssm == 'mtt' else [(None, None)]):
 
         out_dir = exp_root + f'/{ssm}/state_dim_{state_dim}'
@@ -283,7 +294,11 @@ if __name__ == '__main__':
                                        ('apf', 'apf', custom_scan_params_bpf),
                                        ('apf_ess2', 'apf', {'num_prt': [1000], 'ess': [2.0]}),
                                        ('bpf_samedata', 'bpf', {'num_prt': [1000], 'ess': [0.5]}),
-                                       ('apf_samedata', 'apf', {'num_prt': [1000], 'ess': [0.5]})]:
+                                       ('apf_samedata', 'apf', {'num_prt': [1000], 'ess': [0.5]}),
+                                       ('lgsf_table', 'lgsf', table_params_gsf),
+                                       ('ugsf_table', 'ugsf', table_params_ugsf),
+                                       ('lagsf_table', 'lagsf', table_params_lagsf),
+                                       ('uagsf_table', 'uagsf', table_params_uagsf)]:
 
             if name not in algs_to_write:
 

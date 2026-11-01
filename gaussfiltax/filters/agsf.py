@@ -172,9 +172,9 @@ class LAGSF():
 
             nans = jnp.isnan(lls)
             lls = jnp.where(nans, -jnp.inf, lls)
-            lls -= jnp.max(lls)
-            ls = jnp.exp(lls)
-            weights = jnp.multiply(ls, updated_weights)
+            # Weights in the log domain (see gsf.py)
+            log_weights = jnp.log(updated_weights) + lls
+            weights = jnp.exp(log_weights - jnp.max(log_weights))
             weights /= jnp.sum(weights)
 
             updated_means = jnp.reshape(updated_means, (M * N * L, state_dim))
@@ -345,9 +345,9 @@ class UAGSF():
             lls, updated_means, updated_sqrts = vmap(map_condition_on, in_axes=(0,0))(s_sample, lambda_sqrts)
             updated_weights = jnp.tile(predicted_weights, (L,1)).T / L
 
-            lls -= jnp.max(lls)
-            ls = jnp.exp(lls)
-            weights = jnp.multiply(ls, updated_weights)
+            # Weights in the log domain (see gsf.py)
+            log_weights = jnp.log(updated_weights) + lls
+            weights = jnp.exp(log_weights - jnp.max(log_weights))
             weights /= jnp.sum(weights)
 
             updated_means = jnp.reshape(updated_means, (M*N*L, state_dim))
