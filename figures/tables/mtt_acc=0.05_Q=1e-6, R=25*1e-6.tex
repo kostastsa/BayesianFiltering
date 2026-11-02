@@ -1,0 +1,36 @@
+\begin{minipage}[t]{0.5\linewidth}
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{llcc}
+\toprule
+& \textsc{parameters} & MSE & LPE \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{L-GSF}} & $M=1 (EKF)$ & $0.03\pm0.02$ & $465.31\pm215.72$ \\
+  & $M=100$ & $9.27\pm9.12$ & $4.42\times 10^{5}\pm4.69\times 10^{5}$ \\
+  & $M=1000$ & $1.21\times 10^{-3}\pm7.16\times 10^{-4}$ & $89.39\pm96.67$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{U-GSF}} & $M=1 (UKF)$ & $0.07\pm0.06$ & $567.01\pm409.18$ \\
+  & $M=100$ & $1.28\times 10^{-3}\pm4.92\times 10^{-4}$ & $-15.07\pm0.19$ \\
+  & $M=1000$ & $1.24\times 10^{-3}\pm4.46\times 10^{-4}$ & $-15.37\pm0.14$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{\hspace{0.6em}L-AGSF\hspace{0.6em}}} & $M=2, N=5, L=5$ & $7.97\times 10^{-3}\pm4.17\times 10^{-4}$ & $-4.17\pm0.02$ \\
+  & $M=10, N=5, L=5$ & $3.60\times 10^{-3}\pm4.32\times 10^{-4}$ & $-4.19\pm0.02$ \\
+  & $M=100, N=5, L=5$ & $2.93\times 10^{-3}\pm3.77\times 10^{-4}$ & $-4.16\pm0.02$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{\hspace{0.6em}U-AGSF\hspace{0.6em}}} & $M=2, N=5, L=5$ & $9.21\times 10^{-3}\pm1.34\times 10^{-3}$ & $-7.49\pm0.17$ \\
+  & $M=10, N=5, L=5$ & $5.03\times 10^{-3}\pm4.49\times 10^{-4}$ & $-7.56\pm0.08$ \\
+  & $M=100, N=5, L=5$ & $2.89\times 10^{-3}\pm2.98\times 10^{-4}$ & $-7.62\pm0.10$ \\
+\midrule
+\multirow{4}{*}{\rotatebox[origin=c]{90}{BPF}} & $M=100$ & $124.04\pm47.64$ & $5.98\times 10^{7}\pm2.70\times 10^{7}$ \\
+  & $M=1000$ & $151.37\pm45.90$ & $8.16\times 10^{7}\pm2.66\times 10^{7}$ \\
+  & $M=10000$ & $159.01\pm47.90$ & $7.47\times 10^{7}\pm2.10\times 10^{7}$ \\
+  & $M=100000$ & $98.94\pm32.24$ & $4.71\times 10^{7}\pm1.36\times 10^{7}$ \\
+\midrule
+\multirow{4}{*}{\rotatebox[origin=c]{90}{APF}} & $M=100$ & $164.74\pm30.83$ & $8.37\times 10^{7}\pm1.52\times 10^{7}$ \\
+  & $M=1000$ & $159.32\pm34.55$ & $7.65\times 10^{7}\pm1.70\times 10^{7}$ \\
+  & $M=10000$ & $24.77\pm12.20$ & $1.30\times 10^{7}\pm5.86\times 10^{6}$ \\
+  & $M=100000$ & $68.97\pm43.13$ & $3.61\times 10^{7}\pm2.35\times 10^{7}$ \\
+\bottomrule
+\end{tabular}
+\end{minipage}
