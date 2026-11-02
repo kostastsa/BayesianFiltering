@@ -166,7 +166,7 @@ class LAGSF():
 
             # Update (square root EKF)
             lambda_sqrts = vmap(jnp.linalg.cholesky)(Lambdas)
-            map_condition_on = lambda means, S: vmap(_sqrt_condition_on, in_axes=(0,None,None,None,None,None,None,None,None))(means, S, emission_fn, H_x, H_r, R, r0, u, y)
+            map_condition_on = lambda means, S: vmap(partial(_sqrt_condition_on, residual=getattr(self.ssm, 'emission_residual', None)), in_axes=(0,None,None,None,None,None,None,None,None))(means, S, emission_fn, H_x, H_r, R, r0, u, y)
             lls, updated_means, updated_sqrts, _, _ = vmap(map_condition_on, in_axes=(0,0))(s_sample, lambda_sqrts)
             updated_weights = jnp.tile(predicted_weights, (L, 1)).T / L
 
@@ -341,7 +341,7 @@ class UAGSF():
 
             # Update (square root UKF)
             lambda_sqrts = vmap(jnp.linalg.cholesky)(Lambdas)
-            map_condition_on = lambda means, S: vmap(_ukf_sqrt_condition_on_nonadditive, in_axes=(0,None,None,None,None,None,None,None,None,None))(means, S, emission_fn, R, u, y, alpha, beta, kappa, r0)
+            map_condition_on = lambda means, S: vmap(partial(_ukf_sqrt_condition_on_nonadditive, residual=getattr(self.ssm, 'emission_residual', None)), in_axes=(0,None,None,None,None,None,None,None,None,None))(means, S, emission_fn, R, u, y, alpha, beta, kappa, r0)
             lls, updated_means, updated_sqrts = vmap(map_condition_on, in_axes=(0,0))(s_sample, lambda_sqrts)
             updated_weights = jnp.tile(predicted_weights, (L,1)).T / L
 

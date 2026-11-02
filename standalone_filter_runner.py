@@ -35,7 +35,7 @@ from filters.pf import BPF, APF # type: ignore
 from util.param import initialize, sample_prior # type: ignore
 from util.bijectors import RealToPSDBijector # type: ignore
 import util.io # type: ignore
-from util.numerics import kde_error, min_error, log_prob_t, mse # type: ignore
+from util.numerics import kde_error, min_error, log_prob_t, log_prob_error, mse # type: ignore
 from jax.scipy.special import logsumexp as lse # type: ignore
 from jax import vmap # type: ignore
 
@@ -1170,6 +1170,7 @@ class FilterRunner:
         states_list: Optional[list] = None,
         row_titles: Optional[list] = None,
         algorithm_order: Optional[list] = None,
+        panel_titles: Optional[list] = None,
     ):
         """
         Create an RxC scatter comparison grid for filter outputs.
@@ -1177,6 +1178,10 @@ class FilterRunner:
         For each panel:
         - GSF/AGSF results (means/covariances) plot GT, component means, and resampled particles.
         - PF results (particles) plot GT and particle cloud.
+
+        states_list: one state array for each row, or one dict {algorithm: states} for each row when the panels of a
+        row use different data. panel_titles: optional list (one per row) of dicts {algorithm: title}; without it,
+        only the first row gets the algorithm names as titles.
         """
         is_list = isinstance(comparison_results, (list, tuple))
         rows = len(comparison_results) if is_list else 1
@@ -1192,7 +1197,10 @@ class FilterRunner:
             print("Warning: no algorithms provided for comparison scatter.")
             return
 
-        d = states_list[0].shape[1]
+        first_states = states_list[0]
+        if isinstance(first_states, dict):
+            first_states = next(iter(first_states.values()))
+        d = first_states.shape[1]
         i, j = dims
         if d <= max(i, j):
             print("Warning: requested scatter dims are out of range for this model.")
@@ -1341,10 +1349,14 @@ class FilterRunner:
             ax.grid(True, alpha=0.3)
 
         for row_idx, row_results in enumerate(comparison_results):
-            states = states_list[row_idx]
+            row_states = states_list[row_idx]
             for col_idx, algo_name in enumerate(algorithm_order):
                 ax = axes[row_idx, col_idx]
-                panel_title = algo_name if row_idx == 0 else None
+                states = row_states.get(algo_name) if isinstance(row_states, dict) else row_states
+                if panel_titles is not None:
+                    panel_title = panel_titles[row_idx].get(algo_name)
+                else:
+                    panel_title = algo_name if row_idx == 0 else None
                 algo_results = row_results.get(algo_name, None)
                 if algo_results is None:
                     ax.text(0.5, 0.5, 'Results not available', ha='center', va='center')
@@ -1712,8 +1724,8 @@ class FilterRunner:
             # Particle Filter (BPF, APF)
             particles = results['particles']  # Shape: (num_particles, T, state_dim)
             
-            # Format for numerics.py: list with particles dict
-            data = [{'particles': particles}]
+            # Format for numerics.py: list with the particles and weights dict
+            data = [{'particles': particles, 'weights': results['weights']}]
             inf_type = 'bpf'  # Will be handled as particle filter
             
             print(f"  - Detected Particle Filter (particles shape: {particles.shape})")
@@ -1751,21 +1763,10 @@ class FilterRunner:
         except Exception as e:
             print(f"  Warning: Could not compute min_error: {e}")
         
-        # Log probability error: negative log likelihood
+        # Log probability error: the same function as 'main.py errors' (float64 per time step)
         try:
-            # Use get_means_covs to handle both GSF and BPF formats
-            from util.numerics import get_means_covs, get_weights
-            means_all, covs_all = get_means_covs(data, inf_type)
-            weights_all = get_weights(data, inf_type)
-            
-            # means_all shape: (num_components_or_particles, T, state_dim)
-            # covs_all shape: (num_components_or_particles, T, state_dim, state_dim)
-            
-            def lp_t_single(t):
-                return -log_prob_t(means_all[:, t, :], covs_all[:, t, :, :], self.states[t], weights_all[:, t])
-            
-            lp_errs = vmap(lp_t_single)(jnp.arange(self.states.shape[0]))
-            error_metrics['log_prob_error'] = float(jnp.mean(lp_errs))
+            lpe, lp_errs = log_prob_error(data, inf_type, self.states)
+            error_metrics['log_prob_error'] = float(lpe)
             error_metrics['log_prob_error_t'] = lp_errs
         except Exception as e:
             print(f"  Warning: Could not compute log probability error: {e}")
@@ -1819,21 +1820,21 @@ if __name__ == "__main__":
     # =========================================================================
     
     # Individual filter toggles (ignored if RUN_ALL_FILTERS is True)
-    RUN_LGSF = False              # Linear Gaussian Sum Filter
+    RUN_LGSF = True              # Linear Gaussian Sum Filter
     RUN_UGSF = False              # Unscented Gaussian Sum Filter
     RUN_LAGSF = True             # Linear Adaptive Gaussian Sum Filter
-    RUN_UAGSF = True             # Unscented Adaptive Gaussian Sum Filter
-    RUN_BPF = False               # Bootstrap Particle Filter
+    RUN_UAGSF = False            # Unscented Adaptive Gaussian Sum Filter
+    RUN_BPF = True               # Bootstrap Particle Filter
     RUN_APF = False              # Auxiliary Particle Filter
     
     # =========================================================================
     # CONFIGURATION: Plotting options
     # =========================================================================
-    PLOT_SLICES = True          # Plot posterior PDF slices at specific time steps
+    PLOT_SLICES = False          # Plot posterior PDF slices at specific time steps
     PLOT_PAIRWISE_SCATTER = False # Plot pairwise state scatter for results
 
     PLOT_COMPARISON_SCATTER = True # Plot multi-panel comparison scatter for enabled filters
-    PLOT_ONLY_COMPARISON_SCATTER = False  # Skip other plots for faster use
+    PLOT_ONLY_COMPARISON_SCATTER = True  # Skip other plots for faster use
     COMPARISON_SCATTER_DIR = "figures"  # Where to save comparison scatter plots
     SHOW_COMPARISON_SCATTER = False  # Show comparison scatter window (False = save only)
     # =========================================================================

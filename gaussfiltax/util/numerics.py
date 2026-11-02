@@ -50,11 +50,14 @@ def log_prob_t(means, covs, true_state, weights=None, eps: float = 1e-6):
 
     return logp
 
+# Names of the particle filters. Their saved results are a tuple (outputs, log likelihood).
+PF_NAMES = ('bpf', 'apf', 'rpf', 'upf')
+
 def get_weights(data, inf):
     """Normalized weights of the particles or mixture components, shape (n_comps, T).
     Filters that resample at every step give equal weights."""
 
-    outputs = data[0] if inf == 'bpf' or inf == 'apf' else data
+    outputs = data[0] if inf in PF_NAMES else data
     weights = outputs['weights']
     w_sum = jnp.sum(weights, axis=0, keepdims=True)
 
@@ -73,7 +76,7 @@ def get_means_covs(data, inf, eps: float = 1e-6, with_covs: bool = True):
     """Means and covariances of the mixture components. With with_covs=False the covariances of BPF and APF
     (n_prt copies of the same matrix, large for many particles) are not built and None is returned for them."""
 
-    if inf == 'bpf' or inf == 'apf':
+    if inf in PF_NAMES:
 
         means = data[0]['particles']
         weights = get_weights(data, inf)
@@ -130,6 +133,48 @@ def log_prob_error(data, inf, true_states):
     return lpe, lp_errs
 
 
+def posterior_moments(data, inf):
+    """Mean (T, d) and covariance (T, d, d) of the whole filter posterior: the mixture moments for the GSF and AGSF,
+    the weighted particle moments for the particle filters. In float64; call it inside enable_x64()."""
+
+    f64 = lambda x: jnp.asarray(x, dtype=jnp.float64)
+    w = f64(get_weights(data, inf))                                         # (K, T)
+    if inf in PF_NAMES:
+        x = f64(data[0]['particles'])                                       # (K, T, d)
+        m = jnp.einsum('kt,ktd->td', w, x)
+        dx = x - m
+        P = jnp.einsum('kt,ktd,kte->tde', w, dx, dx)
+    else:
+        mu, S = f64(data['means']), f64(data['covariances'])
+        m = jnp.einsum('kt,ktd->td', w, mu)
+        dx = mu - m
+        P = jnp.einsum('kt,ktde->tde', w, S) + jnp.einsum('kt,ktd,kte->tde', w, dx, dx)
+
+    return m, P
+
+
+def nees(data, inf, true_states, level: float = 0.999):
+    """Normalized estimation error squared, NEES_t = (x_t - m_t)^T P_t^{-1} (x_t - m_t), with the mean m_t and the
+    covariance P_t of the whole filter posterior (posterior_moments). For a consistent filter NEES_t follows chi2_d.
+    Returns (fraction of steps with NEES_t > chi2_d(level), NEES over time). A step above the quantile means that the
+    true state is outside the 'level' region of the filter: the filter is confident in a place where the target is not.
+    The function needs no kernel, so the particle filters and the mixtures are treated in the same way."""
+
+    from scipy.stats import chi2 as _chi2
+    d = true_states.shape[1]
+    with enable_x64():
+        m, P = posterior_moments(data, inf)
+        e = jnp.asarray(true_states, dtype=jnp.float64) - m
+        # Eigenvalues max(lam, 0) + eps, as in log_prob_t: a degenerate covariance (one particle left) gives a finite NEES.
+        lam, V = jnp.linalg.eigh(0.5 * (P + jnp.swapaxes(P, -1, -2)))
+        lam = jnp.maximum(lam, 0.0) + 1e-12
+        z = jnp.einsum('tdk,td->tk', V, e)
+        nees_t = jnp.sum(z ** 2 / lam, axis=1)
+        frac = jnp.mean(nees_t > _chi2.ppf(level, d))
+
+    return float(frac), nees_t
+
+
 def bias(data, inf, true_states):
 
     means, _ = get_means_covs(data, inf, with_covs=False)
@@ -166,6 +211,17 @@ def get_num_sims(exp_desc):
     elif inf_desc.name == 'apf':
 
         n_sims = inf_desc.num_prt * sim_desc.num_timesteps
+
+    elif inf_desc.name == 'rpf':
+
+        n_sims = inf_desc.num_prt * sim_desc.num_timesteps
+
+    elif inf_desc.name == 'upf':
+
+        # For each particle: one UKF update over the noise, with 2 n sigma points through f and g (n = dimension of the
+        # process noise plus the observation noise, at most state_dim + emission_dim), and one call of f for the sample.
+        n = sim_desc.state_dim + sim_desc.emission_dim
+        n_sims = (2 * (2 * n) + 1) * inf_desc.num_prt * sim_desc.num_timesteps
 
     return n_sims
 

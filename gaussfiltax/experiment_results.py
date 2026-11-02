@@ -59,3 +59,19 @@ class APF_Results(ExperimentResults):
         self.name = 'APF'
         self.marker = '^'
         self.color = 'y'
+
+class RPF_Results(ExperimentResults):
+
+    def __init__(self):
+        super().__init__()
+        self.name = 'RPF'
+        self.marker = '<'
+        self.color = 'k'
+
+class UPF_Results(ExperimentResults):
+
+    def __init__(self):
+        super().__init__()
+        self.name = 'UPF'
+        self.marker = '>'
+        self.color = 'tab:orange'

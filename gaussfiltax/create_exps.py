@@ -53,6 +53,17 @@ DEFAULT_SCAN_PARAMS = {
         'num_prt': [100, 500, 1000],
         'ess': [0.5],
     },
+    'rpf': {
+        'num_prt': [100, 500, 1000],
+        'ess': [0.5],
+    },
+    'upf': {
+        'num_prt': [100, 500, 1000],
+        'ess': [0.5],
+        'alpha': [1.0],
+        'beta': [0.0],
+        'kappa': [0.0],
+    },
 }
 
 
@@ -70,7 +81,7 @@ def create_descs(
     sim_desc : str
         Simulator descriptor
     alg : str
-        Algorithm name ('lgsf', 'ugsf', 'lagsf', 'uagsf', 'bpf', 'apf')
+        Algorithm name ('lgsf', 'ugsf', 'lagsf', 'uagsf', 'bpf', 'apf', 'rpf', 'upf')
     scan_params : dict, optional
         Dictionary specifying parameters to scan. Format: {param_name: [list of values]}.
         If None, uses DEFAULT_SCAN_PARAMS[alg].
@@ -148,11 +159,21 @@ def create_descs(
                 params_dict['r2']
             )
 
-        elif alg in ['bpf', 'apf']:
+        elif alg in ['bpf', 'apf', 'rpf']:
 
             inf_desc = inf.create_desc(
                 params_dict['num_prt'],
                 params_dict['ess']
+            )
+
+        elif alg == 'upf':
+
+            inf_desc = inf.create_desc(
+                params_dict['num_prt'],
+                params_dict['ess'],
+                params_dict['alpha'],
+                params_dict['beta'],
+                params_dict['kappa']
             )
 
         else:
@@ -188,8 +209,14 @@ if __name__ == '__main__':
     # 'bpf_samedata' and 'apf_samedata' run again on the data of the 30 trials of the runs with 1000 particles (data block):
     # trials 1..30 R give R runs on each data set (check of the implementation against the particles library).
     # '*_table' are the GSF and AGSF rows of Tables I and III of the paper (task T1).
-    # Earlier sets: ['bpf', 'apf', 'apf_ess2', 'bpf_samedata', 'apf_samedata'].
-    algs_to_write = ['lgsf_table', 'ugsf_table', 'lagsf_table', 'uagsf_table']
+    # 'rpf' and 'upf' are the new baselines for Reviewer 2 (task A1, D-26, D-27, D-29).
+    # '*_wrap': the same rows with the wrapped bearing (sim key 'wrap: 1', pilot of D-30). Same filters in the same order
+    # as the files without '_wrap', thus with the same SEED_BASE every trial gets the same key and the same states.
+    # Earlier sets: ['bpf', 'apf', 'apf_ess2', 'bpf_samedata', 'apf_samedata'], ['lgsf_table', 'ugsf_table', 'lagsf_table', 'uagsf_table'],
+    # ['rpf', 'upf'].
+    # D-30 decided (c): the tables use the wrapped bearing. The GSF and AGSF rows are the '*_table_wrap' files (the pilot);
+    # the PF rows are 'bpf_wrap', 'apf_wrap' (SEED_BASE 1000, as A2) and 'rpf_wrap', 'upf_wrap' (SEED_BASE 3000, as A1).
+    algs_to_write = ['bpf_wrap', 'apf_wrap', 'rpf_wrap', 'upf_wrap']
 
     # mtt only: the (a, sigma2) settings. Each setting has its own folder of descriptor files and its own results folder.
     # (None, None) keeps the defaults of simulators/mtt.py (a = 0.05, sigma2 = 2.5) and writes to the folder state_dim_4.
@@ -268,6 +295,10 @@ if __name__ == '__main__':
         'ess': [0.5],
     }
 
+    # RPF and UPF rows of Tables I and III (Exp. A, task A1, D-27): 100, 1000 and 10000 particles.
+    table_params_rpf = {'num_prt': [100, 1000, 10000], 'ess': [0.5]}
+    table_params_upf = {**table_params_rpf, 'alpha': [1.0], 'beta': [0.0], 'kappa': [0.0]}
+
     # GSF and AGSF rows of Tables I and III (Exp. A): M = 1, 100, 1000 components for the GSF, and
     # M = 2, 10, 100 with N = L = 5 and rho1 = rho2 = 0.9 (rule 'prop') for the AGSF.
     table_params_gsf = {'n_comps': [1, 100, 1000], 'n_iters': [1]}
@@ -295,10 +326,20 @@ if __name__ == '__main__':
                                        ('apf_ess2', 'apf', {'num_prt': [1000], 'ess': [2.0]}),
                                        ('bpf_samedata', 'bpf', {'num_prt': [1000], 'ess': [0.5]}),
                                        ('apf_samedata', 'apf', {'num_prt': [1000], 'ess': [0.5]}),
+                                       ('rpf', 'rpf', table_params_rpf),
+                                       ('upf', 'upf', table_params_upf),
                                        ('lgsf_table', 'lgsf', table_params_gsf),
                                        ('ugsf_table', 'ugsf', table_params_ugsf),
                                        ('lagsf_table', 'lagsf', table_params_lagsf),
-                                       ('uagsf_table', 'uagsf', table_params_uagsf)]:
+                                       ('uagsf_table', 'uagsf', table_params_uagsf),
+                                       ('lgsf_table_wrap', 'lgsf', table_params_gsf),
+                                       ('ugsf_table_wrap', 'ugsf', table_params_ugsf),
+                                       ('lagsf_table_wrap', 'lagsf', table_params_lagsf),
+                                       ('uagsf_table_wrap', 'uagsf', table_params_uagsf),
+                                       ('bpf_wrap', 'bpf', custom_scan_params_bpf),
+                                       ('apf_wrap', 'apf', custom_scan_params_bpf),
+                                       ('rpf_wrap', 'rpf', table_params_rpf),
+                                       ('upf_wrap', 'upf', table_params_upf)]:
 
             if name not in algs_to_write:
 
@@ -306,7 +347,7 @@ if __name__ == '__main__':
 
             data_desc = ed.DataDescriptor().create_desc(f'pf/{alg}/numprt_1000_ess_0.5', 30) if name.endswith('_samedata') else None
             exp_descs, (scan_param, scan_init, scan_fin) = create_descs(
-                sim_desc=sim_desc,
+                sim_desc=sim.create_desc(state_dim, emission_dim, num_timesteps, a, sigma2, wrap=True) if name.endswith('_wrap') else sim_desc,
                 alg=alg,
                 scan_params=scan_params,
                 data_desc=data_desc

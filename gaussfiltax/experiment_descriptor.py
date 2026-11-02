@@ -248,6 +248,7 @@ class MTT_Descriptor(SimulatorDescriptor):
         self.num_timesteps = None
         self.a = None
         self.sigma2 = None
+        self.wrap = False
         self.name = 'mtt'
 
         try:
@@ -273,14 +274,15 @@ class MTT_Descriptor(SimulatorDescriptor):
 
             str += '\t\tnum_timesteps: {0},\n'.format(self.num_timesteps)
             str += '\t\ta: {0},\n'.format(self.a)
-            str += '\t\tsigma2: {0}\n'.format(self.sigma2)
+            str += '\t\tsigma2: {0}{1}\n'.format(self.sigma2, ',\n\t\twrap: 1' if self.wrap else '')
 
         str += '\t}'
 
         return str
 
-    def create_desc(self, state_dim, emission_dim, num_timesteps, a=None, sigma2=None):
-        """The optional a (turn parameter) and sigma2 (variance of the observation noise) replace the defaults of simulators/mtt.py (a = 0.05, sigma2 = 2.5)."""
+    def create_desc(self, state_dim, emission_dim, num_timesteps, a=None, sigma2=None, wrap=False):
+        """The optional a (turn parameter) and sigma2 (variance of the observation noise) replace the defaults of simulators/mtt.py (a = 0.05, sigma2 = 2.5).
+        wrap = True (only with a and sigma2) adds the key 'wrap: 1': the bearing is an angle (D-30)."""
 
         str = 'sim: mtt\n'
         str += '\t{\n'
@@ -295,7 +297,7 @@ class MTT_Descriptor(SimulatorDescriptor):
 
             str += '\t\tnum_timesteps: {0},\n'.format(num_timesteps)
             str += '\t\ta: {0},\n'.format(a)
-            str += '\t\tsigma2: {0}\n'.format(sigma2)
+            str += '\t\tsigma2: {0}{1}\n'.format(sigma2, ',\n\t\twrap: 1' if wrap else '')
 
         str += '\t}'
 
@@ -304,7 +306,7 @@ class MTT_Descriptor(SimulatorDescriptor):
     def parse(self, str):
 
         str = util.misc.remove_whitespace(str)
-        m = re.match(r'mtt\{state_dim:([^,]*),emission_dim:([^,]*),num_timesteps:([^,]*)(?:,a:([^,]*),sigma2:([^,]*))?\}\Z', str)
+        m = re.match(r'mtt\{state_dim:([^,]*),emission_dim:([^,]*),num_timesteps:([^,]*)(?:,a:([^,]*),sigma2:([^,]*)(?:,wrap:([01]))?)?\}\Z', str)
 
         if m is None:
             raise ParseError(str)
@@ -314,6 +316,7 @@ class MTT_Descriptor(SimulatorDescriptor):
         self.num_timesteps = int(m.group(3))
         self.a = None if m.group(4) is None else float(m.group(4))
         self.sigma2 = None if m.group(5) is None else float(m.group(5))
+        self.wrap = m.group(6) == '1'
 
     def get_dir(self):
 
@@ -322,6 +325,10 @@ class MTT_Descriptor(SimulatorDescriptor):
         if self.a is not None:
 
             name += '_a_{0}_sigma2_{1}'.format(self.a, self.sigma2)
+
+        if self.wrap:
+
+            name += '_wrap'
 
         return os.path.join('mtt', name)
     
@@ -354,6 +361,14 @@ class InferenceDescriptor:
         elif re.match('apf', str):
 
             return APF_Descriptor(str)
+
+        elif re.match('rpf', str):
+
+            return RPF_Descriptor(str)
+
+        elif re.match('upf', str):
+
+            return UPF_Descriptor(str)
 
         else:
 
@@ -816,6 +831,114 @@ class APF_Descriptor():
     def get_dir(self):
 
         return os.path.join('pf', 'apf', self.get_id())
+
+
+class RPF_Descriptor():
+    """Regularized particle filter (filters/pf.py, RPF). Keys: num_prt, ess."""
+
+    def __init__(self, str=None):
+
+        self.num_prt = None
+        self.ess = None
+        self.name = 'rpf'
+
+        try:
+            self.parse(str)
+        except:
+            pass
+
+    def pprint(self):
+
+        return self.create_desc(self.num_prt, self.ess)[len('inf: '):]
+
+    def create_desc(self, num_prt, ess):
+
+        str = 'inf: rpf\n'
+        str += '\t{\n'
+        str += '\t\tnum_prt: {0},\n'.format(num_prt)
+        str += '\t\tess: {0}\n'.format(ess)
+        str += '\t}'
+
+        return str
+
+    def parse(self, str):
+
+        str = util.misc.remove_whitespace(str)
+        m = re.match(r'rpf\{num_prt:(.*),ess:(.*)\}\Z', str)
+
+        self.num_prt = int(m.group(1))
+        self.ess = float(m.group(2))
+
+    def get_id(self, delim='_'):
+
+        id = 'numprt' + delim + str(self.num_prt)
+        id += delim + 'ess' + delim + str(self.ess)
+
+        return id
+
+    def get_dir(self):
+
+        return os.path.join('pf', 'rpf', self.get_id())
+
+
+class UPF_Descriptor():
+    """Unscented particle filter in the noise space (filters/pf.py, UPF). Keys: num_prt, ess, alpha, beta, kappa."""
+
+    def __init__(self, str=None):
+
+        self.num_prt = None
+        self.ess = None
+        self.alpha = None
+        self.beta = None
+        self.kappa = None
+        self.name = 'upf'
+
+        try:
+            self.parse(str)
+        except:
+            pass
+
+    def pprint(self):
+
+        return self.create_desc(self.num_prt, self.ess, self.alpha, self.beta, self.kappa)[len('inf: '):]
+
+    def create_desc(self, num_prt, ess, alpha, beta, kappa):
+
+        str = 'inf: upf\n'
+        str += '\t{\n'
+        str += '\t\tnum_prt: {0},\n'.format(num_prt)
+        str += '\t\tess: {0},\n'.format(ess)
+        str += '\t\talpha: {0},\n'.format(alpha)
+        str += '\t\tbeta: {0},\n'.format(beta)
+        str += '\t\tkappa: {0}\n'.format(kappa)
+        str += '\t}'
+
+        return str
+
+    def parse(self, str):
+
+        str = util.misc.remove_whitespace(str)
+        m = re.match(r'upf\{num_prt:(.*),ess:(.*),alpha:(.*),beta:(.*),kappa:(.*)\}\Z', str)
+
+        self.num_prt = int(m.group(1))
+        self.ess = float(m.group(2))
+        self.alpha = float(m.group(3))
+        self.beta = float(m.group(4))
+        self.kappa = float(m.group(5))
+
+    def get_id(self, delim='_'):
+
+        id = 'numprt' + delim + str(self.num_prt)
+        id += delim + 'ess' + delim + str(self.ess)
+        id += delim + 'alpha' + delim + str(self.alpha)
+        id += delim + 'beta' + delim + str(self.beta)
+        id += delim + 'kappa' + delim + str(self.kappa)
+
+        return id
+
+    def get_dir(self):
+
+        return os.path.join('pf', 'upf', self.get_id())
 
 
 class DataDescriptor():

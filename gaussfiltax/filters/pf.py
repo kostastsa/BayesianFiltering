@@ -252,3 +252,159 @@ class APF(ParticleFilter):
         outputs = swap_axes_on_values(outputs)
 
         return outputs, ll
+
+
+def _weighted_sqrt_cov(weights, particles):
+    """Square root D (D D^T = C) of the weighted covariance C of the particles, from the eigenvalues max(lam, 0).
+    A Cholesky factor gives NaN when the cloud is degenerate (for example, all particles equal)."""
+
+    mean = weights @ particles
+    diff = particles - mean
+    cov = jnp.einsum('i,ij,ik->jk', weights, diff, diff)
+    lam, V = jnp.linalg.eigh(0.5 * (cov + cov.T))
+
+    return V * jnp.sqrt(jnp.maximum(lam, 0.0))
+
+
+class RPF(ParticleFilter):
+    """Regularized particle filter: the post-resampling RPF of Musso, Oudjane and Le Gland (2001), with a Gaussian
+    kernel (see also Arulampalam et al., 2002, Sec. V-D). It is the BPF, but after each resampling every particle
+    moves by h D e, e ~ N(0, I). D is the square root of the weighted covariance of the particles before the
+    resampling, and h = (4 / (N (d + 2)))^(1 / (d + 4)) is the optimal bandwidth for a Gaussian density (D-29)."""
+
+    def run(self,
+            params: ParamSSM,
+            observations: Float[Array, "..."],
+            num_particles: Int,
+            key: jr.PRNGKey = jr.PRNGKey(0),
+            inputs: Optional[Float[Array, "..."]] = None,
+            ess_threshold: float = 0.5
+           ):
+
+        num_timesteps = observations.shape[0]
+        inputs = inputs if inputs is not None else jnp.zeros((num_timesteps, self.ssm.input_dim))
+        state_dim = params.initial.mean.value.shape[0]
+        h_opt = (4.0 / (num_particles * (state_dim + 2.0))) ** (1.0 / (state_dim + 4.0))
+
+        def _regularized_resample(weights, particles, key):
+            D = _weighted_sqrt_cov(weights, particles)
+            key, subkey = jr.split(key)
+            weights, particles, key = resample(weights, particles, key)
+            eps = jr.normal(subkey, particles.shape)
+            return weights, particles + h_opt * eps @ D.T, key
+
+        def _step(carry, t):
+            weights, ll, prev_states, key = carry
+            u = inputs[t]
+            y = observations[t]
+
+            # Propagate with the dynamics, as in the BPF
+            keys = jr.split(key, num_particles + 1)
+            next_key = keys[0]
+            new_states = vmap(self.ssm.dynamics_simulator, in_axes=(0, None, 0, None))(keys[1:], params, prev_states, u)
+
+            # Weights in the log domain, with the previous weights inside the max-shift (see BPF)
+            lls = vmap(self.ssm.emission_log_prob, in_axes=(None, None, 0, None))(params, y, new_states, u)
+            log_weights = jnp.log(weights) + lls
+            log_weights_max = jnp.max(log_weights)
+            u_weights = jnp.exp(log_weights - log_weights_max)
+            ll += jnp.log(jnp.sum(u_weights)) + log_weights_max
+            new_weights = u_weights / jnp.sum(u_weights)
+
+            # Resample and move the particles with the kernel if the ESS is low
+            resample_cond = 1.0 / jnp.sum(jnp.square(new_weights)) < ess_threshold * num_particles
+            weights, new_states, next_key = lax.cond(resample_cond, _regularized_resample, lambda *args: args,
+                                                     new_weights, new_states, next_key)
+
+            outputs = {'weights': weights, 'particles': new_states, 'u_weights': u_weights}
+            return (weights, ll, new_states, next_key), outputs
+
+        keys = jr.split(key, num_particles + 1)
+        weights = jnp.ones(num_particles) / num_particles
+        map_sample = vmap(MVN(loc=params.initial.mean.value, covariance_matrix=params.initial.cov.value).sample, in_axes=(None, 0))
+        particles = map_sample((), keys[1:])
+
+        out_carry, outputs = lax.scan(_step, (weights, 0.0, particles, keys[0]), jnp.arange(num_timesteps))
+
+        return swap_axes_on_values(outputs), out_carry[1]
+
+
+class UPF(ParticleFilter):
+    """Unscented particle filter in the noise space (D-26). For each particle, one square-root UKF update over the
+    process noise q, with the prior N(q0, Q), the model y = g(f(x_prev, q, u), r, u) and the observation y_t, gives
+    the proposal N(m_q, S_q S_q^T). This is the unscented approximation of the optimal proposal p(x_t | x_{t-1}, y_t)
+    (van der Merwe et al., 2000), written over q so that it is valid when the process noise enters through a
+    singular matrix (Exp. A: x' = F x + G q, G of size 4 x 2) or in a non-additive way. The filter samples q, sets
+    x_t = f(x_prev, q, u) and uses the incremental weight p(y_t | x_t) N(q; q0, Q) / N(q; m_q, S_q S_q^T)."""
+
+    def run(self,
+            params: ParamSSM,
+            observations: Float[Array, "..."],
+            num_particles: Int,
+            key: jr.PRNGKey = jr.PRNGKey(0),
+            inputs: Optional[Float[Array, "..."]] = None,
+            ess_threshold: float = 0.5,
+            alpha: float = 1.0,
+            beta: float = 0.0,
+            kappa: float = 0.0
+           ):
+
+        from .steps import _ukf_sqrt_condition_on_nonadditive
+
+        num_timesteps = observations.shape[0]
+        inputs = inputs if inputs is not None else jnp.zeros((num_timesteps, self.ssm.input_dim))
+        dynamics_fn = partial(self.ssm.dynamics_function, params)
+        emission_fn = partial(self.ssm.emission_function, params)
+
+        Q = params.dynamics.cov.value
+        q0 = params.dynamics.bias.value
+        R = params.emissions.cov.value
+        r0 = params.emissions.bias.value
+        S_Q = jnp.linalg.cholesky(Q)
+        noise_dim = q0.shape[0]
+
+        def _proposal_and_sample(x_prev, key, u, y):
+            # One UKF update over q. The "state" of this UKF is q, and its emission function is q -> g(f(x_prev, q, u), r, u).
+            h = lambda q, r, u: emission_fn(dynamics_fn(x_prev, q, u), r, u)
+            _, m_q, S_q = _ukf_sqrt_condition_on_nonadditive(q0, S_Q, h, R, u, y, alpha, beta, kappa, r0,
+                                                             getattr(self.ssm, 'emission_residual', None))
+            eps = jr.normal(key, (noise_dim,))
+            q = m_q + S_q @ eps
+            # log N(q; m_q, S_q S_q^T) from eps, without the inverse of S_q
+            log_q = -0.5 * eps @ eps - jnp.sum(jnp.log(jnp.abs(jnp.diag(S_q)))) - 0.5 * noise_dim * jnp.log(2 * jnp.pi)
+            log_prior = MVN_log_prob(q0, Q, q)
+            return dynamics_fn(x_prev, q, u), log_prior - log_q
+
+        def _step(carry, t):
+            weights, ll, prev_states, key = carry
+            u = inputs[t]
+            y = observations[t]
+
+            keys = jr.split(key, num_particles + 1)
+            next_key = keys[0]
+            new_states, log_ratio = vmap(_proposal_and_sample, in_axes=(0, 0, None, None))(prev_states, keys[1:], u, y)
+
+            lls = vmap(self.ssm.emission_log_prob, in_axes=(None, None, 0, None))(params, y, new_states, u)
+            log_weights = jnp.log(weights) + lls + log_ratio
+            # A NaN or inf proposal (a failed UKF update) gets the weight 0, not a NaN for all particles
+            log_weights = jnp.where(jnp.isfinite(log_weights), log_weights, -jnp.inf)
+            log_weights_max = jnp.max(log_weights)
+            u_weights = jnp.exp(log_weights - log_weights_max)
+            ll += jnp.log(jnp.sum(u_weights)) + log_weights_max
+            new_weights = u_weights / jnp.sum(u_weights)
+
+            resample_cond = 1.0 / jnp.sum(jnp.square(new_weights)) < ess_threshold * num_particles
+            weights, new_states, next_key = lax.cond(resample_cond, resample, lambda *args: args,
+                                                     new_weights, new_states, next_key)
+
+            outputs = {'weights': weights, 'particles': new_states, 'u_weights': u_weights}
+            return (weights, ll, new_states, next_key), outputs
+
+        keys = jr.split(key, num_particles + 1)
+        weights = jnp.ones(num_particles) / num_particles
+        map_sample = vmap(MVN(loc=params.initial.mean.value, covariance_matrix=params.initial.cov.value).sample, in_axes=(None, 0))
+        particles = map_sample((), keys[1:])
+
+        out_carry, outputs = lax.scan(_step, (weights, 0.0, particles, keys[0]), jnp.arange(num_timesteps))
+
+        return swap_axes_on_values(outputs), out_carry[1]

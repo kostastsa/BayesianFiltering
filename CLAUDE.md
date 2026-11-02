@@ -4,7 +4,7 @@ This file gives guidance to Claude Code (claude.ai/code) for work in this reposi
 
 ## Project Overview
 
-**gaussfiltax** is a research framework for state estimation (filtering) in nonlinear state space models (SSMs). It compares six filters on four simulators. All computations use JAX.
+**gaussfiltax** is a research framework for state estimation (filtering) in nonlinear state space models (SSMs). It compares eight filters on four simulators. All computations use JAX.
 
 | Short name | Filter |
 |---|---|
@@ -12,6 +12,8 @@ This file gives guidance to Claude Code (claude.ai/code) for work in this reposi
 | L-AGSF, U-AGSF | Adaptive Gaussian sum filter, with linearized (L) or unscented (U) components |
 | BPF | Bootstrap particle filter |
 | APF | Auxiliary particle filter |
+| RPF | Regularized particle filter (Gaussian kernel after each resampling) |
+| UPF | Unscented particle filter (UKF proposal over the process noise) |
 
 The simulators are `lgssm`, `lmsv`, `covinfl`, and `mtt`. The filters run with the true model parameters. The parameters are fixed values, not random draws. Only the simulated states and observations change from trial to trial.
 
@@ -55,6 +57,17 @@ python gaussfiltax/create_exps.py
 # Exp. A, GSF and AGSF rows of Tables I and III (task T1, 20 trials)
 SEED_BASE=2000 ./run_tables_I_III.zsh 1 20 0.5 lgsf_table,ugsf_table,lagsf_table,uagsf_table
 
+# Exp. A, RPF and UPF rows of Tables I and III (task A1, 30 trials)
+SEED_BASE=3000 ./run_tables_I_III.zsh 1 30 0.5 rpf,upf
+
+# Since D-30 (01-Nov-2026) the tables use the wrapped bearing: the same commands with the '*_wrap' files
+SEED_BASE=2000 ./run_tables_I_III.zsh 1 20 0.5 lgsf_table_wrap,ugsf_table_wrap,lagsf_table_wrap,uagsf_table_wrap
+SEED_BASE=1000 ./run_tables_I_III.zsh 1 30 0.5 bpf_wrap,apf_wrap
+SEED_BASE=3000 ./run_tables_I_III.zsh 1 30 0.5 rpf_wrap,upf_wrap
+
+# Markdown rows from the Error summary.txt files (run 'errors' first)
+python gaussfiltax/main.py table <descriptor files> [-o out.md]
+
 # R runs of the BPF or APF on each of the 30 stored data sets (data block, see "Descriptor syntax"), for the check against
 # the particles library in scratch/particles_check. Give each call its own SEED_BASE. Write sigma2 as in the folder names.
 SEED_BASE=5000 ./run_samedata.zsh 20 0.5 0.025,2.5,2.5e-05 apf
@@ -63,6 +76,8 @@ SEED_BASE=5000 ./run_samedata.zsh 20 0.5 0.025,2.5,2.5e-05 apf
 python tests/test_pf_vs_kalman.py
 python tests/test_numerics_weights.py
 python tests/test_gsf_weights.py
+python tests/test_wrapped_bearing.py
+python tests/test_nees.py
 python test_sqrt_filter.py
 ```
 
@@ -118,6 +133,7 @@ experiment
 |---|---|
 | `lgssm`, `lmsv`, `mtt` | `state_dim`, `emission_dim`, `num_timesteps` |
 | `mtt` with two more keys | `state_dim`, `emission_dim`, `num_timesteps`, `a`, `sigma2` |
+| `mtt` with the wrapped bearing | `state_dim`, `emission_dim`, `num_timesteps`, `a`, `sigma2`, `wrap` |
 | `covinfl` | `emission_dim`, `num_timesteps`, `a`, `b` (the state dimension is always 1) |
 
 | `inf:` | Keys, in order |
@@ -126,13 +142,17 @@ experiment
 | `ugsf` | `n_comps`, `n_iters`, `alpha`, `beta`, `kappa` |
 | `lagsf` | `M`, `N`, `L`, `n_iters`, `ac1`, `r1`, `ac2`, `r2` |
 | `uagsf` | `M`, `N`, `L`, `n_iters`, `alpha`, `beta`, `kappa`, `ac1`, `r1`, `ac2`, `r2` |
-| `bpf`, `apf` | `num_prt`, `ess` |
+| `bpf`, `apf`, `rpf` | `num_prt`, `ess` |
+| `upf` | `num_prt`, `ess`, `alpha`, `beta`, `kappa` |
 
 - `mtt`: the keys `a` (turn parameter, default 0.05) and `sigma2` (variance of the observation noise, default 2.5) are optional. Write both or none. Each pair has its own results folder.
+- `mtt`, `wrap: 1` (only after `a` and `sigma2`): the bearing is an angle (decision D-30). Tables I and III use this key. The simulator wraps the noisy bearing into [-pi, pi), and all filters use the residual `[wrap(y1 - y1_hat), y2 - y2_hat]`. The results folder ends in `_wrap`. Without the key, the bearing is the raw value of `arctan2` plus noise, with a jump of 2 pi on the negative x1-axis.
 - `n_comps`: number of Gaussian components. `n_iters`: number of relinearizations in the update step. `alpha`, `beta`, `kappa`: parameters of the unscented transform.
 - AGSF: `M` components stay after each step. Each component splits into `N` points before the prediction and `L` points before the update. The filter then resamples the `M·N·L` candidates down to `M`. `ac1` is the split rule for the prediction and `ac2` is the rule for the update. The value is `prop` or `auto`. `r1` and `r2` set the covariance of the new components as a fraction of the covariance P (`prop`) or as the scale of the automatic rule (`auto`).
-- BPF and APF: `num_prt` particles. The filter resamples when the effective sample size is below `ess × num_prt`.
-- Optional `data` block after `inf` (BPF and APF only): the filter runs on the stored data of another experiment with the same `sim` block. The data is not simulated again. Only the filter key changes. Trial t uses the data of trial ((t - 1) mod `trials`) + 1 of the folder `from`. Thus trials 1 to R × `trials` are R runs on each data set. The results go to `<sim folder>/data_<from with _ for />/<inf folder>`. `create_exps.py` writes these files as `*_samedata_*`.
+- BPF, APF, RPF and UPF: `num_prt` particles. The filter resamples when the effective sample size is below `ess × num_prt`.
+- RPF: after each resampling, each particle moves by `h D e`. `D` is the square root of the weighted covariance before the resampling, `e` is standard normal, and `h = (4 / (N (d + 2)))^(1 / (d + 4))` (decision D-29).
+- UPF: for each particle, one square-root UKF update over the process noise `q` (prior `N(q0, Q)`) gives the proposal. The weight is `p(y|x) N(q; q0, Q) / N(q; m_q, P_q)`. Thus the UPF works when the noise enters through a singular matrix, as in `mtt` (decision D-26).
+- Optional `data` block after `inf` (particle filters only): the filter runs on the stored data of another experiment with the same `sim` block. The data is not simulated again. Only the filter key changes. Trial t uses the data of trial ((t - 1) mod `trials`) + 1 of the folder `from`. Thus trials 1 to R × `trials` are R runs on each data set. The results go to `<sim folder>/data_<from with _ for />/<inf folder>`. `create_exps.py` writes these files as `*_samedata_*`.
 
 ```
     data: data
@@ -158,6 +178,8 @@ Each simulator module has these functions:
 
 The dynamics function is `f(x, q, u, params)`. The emission function is `g(x, r, u, params)`. The particle filters also need `ssm.emission_log_prob`. The module `lmsv` sets it explicitly.
 
+`NonlinearSSM.emission_residual` is optional (default `None`, which means `y - y_hat`). Set it when an observation component is an angle. The likelihood `emission_log_prob` and the EKF and UKF update steps (`_sqrt_condition_on`, `_ukf_sqrt_condition_on_nonadditive`) then use it. With `None`, these functions use the old code path. Test: `tests/test_wrapped_bearing.py`.
+
 To add a simulator:
 1. Make `simulators/<name>.py` and `simulators/<name>_params.py`.
 2. Add a descriptor class in `experiment_descriptor.py` with `parse`, `pprint`, `create_desc`, and `get_dir`. Register it in `SimulatorDescriptor.get_descriptor`.
@@ -172,7 +194,7 @@ The filters use square-root covariances and `lax.scan` over time. The `run` meth
 |---|---|---|
 | `LGSF`, `UGSF` | `gsf.py` | Dictionary with `means` (K, T, d), `covariances` (K, T, d, d), `weights` (K, T), and the predicted values |
 | `LAGSF`, `UAGSF` | `agsf.py` | Same dictionary without the predicted values. A second output, `aux_outputs`, holds `Deltas`, `Lambdas`, `rho1s`, `rho2s`. |
-| `BPF`, `APF` | `pf.py` | Tuple of a dictionary and the log likelihood. The dictionary has `particles` (N, T, d), `weights` (N, T), and `u_weights`. |
+| `BPF`, `APF`, `RPF`, `UPF` | `pf.py` | Tuple of a dictionary and the log likelihood. The dictionary has `particles` (N, T, d), `weights` (N, T), and `u_weights`. |
 
 `steps.py` holds the Kalman and unscented prediction and update steps. The filters share them.
 
@@ -180,7 +202,7 @@ To add a filter, change all of these places:
 1. The filter class in `filters/`.
 2. A descriptor class in `experiment_descriptor.py`, registered in `InferenceDescriptor.get_descriptor`.
 3. A method `_run_<name>` and a branch in `ExperimentRunner.run`.
-4. A branch in `get_means_covs` and `get_num_sims` in `util/numerics.py`.
+4. A branch in `get_num_sims` in `util/numerics.py`. For a particle filter, add the name to `PF_NAMES`. For a mixture filter, add a branch in `get_means_covs`.
 5. A results class in `experiment_results.py` and a branch in `main.view_ensemble`.
 
 ### Parameters
@@ -205,9 +227,9 @@ The names encode every descriptor field. If you change one field, the folder cha
 | `results.pkl`, `gt.pkl` | Filter output. Ground truth: `(states, observations, true_params)`. | `trials` |
 | `exp_desc.txt`, `out.log`, `runtime.txt`, `observations.png` | Descriptor, log, run time, plot of the simulated data | `trials` |
 | `aux_outputs.pkl` | `aux_outputs` of the AGSF | `trials` |
-| `lpe.pkl`, `bs.pkl`, `me.pkl`, `mse.pkl`, `num_sims.pkl` | Metrics of the trial (see "Metrics") | `errors` |
+| `lpe.pkl`, `bs.pkl`, `me.pkl`, `mse.pkl`, `nees.pkl`, `num_sims.pkl` | Metrics of the trial (see "Metrics") | `errors` |
 | `Error histograms.png`, `Errors vs Trials.png` | Plots over all trials. These are in the experiment folder, above the trial folders. | `errors` (not with `--no-plots`) |
-| `Error summary.txt` | Number of trials, number of non-finite trials, number of trials with MSE above 10, and the bootstrap mean and standard deviation and the median of each metric. This file is in the experiment folder, above the trial folders. Use it for the tables of the paper. | `errors` |
+| `Error summary.txt` | Number of trials, number of non-finite trials, and number of trials with MSE above 10. The bootstrap mean, standard deviation and median of each metric. The number of trials with more than 20 % of the steps outside the 99.9 % region (NEES). This file is in the experiment folder, above the trial folders. Use it for the tables of the paper. | `errors` |
 
 `ensemble` writes `figures/ensemble_<sim>_.pdf`. Use `util.io.save(data, path)` and `util.io.load(path)`. Both add `.pkl` to the path.
 
@@ -217,8 +239,8 @@ When `results.pkl` exists, `trials` skips the trial. If the trial folder exists 
 
 One `results.pkl` of a BPF or APF run with 100000 particles and 500 steps has 1.2 GB. The runs with 10000 particles have 115 MB. Do not keep all of them.
 
-- `run_tables_I_III.zsh FIRST LAST A [NAMES]` runs one trial number at a time: `trials` (seed 1000 + trial number), `errors --no-plots`, and then it deletes `results.pkl` of the runs with 10000 and 100000 particles. The metrics, `gt.pkl` and the other small files stay.
-- If `results.pkl` is not there, `errors` reads the saved `lpe.pkl`, `bs.pkl`, `me.pkl` and `mse.pkl` of the trial. Run `errors FIRST LAST <files>` at the end to write `Error summary.txt` for all trials.
+- `run_tables_I_III.zsh FIRST LAST A [NAMES]` runs one trial number at a time: `trials` (seed `SEED_BASE` + trial number, default 1000), `errors --no-plots`, and then it deletes `results.pkl` of the particle filter runs with 10000 and 100000 particles. It deletes only the runs of its own descriptor files. Thus several calls can run at the same time. The metrics, `gt.pkl` and the other small files stay.
+- If `results.pkl` is not there, `errors` reads the saved `lpe.pkl`, `bs.pkl`, `me.pkl`, `mse.pkl` and `nees.pkl` of the trial. A new metric needs `results.pkl`. Thus, for the runs with 10000 and 100000 particles, run the trials again with the same `SEED_BASE` (the same keys give the same results). Run `errors FIRST LAST <files>` at the end to write `Error summary.txt` for all trials.
 - Do not run `trials` again for a trial that has no `results.pkl`. It deletes the trial folder and runs the trial again.
 - `main.py trials` splits the key one time for each trial, also for a trial that it skips. Thus a trial gets the same key after a restart with the same seed. (Before 30-Oct-2026, the key was split only for trials that ran.)
 - `main.py trials` splits the key again for each descriptor. Thus the BPF and APF runs of one trial number have different data. Use a data block to run a filter on the same data.
@@ -234,9 +256,10 @@ All metrics are in `util/numerics.py`. Each takes `(data, inf_name, true_states)
 | `bias` | `bs` | Norm of the error of the weighted mean estimate |
 | `min_error` | `me` | Norm of the error of the best single component mean |
 | `mse` | `mse` | Squared norm of the error of the weighted mean estimate |
+| `nees` | `nees` | Fraction of the steps with NEES above the 0.999 quantile of chi2 (d degrees of freedom). The NEES uses the mean and covariance of the whole posterior, so it needs no kernel for the particle filters. A high value means that the filter is confident in a region where the target is not. |
 | `get_num_sims(exp_desc)` | `num_sims` | Number of simulations that the filter uses. This is the cost axis of the plots. |
 
-`bootstrap(key, array, B)` returns `B` bootstrap means over trials. `main.py` uses `B = 100`. The plots show the mean and the standard deviation of these means.
+`bootstrap(key, array, B)` returns `B` bootstrap means over trials. `main.py` uses `B = 100`. The plots show the mean and the standard deviation of these means. Since 02-Nov-2026 the bootstrap key of each experiment is fixed: `BOOTSTRAP_SEED` (in `main.py`) and a hash of the results folder. Thus `errors` and `ensemble` give the same numbers at each run, in any order of the descriptor files.
 
 ## Key conventions
 
@@ -246,7 +269,9 @@ All metrics are in `util/numerics.py`. Each takes `(data, inf_name, true_states)
 
 **Memory cleanup**: After each trial, `jax.clear_caches()` and `gc.collect()` run. This is intentional. Keep it.
 
-**Plotting style**: `scienceplots` with `['science', 'ieee']`. Use the classes in `experiment_results.py` for the name, marker, and color: L-GSF blue circle, U-GSF green square, L-AGSF red diamond, U-AGSF magenta cross, BPF cyan triangle, APF yellow triangle.
+**Plotting style**: `scienceplots` with `['science', 'ieee']`. Use the classes in `experiment_results.py` for the name, marker, and color of each algorithm.
+- GSF and AGSF: L-GSF blue circle, U-GSF green square, L-AGSF red diamond, U-AGSF magenta cross.
+- Particle filters: BPF cyan triangle, APF yellow triangle, RPF black left triangle, UPF orange right triangle.
 
 **NaN trials**: `main.py ensemble` removes NaN and inf values before the bootstrap. `main.py errors` computes the bootstrap mean and standard deviation first, then removes them for the histograms. The count of non-finite trials is in `Error summary.txt`. A NaN trial makes the mean line in the `errors` plots NaN. Do not ignore a NaN trial. Find the cause.
 

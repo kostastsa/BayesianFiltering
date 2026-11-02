@@ -137,7 +137,7 @@ class ExperimentRunner:
 
         elif sim_desc.name == 'mtt':
 
-            sim_setup = self.sim.setup(sim_desc.state_dim, sim_desc.emission_dim, sim_desc.input_dim, sim_desc.a, sim_desc.sigma2)
+            sim_setup = self.sim.setup(sim_desc.state_dim, sim_desc.emission_dim, sim_desc.input_dim, sim_desc.a, sim_desc.sigma2, sim_desc.wrap)
 
         else:
 
@@ -146,8 +146,8 @@ class ExperimentRunner:
         ssm = sim_setup['ssm']
         props = sim_setup['props']
 
-        if self.exp_desc.data is not None and not isinstance(inf_desc, (ed.BPF_Descriptor, ed.APF_Descriptor)):
-            raise NotImplementedError('the data block is implemented for bpf and apf only')
+        if self.exp_desc.data is not None and not isinstance(inf_desc, (ed.BPF_Descriptor, ed.APF_Descriptor, ed.RPF_Descriptor, ed.UPF_Descriptor)):
+            raise NotImplementedError('the data block is implemented for the particle filters only')
 
         try:
 
@@ -174,6 +174,10 @@ class ExperimentRunner:
             elif isinstance(self.exp_desc.inf, ed.APF_Descriptor):
 
                 self._run_apf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, self._load_data(trial))
+
+            elif isinstance(self.exp_desc.inf, (ed.RPF_Descriptor, ed.UPF_Descriptor)):
+
+                self._run_rpf_upf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, self._load_data(trial))
             else:
                 raise TypeError('unknown inference descriptor')
 
@@ -480,5 +484,47 @@ class ExperimentRunner:
 
             del results
             runner = None
+            jax.clear_caches()
+            gc.collect()
+
+    def _run_rpf_upf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, data=None):
+        """Runs the RPF or the UPF (filters/pf.py). The key splits and the saved files are the same as in _run_bpf."""
+
+        from filters import pf
+
+        key, subkey = jr.split(key)
+        inputs = self.sim.get_inputs(subkey, sim_desc.num_timesteps)
+        true_ps = sample_prior(jr.PRNGKey(0), props, 1)[0]
+        key, subkey = jr.split(key)
+        if data is None:
+            states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        else:
+            states, observations, true_ps = data
+
+        if plot_sims:
+            _plot_states_observations(states, observations, exp_dir)
+
+        if isinstance(inf_desc, ed.UPF_Descriptor):
+            filter = pf.UPF(props, ssm)
+            extra = dict(alpha=inf_desc.alpha, beta=inf_desc.beta, kappa=inf_desc.kappa)
+        else:
+            filter = pf.RPF(props, ssm)
+            extra = {}
+
+        with util.io.Logger(os.path.join(exp_dir, 'out.log')) as logger:
+
+            key, subkey = jr.split(key)
+
+            start_time = time.time()
+            results = filter.run(true_ps, observations, inf_desc.num_prt, subkey, inputs, inf_desc.ess, **extra)
+            jax.block_until_ready(results)  # wait for the computation, not only the dispatch
+            elapsed_time = time.time() - start_time
+
+            util.io.save(results, os.path.join(exp_dir, 'results'))
+            util.io.save_txt(f"Runtime: {elapsed_time:.6f} seconds\n", os.path.join(exp_dir, 'runtime.txt'))
+            util.io.save((states, observations, true_ps), os.path.join(exp_dir, 'gt'))
+            util.io.save_txt(self.exp_desc.pprint(), os.path.join(exp_dir, 'exp_desc.txt'))
+
+            del results
             jax.clear_caches()
             gc.collect()
