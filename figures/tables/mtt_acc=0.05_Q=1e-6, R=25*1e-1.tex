@@ -1,0 +1,36 @@
+\begin{minipage}[t]{0.5\linewidth}
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{llcc}
+\toprule
+& \textsc{parameters} & MSE & LPE \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{L-GSF}} & $M=1 (EKF)$ & $178.20\pm46.16$ & $3.38\times 10^{3}\pm896.60$ \\
+  & $M=100$ & $52.11\pm9.41$ & $25.12\pm3.75$ \\
+  & $M=1000$ & $66.80\pm20.83$ & $4.73\pm1.10$ (95.0\%) \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{U-GSF}} & $M=1 (UKF)$ & $87.79\pm48.81$ & $1.80\times 10^{4}\pm1.60\times 10^{4}$ \\
+  & $M=100$ & $6.21\pm4.63$ & $7.26\pm7.20$ \\
+  & $M=1000$ & $44.40\pm20.59$ & $-1.59\pm0.57$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{\hspace{0.6em}L-AGSF\hspace{0.6em}}} & $M=2, N=5, L=5$ & $94.86\pm28.93$ & $86.91\pm36.54$ \\
+  & $M=10, N=5, L=5$ & $21.45\pm6.45$ & $13.16\pm6.14$ \\
+  & $M=100, N=5, L=5$ & $9.88\pm1.57$ & $3.07\pm0.07$ \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{\hspace{0.6em}U-AGSF\hspace{0.6em}}} & $M=2, N=5, L=5$ & $54.71\pm15.30$ & $86.04\pm30.01$ \\
+  & $M=10, N=5, L=5$ & $33.79\pm8.33$ & $36.29\pm11.35$ \\
+  & $M=100, N=5, L=5$ & $8.49\pm1.72$ & $2.52\pm0.21$ \\
+\midrule
+\multirow{4}{*}{\rotatebox[origin=c]{90}{BPF}} & $M=100$ & $42.78\pm21.52$ & $1.61\times 10^{6}\pm8.85\times 10^{5}$ \\
+  & $M=1000$ & $2.21\pm0.76$ & $1.99\times 10^{3}\pm1.29\times 10^{3}$ \\
+  & $M=10000$ & $1.34\pm0.36$ & $1.29\times 10^{3}\pm1.24\times 10^{3}$ \\
+  & $M=100000$ & $1.92\pm0.80$ & $90.31\pm27.90$ \\
+\midrule
+\multirow{4}{*}{\rotatebox[origin=c]{90}{APF}} & $M=100$ & $45.40\pm13.02$ & $2.21\times 10^{6}\pm5.56\times 10^{5}$ \\
+  & $M=1000$ & $115.32\pm92.06$ & $9.59\times 10^{6}\pm8.30\times 10^{6}$ \\
+  & $M=10000$ & $1.13\pm0.50$ & $5.80\times 10^{3}\pm2.93\times 10^{3}$ \\
+  & $M=100000$ & $0.78\pm0.24$ & $183.63\pm44.74$ \\
+\bottomrule
+\end{tabular}
+\end{minipage}
