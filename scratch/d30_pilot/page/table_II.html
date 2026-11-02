@@ -1,0 +1,115 @@
+<title>Revised Table II</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* Layout: one manuscript-style table for Exp. B; new values first, old paper values in muted columns that a switch hides. */
+:root {
+  --bg: #f5f7f9; --surface: #ffffff; --fg: #1b2430; --muted: #5a6573; --line: #dbe1e7; --rule: #9aa5b1; --accent: #1f5a7d;
+  --best-bg: #e6eff6; --old: #7b8591; --newtag: #7a4b00; --newtag-bg: #fbefd9; --warn: #b03f2c;
+  --f-display: "IBM Plex Serif", Georgia, serif; --f-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12171d; --surface: #1a2129; --fg: #e3e8ee; --muted: #9aa6b3; --line: #2c3540; --rule: #56616d; --accent: #7fb6d9;
+  --best-bg: #1f3242; --old: #7d8894; --newtag: #f3c77a; --newtag-bg: #3a2d14; --warn: #f08b78; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12171d; --surface: #1a2129; --fg: #e3e8ee; --muted: #9aa6b3; --line: #2c3540; --rule: #56616d; --accent: #7fb6d9;
+  --best-bg: #1f3242; --old: #7d8894; --newtag: #f3c77a; --newtag-bg: #3a2d14; --warn: #f08b78; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 24px; }
+h1 { font-family: var(--f-display); font-weight: 600; font-size: clamp(26px, 4vw, 34px); line-height: 1.15; margin: 0; text-wrap: balance; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.lede { max-width: 72ch; color: var(--muted); margin: 10px 0 0; }
+.findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 13px 15px; min-width: 0; font-size: 14px; color: var(--muted); }
+.finding b { color: var(--fg); font-weight: 600; display: block; margin-bottom: 4px; }
+.bar { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: center; }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; color: var(--muted); cursor: pointer; }
+.toggle input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.caption { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; font-size: 14px; max-width: 110ch; }
+.caption b { font-family: var(--f-display); }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 12px; text-align: center; white-space: nowrap; }
+thead tr:first-child th { border-top: 2px solid var(--rule); }
+thead tr:last-child th { border-bottom: 1px solid var(--rule); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+th.grp { font-size: 12px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); }
+td { font-family: var(--f-mono); font-size: 13.5px; }
+td.fam { font-family: var(--f-body); font-weight: 600; text-align: left; vertical-align: middle; border-right: 1px solid var(--line); }
+td.par { font-family: var(--f-body); text-align: left; }
+tr.fam-start td { border-top: 1px solid var(--rule); }
+tbody tr:last-child td { border-bottom: 2px solid var(--rule); }
+td.best { background: var(--best-bg); font-weight: 600; }
+td.oldc, th.oldc { color: var(--old); }
+td.oldc.first, th.oldc.first { border-left: 1px dashed var(--line); }
+td.bad { color: var(--warn); }
+.sd { color: var(--muted); font-weight: 400; }
+.newtag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--newtag); background: var(--newtag-bg); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
+.hide-old .oldc { display: none; }
+.note { color: var(--muted); font-size: 13px; max-width: 100ch; margin: 0; padding-left: 18px; }
+.note li { margin-block: 4px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">AGSF paper · revision · Exp. B (switching LG / MSV model, <code style="font-family:var(--f-mono)">lmsv</code>)</p>
+    <h1>Revised Table II</h1>
+    <p class="lede">Preview of Table II with the corrected filters (log-domain weights, float64 LPE), the new RPF and UPF baselines and the new NEES column. The old values of the paper are shown in grey for comparison. The run-time column of the old table is not in this preview: the measured run times include the JIT compile time and need a separate measurement.</p>
+  </header>
+
+  <div class="findings">
+    <div class="finding"><b>AGSF: best LPE, no overconfidence</b>L-AGSF and U-AGSF with M ≥ 100 have an MSE of about 15.7, close to the best particle filters, the lowest LPE (5.45) and no steps outside their 99.9 % region.</div>
+    <div class="finding"><b>BPF, APF, RPF: often confident in the wrong place</b>With 10⁴ particles they are outside their 99.9 % region at 29–31 % of the steps, in every simulation. Their LPE is 10⁴–10⁵.</div>
+    <div class="finding"><b>GSF: wide but biased</b>The L-GSF and U-GSF keep the truth inside their region, but their MSE is about 49, three times that of the AGSF.</div>
+  </div>
+
+  <div class="bar">
+    <label class="toggle" for="show-old"><input id="show-old" type="checkbox" checked> Show the old values of the paper</label>
+    <label class="toggle" for="show-sd"><input id="show-sd" type="checkbox" checked> Show ± sd</label>
+  </div>
+
+  <div class="caption"><b>Table II.</b> Experiment B. MSE, LPE and NEES of the GSF, AGSF and particle filters (lower is better). MSE and LPE: mean ± the standard deviation of 100 bootstrap means over 20 (GSF, AGSF) or 30 (BPF, APF, RPF, UPF) simulations. NEES: the percentage of time steps at which the NEES exceeds the 0.999 quantile of χ² with 4 degrees of freedom; in parentheses, the simulations with more than 20 % of such steps. AGSF: N = L = 5, ρ₁ = 0.9, ρ₂ from Eq. (47).</div>
+  <div class="tablebox" id="box"><table id="tbl"></table></div>
+
+  <ul class="note">
+    <li>Shaded: the best new value of each column. Red NEES: more than 20 % of the steps outside the 99.9 % region.</li>
+    <li>Source: <code>Error summary.txt</code> of <code>main.py errors</code> (fixed bootstrap key); rows also in <code>figures/tables/T2_expB_table_II.md</code>. Old values: Table II of the submitted paper.</li>
+    <li>The column Lost (MSE above 10) of Tables I and III is left out: in this experiment the MSE of a good filter is near 15.</li>
+  </ul>
+</div>
+
+<script>
+const DATA = [{"name": "L-GSF", "new": false, "rows": [{"n": 20, "mse": [48.9126, 1.75691], "lpe": [6.53834, 0.0315184], "outside": [0.000985, 0.000592474], "empty": 0, "label": "M=10", "old": {"mse": [52.69, 1.29], "lpe": [6.61, 0.04]}}, {"n": 20, "mse": [49.125, 1.40217], "lpe": [6.54618, 0.0321813], "outside": [0.0007675, 0.000421686], "empty": 0, "label": "M=100", "old": {"mse": [53.21, 2.59], "lpe": [6.54, 0.06]}}, {"n": 20, "mse": [49.5662, 1.53849], "lpe": [6.55516, 0.0388567], "outside": [0.0007075, 0.000388997], "empty": 0, "label": "M=1000", "old": {"mse": [53.63, 1.48], "lpe": [6.64, 0.03]}}]}, {"name": "U-GSF", "new": false, "rows": [{"n": 20, "mse": [48.6848, 1.24858], "lpe": [6.55414, 0.0341245], "outside": [0.000995, 0.000567869], "empty": 0, "label": "M=10", "old": {"mse": [49.9, 1.36], "lpe": [6.55, 0.03]}}, {"n": 20, "mse": [49.1035, 1.57093], "lpe": [6.54885, 0.038875], "outside": [0.000745, 0.00044156], "empty": 0, "label": "M=100", "old": {"mse": [52.27, 2.12], "lpe": [7.9, 0.89]}}, {"n": 20, "mse": [49.899, 1.65827], "lpe": [6.55304, 0.0419918], "outside": [0.000695, 0.000376796], "empty": 0, "label": "M=1000", "old": {"mse": [50.32, 1.26], "lpe": [6.55, 0.03]}}]}, {"name": "BPF", "new": false, "rows": [{"n": 30, "mse": [22.2244, 0.336798], "lpe": [2042930.0, 66438.5], "outside": [0.564222, 0.00364676], "empty": 30, "label": "M=100", "old": {"mse": [21.77, 0.78], "lpe": [2070000.0, 85600.0]}}, {"n": 30, "mse": [16.0184, 0.233722], "lpe": [401509.0, 11656.5], "outside": [0.490428, 0.00198175], "empty": 30, "label": "M=1000", "old": {"mse": [15.77, 0.29], "lpe": [469000.0, 23900.0]}}, {"n": 30, "mse": [14.5691, 0.267213], "lpe": [123636.0, 7191.52], "outside": [0.306093, 0.00405917], "empty": 30, "label": "M=10000", "old": {"mse": [14.87, 0.4], "lpe": [120000.0, 5030.0]}}]}, {"name": "APF", "new": false, "rows": [{"n": 30, "mse": [19.3741, 0.323047], "lpe": [754313.0, 24627.2], "outside": [0.527632, 0.0020346], "empty": 30, "label": "M=100", "old": {"mse": [20.79, 0.39], "lpe": [1720000.0, 39400.0]}}, {"n": 30, "mse": [16.0554, 0.258043], "lpe": [64382.5, 4055.12], "outside": [0.479548, 0.00276167], "empty": 30, "label": "M=1000", "old": {"mse": [16.24, 0.22], "lpe": [333000.0, 14200.0]}}, {"n": 30, "mse": [15.8357, 0.337542], "lpe": [33638.1, 17356.1], "outside": [0.288795, 0.00392299], "empty": 30, "label": "M=10000", "old": {"mse": [15.44, 0.39], "lpe": [101000.0, 12700.0]}}]}, {"name": "RPF", "new": true, "rows": [{"n": 30, "mse": [22.3111, 0.338246], "lpe": [1829690.0, 45810.0], "outside": [0.543287, 0.00257532], "empty": 30, "label": "M=100", "old": null}, {"n": 30, "mse": [15.906, 0.233056], "lpe": [408619.0, 12689.3], "outside": [0.48756, 0.00165606], "empty": 30, "label": "M=1000", "old": null}, {"n": 30, "mse": [14.6121, 0.322176], "lpe": [111723.0, 6182.83], "outside": [0.290395, 0.0038675], "empty": 30, "label": "M=10000", "old": null}]}, {"name": "UPF", "new": true, "rows": [{"n": 30, "mse": [17.1832, 0.400376], "lpe": [94626.9, 28193.5], "outside": [0.05865, 0.00336968], "empty": 0, "label": "M=100", "old": null}, {"n": 30, "mse": [15.1366, 0.27962], "lpe": [2066.17, 1152.27], "outside": [0.00697167, 0.0012479], "empty": 0, "label": "M=1000", "old": null}, {"n": 30, "mse": [15.1507, 0.292532], "lpe": [1075.18, 168.718], "outside": [0.003885, 0.000861425], "empty": 0, "label": "M=10000", "old": null}]}, {"name": "L-AGSF", "new": false, "rows": [{"n": 20, "mse": [18.1177, 0.417381], "lpe": [5.61649, 0.0252551], "outside": [0.00228, 0.000797088], "empty": 0, "label": "M=10, N=5, L=5", "old": {"mse": [18.65, 0.48], "lpe": [5.65, 0.03]}}, {"n": 20, "mse": [15.7257, 0.333099], "lpe": [5.45381, 0.0126329], "outside": [0.0002625, 0.000250936], "empty": 0, "label": "M=100, N=5, L=5", "old": {"mse": [15.48, 0.28], "lpe": [5.47, 0.02]}}, {"n": 20, "mse": [15.6675, 0.358252], "lpe": [5.4741, 0.0193869], "outside": [0.0, 0.0], "empty": 0, "label": "M=1000, N=5, L=5", "old": {"mse": [14.59, 0.26], "lpe": [5.44, 0.02]}}]}, {"name": "U-AGSF", "new": false, "rows": [{"n": 20, "mse": [18.1696, 0.326757], "lpe": [5.60849, 0.0232501], "outside": [0.002265, 0.000815337], "empty": 0, "label": "M=10, N=5, L=5", "old": {"mse": [17.46, 0.39], "lpe": [5.58, 0.02]}}, {"n": 20, "mse": [15.7267, 0.332855], "lpe": [5.45159, 0.0158485], "outside": [0.00025, 0.000215058], "empty": 0, "label": "M=100, N=5, L=5", "old": {"mse": [15.1, 0.35], "lpe": [5.46, 0.02]}}, {"n": 20, "mse": [15.7235, 0.356131], "lpe": [5.47055, 0.0234477], "outside": [0.0002875, 0.000240767], "empty": 0, "label": "M=1000, N=5, L=5", "old": {"mse": [14.46, 0.32], "lpe": [5.42, 0.01]}}]}];
+function num(x) {
+  if (x === 0) return "0";
+  const ax = Math.abs(x);
+  if (ax >= 1e4 || ax < 1e-2) { const e = Math.floor(Math.log10(ax)); return `${(x / Math.pow(10, e)).toFixed(2)}×10<sup>${e}</sup>`; }
+  return x.toFixed(2);
+}
+function render() {
+  const sd = document.getElementById("show-sd").checked;
+  document.getElementById("box").classList.toggle("hide-old", !document.getElementById("show-old").checked);
+  const all = DATA.flatMap(f => f.rows);
+  const best = { mse: Math.min(...all.map(r => r.mse[0])), lpe: Math.min(...all.map(r => r.lpe[0])), out: Math.min(...all.map(r => r.outside[0])) };
+  const v = (p) => num(p[0]) + (sd ? ` <span class="sd">± ${num(p[1])}</span>` : "");
+  let h = `<thead><tr><th rowspan="2"></th><th rowspan="2" style="text-align:left">Parameters</th><th class="grp" colspan="3">New (revision)</th><th class="grp oldc first" colspan="2">Old (submitted paper)</th></tr>
+    <tr><th>MSE</th><th>LPE</th><th>NEES</th><th class="oldc first">MSE</th><th class="oldc">LPE</th></tr></thead><tbody>`;
+  for (const f of DATA) {
+    f.rows.forEach((r, j) => {
+      h += `<tr class="${j === 0 ? "fam-start" : ""}">`;
+      if (j === 0) h += `<td class="fam" rowspan="${f.rows.length}">${f.name}${f.new ? '<span class="newtag">new</span>' : ""}</td>`;
+      h += `<td class="par">${r.label}</td>`;
+      h += `<td class="${r.mse[0] === best.mse ? "best" : ""}">${v(r.mse)}</td>`;
+      h += `<td class="${r.lpe[0] === best.lpe ? "best" : ""}">${v(r.lpe)}</td>`;
+      h += `<td class="${r.outside[0] === best.out ? "best" : ""} ${r.outside[0] > 0.2 ? "bad" : ""}">${(100 * r.outside[0]).toFixed(1)} % <span class="sd">(${r.empty})</span></td>`;
+      h += r.old ? `<td class="oldc first">${v(r.old.mse)}</td><td class="oldc">${v(r.old.lpe)}</td>` : `<td class="oldc first">—</td><td class="oldc">—</td>`;
+      h += `</tr>`;
+    });
+  }
+  document.getElementById("tbl").innerHTML = h + "</tbody>";
+}
+document.getElementById("show-old").addEventListener("change", render);
+document.getElementById("show-sd").addEventListener("change", render);
+render();
+</script>

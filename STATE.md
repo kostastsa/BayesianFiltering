@@ -1,28 +1,32 @@
-# STATE: gaussfiltax (01-Nov-2026)
+# STATE: gaussfiltax (02-Nov-2026)
 
 Tracker: `~/Desktop/TSP Resubmission review/` (`TODO.md`, `DECISIONS.md`, `MAP.md`). This session is the owner `exps`.
 
 ## Doing
-T1 is finished. The next task of `exps` is T2.
+Tables I, II and III are complete with the new code. The next task of `exps` is A6.
 
-## Done (01-Nov-2026)
-- Made the tracker (D-17, D-19).
-- K1: `jax.block_until_ready` in the `_run_*` methods (`gaussfiltax/experiment_runner.py`).
-- K4: log-domain weights in `gaussfiltax/filters/gsf.py` and `agsf.py` (D-23). Test: `tests/test_gsf_weights.py`.
-- K5: LPE from clipped eigenvalues in float64 (`gaussfiltax/util/numerics.py`, D-24). Test: last test in `tests/test_numerics_weights.py`.
-- T1: GSF and AGSF rows of Tables I and III, 20 trials (D-22), `SEED_BASE=2000`. Descriptors: `exps/mtt/state_dim_4/a_*/mtt_*_table_scan_num_prt.txt` (`create_exps.py`). Rows: `figures/tables/T1_gsf_agsf_rows.md`. Log: `data.nosync/logs/T1_gsf_agsf.log`.
-- Decisions D-13 (deferred: 30 trials for BPF and APF) and D-15 (default).
-- Old runs of 2025-12-18 are on the flash drive `ESD-ESK` (`data/mtt_acc=*`): 3 of 6 settings, 20 trials, old code. T1 does not use them.
+## Done (01 to 02-Nov-2026)
+- A1: RPF and UPF in `gaussfiltax/filters/pf.py` (D-26, D-27, D-29). Test: `tests/test_pf_vs_kalman.py`.
+- D-30: wrapped bearing for `mtt` (key `wrap: 1`, `NonlinearSSM.emission_residual`). Test: `tests/test_wrapped_bearing.py`. Pilot and diagnostics: `scratch/d30_pilot/`, `scratch/agsf_lost_tracks/`.
+- T4: all rows of Tables I and III with the wrapped bearing: `figures/tables/T4_wrapped_tables_I_III.md`.
+- K6 (D-31): NEES metric (`util/numerics.py`, `main.py errors`, `main.py table`). Test: `tests/test_nees.py`.
+- K7: fixed bootstrap key in `main.py errors` and `ensemble`.
+- P3: Tables I and III replaced in `main.tex` and `supplementary.tex` (generator `scratch/d30_pilot/latex/make_tables.py`, old files `*.before_T4_tables`).
+- T2 (D-32): all rows of Table II (Exp. B): `figures/tables/T2_expB_table_II.md`. `create_exps.py lmsv`, `SIM=lmsv ./run_tables_I_III.zsh`.
+- The raw-bearing `results.pkl` and `aux_outputs.pkl` are deleted. Their metrics and summaries stay.
+- Previews on claude.ai: `scratch/d30_pilot/page/*.html`.
 
 ## Next
-1. T2: BPF and APF rows of Table II (Exp. B).
-2. A6, then A7 (Exp. B).
-3. A1 (RPF and UPF), then A3. For A3, `runtime.txt` includes the JIT compile time (see `CLAUDE.md`).
+1. Replace Table II in `main.tex` (decide first: without the run time column, or after A3).
+2. A6 (sweep of fixed rho2 in Exp. B), then A7 (Fig. 3 with U-GSF and U-AGSF).
+3. A3: run time without the JIT compile time.
+4. A5 (PCRB) if time remains.
 
 ## Open
-- The new T1 rows change the text of C6 and P2 (owner `paper`). Example: the U-GSF (M = 100) is now the best GSF and AGSF row at a = 0.5, sigma2 = 2.5, and the AGSF loses tracks there.
-- Decisions for the user: D-12, D-14, D-16, D-18, D-20, D-21, and D-24 (a default).
-- K2 (optional). Do not run `trials` again for a trial without `results.pkl`.
+- User: Table II run time column (A3)? Tables I and III have a very small font with 14 columns (remove the LPE sd, or move NEES and Lost to the Supplementary?).
+- Owner `paper`: the text of Exp. A cites the old numbers (C6, P2). The text must define the NEES and the wrapped bearing. Table R1 keeps the raw model (D-30).
+- Decisions for the user: D-12, D-14, D-16, D-18, D-20, D-21. Defaults to confirm: D-24, D-29, D-32.
+- Do not run `trials` again for a trial without `results.pkl` (except the same-seed re-run, see `CLAUDE.md`).
 
-## Files changed
-`gaussfiltax/{experiment_runner,create_exps}.py`, `gaussfiltax/filters/{gsf,agsf}.py`, `gaussfiltax/util/numerics.py`, `tests/test_gsf_weights.py`, `tests/test_numerics_weights.py`, `CLAUDE.md`, `exps/mtt/state_dim_4/a_*/mtt_*_table_scan_num_prt.txt`, `figures/tables/T1_gsf_agsf_rows.md`, `STATE.md`.
+## Files changed last
+`gaussfiltax/{create_exps,main}.py`, `run_tables_I_III.zsh`, `exps/lmsv/state_dim_4/lmsv_*_tableII_scan_num_prt.txt`, `figures/tables/T2_expB_table_II.md`, `scratch/d30_pilot/{latex,page}/`, `STATE.md`.

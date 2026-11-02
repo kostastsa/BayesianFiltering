@@ -382,11 +382,11 @@ def make_table(args):
         v = read_error_summary(path)
         outside = f'{100 * v["outside"][0]:.1f} % ({v["empty"]})' if 'outside' in v and v['outside'][0] == v['outside'][0] else 'n/a'
         rows.append(f'| {names[exp_desc.inf.name]} | {size(exp_desc.inf)} | {fmt(v["mse"][0])} ± {fmt(v["mse"][1])} '
-                    f'| {fmt(v["lpe"][0])} ± {fmt(v["lpe"][1])} | {v["lost"]} of {v["trials"]} | {outside} |')
+                    f'| {fmt(v["lpe"][0])} ± {fmt(v["lpe"][1])} | {outside} | {v["lost"]} of {v["trials"]} |')
 
     text = ''
     for sim_dir, rows in tables.items():
-        text += (f'### {sim_dir}\n\n| Filter | M | MSE | LPE | Lost | Outside 99.9 % (trials > 20 %) |\n'
+        text += (f'### {sim_dir}\n\n| Filter | M | MSE | LPE | NEES: outside 99.9 % (trials > 20 %) | Lost |\n'
                  f'|---|---|---|---|---|---|\n' + '\n'.join(rows) + '\n\n')
     if args.out:
         util.io.save_txt(text, args.out)
