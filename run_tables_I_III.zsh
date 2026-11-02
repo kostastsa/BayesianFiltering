@@ -9,12 +9,17 @@
 # stay in the trial folders. The final 'main.py errors FIRST LAST <files>' then reads the saved metrics (see Results in CLAUDE.md).
 # Do not run 'main.py trials' again for a trial after the raw results are deleted: it would delete the folder and run the trial again.
 # Optional: $4 = comma-separated names of the descriptor files (default bpf,apf; apf_ess2 is the APF that resamples at every step)
-# and the environment variable SEED_BASE (default 1000).
+# and the environment variable SEED_BASE (default 1000). SIM=lmsv: the files of Exp. B (Table II) in exps/lmsv/state_dim_4.
 FIRST=$1; LAST=$2; A=$3
 names=( ${(s:,:)4:-bpf,apf} )
 SEED_BASE=${SEED_BASE:-1000}
 setopt nullglob
-files=( exps/mtt/state_dim_4/a_${A}_sigma2_*/mtt_${^names}_scan_num_prt.txt )
+if [[ ${SIM:-mtt} == lmsv ]]; then
+    # Exp. B (Table II): SIM=lmsv. The argument A is only a label in the log; the files are in exps/lmsv/state_dim_4.
+    files=( exps/lmsv/state_dim_4/lmsv_${^names}_scan_num_prt.txt )
+else
+    files=( exps/mtt/state_dim_4/a_${A}_sigma2_*/mtt_${^names}_scan_num_prt.txt )
+fi
 echo "$(date +%T) a=$A: ${#files} descriptor files, trials $FIRST to $LAST"
 
 # Folders of the particle filter runs with 10^4 and 10^5 particles in the descriptor files of THIS call only.

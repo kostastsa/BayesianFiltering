@@ -201,7 +201,8 @@ def create_descs(
 if __name__ == '__main__':
 
     exp_root = '/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/exps'
-    ssm = 'mtt'
+    # The simulator is the first argument (default mtt): python gaussfiltax/create_exps.py lmsv
+    ssm = sys.argv[1] if len(sys.argv) > 1 else 'mtt'
     sim = ed.SimulatorDescriptor().get_descriptor(ssm)
 
     # Files that are written. 'apf_ess2' is the APF that resamples the ancestors at every step (ess 2.0: the ESS is always below 2 M),
@@ -217,6 +218,10 @@ if __name__ == '__main__':
     # D-30 decided (c): the tables use the wrapped bearing. The GSF and AGSF rows are the '*_table_wrap' files (the pilot);
     # the PF rows are 'bpf_wrap', 'apf_wrap' (SEED_BASE 1000, as A2) and 'rpf_wrap', 'upf_wrap' (SEED_BASE 3000, as A1).
     algs_to_write = ['bpf_wrap', 'apf_wrap', 'rpf_wrap', 'upf_wrap']
+    # Exp. B (lmsv), Table II of the paper: '*_tableII' (task T2 and A1, D-32).
+    if ssm == 'lmsv':
+        algs_to_write = ['lgsf_tableII', 'ugsf_tableII', 'lagsf_tableII', 'uagsf_tableII',
+                         'bpf_tableII', 'apf_tableII', 'rpf_tableII', 'upf_tableII']
 
     # mtt only: the (a, sigma2) settings. Each setting has its own folder of descriptor files and its own results folder.
     # (None, None) keeps the defaults of simulators/mtt.py (a = 0.05, sigma2 = 2.5) and writes to the folder state_dim_4.
@@ -299,6 +304,14 @@ if __name__ == '__main__':
     table_params_rpf = {'num_prt': [100, 1000, 10000], 'ess': [0.5]}
     table_params_upf = {**table_params_rpf, 'alpha': [1.0], 'beta': [0.0], 'kappa': [0.0]}
 
+    # Table II (Exp. B, lmsv, D-32): M = 10, 100, 1000 for the GSF and AGSF, 100, 1000, 10000 particles for the PFs.
+    # AGSF: N = L = 5, rho1 = 0.9 fixed (rule 'prop'), rho2 from the automatic rule with r2 = 2 / L = 0.4 (Sec. V-B).
+    t2_gsf = {'n_comps': [10, 100, 1000], 'n_iters': [1]}
+    t2_ukf = {'alpha': [1.0], 'beta': [0.0], 'kappa': [0.0]}
+    t2_agsf = {'M': [10, 100, 1000], 'N': [5], 'L': [5], 'n_iters': [1]}
+    t2_split = {'ac1': ['prop'], 'r1': [0.9], 'ac2': ['auto'], 'r2': [0.4]}
+    t2_pf = {'num_prt': [100, 1000, 10000], 'ess': [0.5]}
+
     # GSF and AGSF rows of Tables I and III (Exp. A): M = 1, 100, 1000 components for the GSF, and
     # M = 2, 10, 100 with N = L = 5 and rho1 = rho2 = 0.9 (rule 'prop') for the AGSF.
     table_params_gsf = {'n_comps': [1, 100, 1000], 'n_iters': [1]}
@@ -339,7 +352,15 @@ if __name__ == '__main__':
                                        ('bpf_wrap', 'bpf', custom_scan_params_bpf),
                                        ('apf_wrap', 'apf', custom_scan_params_bpf),
                                        ('rpf_wrap', 'rpf', table_params_rpf),
-                                       ('upf_wrap', 'upf', table_params_upf)]:
+                                       ('upf_wrap', 'upf', table_params_upf),
+                                       ('lgsf_tableII', 'lgsf', t2_gsf),
+                                       ('ugsf_tableII', 'ugsf', {**t2_gsf, **t2_ukf}),
+                                       ('lagsf_tableII', 'lagsf', {**t2_agsf, **t2_split}),
+                                       ('uagsf_tableII', 'uagsf', {**t2_agsf, **t2_ukf, **t2_split}),
+                                       ('bpf_tableII', 'bpf', t2_pf),
+                                       ('apf_tableII', 'apf', t2_pf),
+                                       ('rpf_tableII', 'rpf', t2_pf),
+                                       ('upf_tableII', 'upf', {**t2_pf, **t2_ukf})]:
 
             if name not in algs_to_write:
 
