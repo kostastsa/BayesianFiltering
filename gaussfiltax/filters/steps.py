@@ -117,7 +117,7 @@ def _sqrt_predict(m, S, f, F_x, F_q, Q, q0, u):
     
     return mu_pred, S_pred, F_x_eval
 
-def _sqrt_condition_on(m, S, h, H_x, H_r, R, r0, u, y):
+def _sqrt_condition_on(m, S, h, H_x, H_r, R, r0, u, y, residual=None):
     r"""Square root update step for EKF using QR decomposition.
     
     Instead of propagating covariance P, propagates square root S where P = S @ S.T
@@ -136,6 +136,8 @@ def _sqrt_condition_on(m, S, h, H_x, H_r, R, r0, u, y):
         r0 (D_obs,): nominal measurement noise.
         u (D_in,): inputs.
         y (D_obs,): observation.
+        residual (Callable, optional): residual(y, y_hat) for observations with angle components (D-30).
+            None: y - y_hat (the old code path, unchanged).
     
     Returns:
         ll (float): log-likelihood of observation.
@@ -159,11 +161,14 @@ def _sqrt_condition_on(m, S, h, H_x, H_r, R, r0, u, y):
     S_innov = R_qr.T  # Innovation covariance square root (D_obs, D_obs)
     
     # Innovation covariance S = S_innov @ S_innov.T
-    innovation = y - h(m, r0, u)
     S_innov_full = S_innov @ S_innov.T
-    
-    # Compute log-likelihood
-    ll = MVN_log_prob(h(m, r0, u), S_innov_full, y)
+
+    if residual is None:
+        innovation = y - h(m, r0, u)
+        ll = MVN_log_prob(h(m, r0, u), S_innov_full, y)
+    else:
+        innovation = residual(y, h(m, r0, u))
+        ll = MVN_log_prob(jnp.zeros_like(innovation), S_innov_full, innovation)
     
     # Compute Kalman gain: K = P @ H_x.T @ S^{-1}
     # We have P = S @ S.T, so K = S @ S.T @ H_x.T @ (S_innov @ S_innov.T)^{-1}
@@ -416,7 +421,7 @@ def _ukf_sqrt_predict_nonadditive(m, S, f, u, Q, alpha, beta, kappa, q0):
     
     return mu_pred, S_pred
 
-def _ukf_sqrt_condition_on_nonadditive(m, S, h, R, u, y, alpha, beta, kappa, r0):
+def _ukf_sqrt_condition_on_nonadditive(m, S, h, R, u, y, alpha, beta, kappa, r0, residual=None):
     r"""Square root UKF update step for non-additive measurement noise.
     
     Instead of propagating covariance P, propagates square root S where P = S @ S.T.
@@ -462,17 +467,27 @@ def _ukf_sqrt_condition_on_nonadditive(m, S, h, R, u, y, alpha, beta, kappa, r0)
     new_sigma_points = vmap(hA, in_axes=(0, None))(sigma_points, u)
     
     # Compute predicted measurement mean
-    mu_y = jnp.sum(new_sigma_points, axis=0) / (2 * (lamda + state_dim + noise_dim)) + \
-           h(m, r0, u) * lamda / (lamda + state_dim + noise_dim)
+    if residual is None:
+        mu_y = jnp.sum(new_sigma_points, axis=0) / (2 * (lamda + state_dim + noise_dim)) + \
+               h(m, r0, u) * lamda / (lamda + state_dim + noise_dim)
+    else:
+        # Angle components (D-30): average the residuals relative to the central point, not the raw values.
+        # With residual(a, b) = a - b this is the formula above.
+        y_c = h(m, r0, u)
+        mu_y = y_c + jnp.sum(vmap(residual, in_axes=(0, None))(new_sigma_points, y_c), axis=0) / (2 * (lamda + state_dim + noise_dim))
     
     # Compute weights
     wc = 1.0 / (2 * (lamda + state_dim + noise_dim))
     wc0 = lamda / (lamda + state_dim + noise_dim) + (1 - alpha**2 + beta)
     
     # Center the sigma points
-    centered_y_points = new_sigma_points - mu_y
+    if residual is None:
+        centered_y_points = new_sigma_points - mu_y
+        center_y = h(m, r0, u) - mu_y
+    else:
+        centered_y_points = vmap(residual, in_axes=(0, None))(new_sigma_points, mu_y)
+        center_y = residual(h(m, r0, u), mu_y)
     centered_x_points = sigma_points[:, :state_dim] - m
-    center_y = h(m, r0, u) - mu_y
     
     # Innovation covariance square root using QR
     weighted_y_points = jnp.sqrt(wc) * centered_y_points.T
@@ -497,7 +512,7 @@ def _ukf_sqrt_condition_on_nonadditive(m, S, h, R, u, y, alpha, beta, kappa, r0)
     K = psd_solve(P_yy, P_xy.T).T
     
     # Innovation
-    innovation = y - mu_y
+    innovation = y - mu_y if residual is None else residual(y, mu_y)
     
     # Updated mean
     mu_cond = m + K @ innovation
@@ -516,7 +531,7 @@ def _ukf_sqrt_condition_on_nonadditive(m, S, h, R, u, y, alpha, beta, kappa, r0)
     S_cond = cholesky(P_post, lower=True)
     
     # Log-likelihood
-    ll = MVN_log_prob(mu_y, P_yy, y)
+    ll = MVN_log_prob(mu_y, P_yy, y) if residual is None else MVN_log_prob(jnp.zeros_like(innovation), P_yy, innovation)
     
     return ll, mu_cond, S_cond
 

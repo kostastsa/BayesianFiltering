@@ -78,7 +78,7 @@ class LGSF():
             y = emissions[t]
 
             # Condition on this emission using square root filter
-            lls, filtered_means, filtered_sqrt_covs, _, _ = vmap(_sqrt_condition_on, in_axes=(0, 0, None, None, None, None, None, None, None))(pred_means, pred_sqrt_covs, emission_fn, H_x, H_r, R, r0, u, y)
+            lls, filtered_means, filtered_sqrt_covs, _, _ = vmap(partial(_sqrt_condition_on, residual=getattr(self.ssm, 'emission_residual', None)), in_axes=(0, 0, None, None, None, None, None, None, None))(pred_means, pred_sqrt_covs, emission_fn, H_x, H_r, R, r0, u, y)
 
             # Compute weights in the log domain: if the likelihood of every component with a nonzero weight underflows
             # after a shift by max(lls) alone, the linear-domain product is 0 for all components and the weights are NaN.
@@ -173,7 +173,7 @@ class UGSF():
             y = emissions[t]
 
             # Condition on this emission using square root UKF
-            lls, filtered_means, filtered_sqrt_covs = vmap(_ukf_sqrt_condition_on_nonadditive, in_axes=(0, 0, None, None, None, None, None, None, None, None))(pred_means, pred_sqrt_covs, emission_fn, R, u, y, alpha, beta, kappa, r0)
+            lls, filtered_means, filtered_sqrt_covs = vmap(partial(_ukf_sqrt_condition_on_nonadditive, residual=getattr(self.ssm, 'emission_residual', None)), in_axes=(0, 0, None, None, None, None, None, None, None, None))(pred_means, pred_sqrt_covs, emission_fn, R, u, y, alpha, beta, kappa, r0)
 
             # Compute weights in the log domain: if the likelihood of every component with a nonzero weight underflows
             # after a shift by max(lls) alone, the linear-domain product is 0 for all components and the weights are NaN.

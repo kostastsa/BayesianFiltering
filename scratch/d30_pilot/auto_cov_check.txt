@@ -1,0 +1,4 @@
+U-AGSF a=0.05 trial  2 | stored prop/prop  19.84 | prop/prop:  22.19  24.58  13.40 (lost 3/3) | prop/auto:  17.25  31.26  30.57 (lost 3/3) | auto/auto:  24.11  15.31  16.12 (lost 3/3) |
+L-AGSF a=0.05 trial 18 | stored prop/prop  15.79 | prop/prop:  14.97  16.27  11.10 (lost 3/3) | prop/auto:  12.51  11.83  17.67 (lost 3/3) | auto/auto:  15.91  17.39  14.89 (lost 3/3) |
+U-AGSF a=0.5 trial  5 | stored prop/prop  16.03 | prop/prop:  19.98  22.12  27.88 (lost 3/3) | prop/auto:  16.29  16.76   8.67 (lost 2/3) | auto/auto:  45.82  24.35  22.52 (lost 3/3) |
+L-AGSF a=0.5 trial  4 | stored prop/prop  14.52 | prop/prop:  61.86  24.90   9.40 (lost 2/3) | prop/auto:  10.62  23.72  11.50 (lost 3/3) | auto/auto:  19.55   8.45  17.35 (lost 2/3) |

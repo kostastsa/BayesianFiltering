@@ -32,8 +32,28 @@ def make_f(a):
 
     return lambda x, q, u, dyn_params: (0.5*(u-1)*(u-2) * FCV - u*(u-2) * FCT(x, a) + 0.5*u*(u-1) * FCT(x, -a)) @ x + G @ q
 
-def setup(state_dim, emission_dim, input_dim, a=None, sigma2=None):
-    """a: turn parameter (default: acc of this module). sigma2: variance of the observation noise (default 2.5)."""
+def wrap_angle(d):
+    """Angle in [-pi, pi)."""
+
+    return (d + jnp.pi) % (2 * jnp.pi) - jnp.pi
+
+def g_wrapped(x, r, u, em_params):
+    """g with the bearing wrapped into [-pi, pi). The last axis is the observation: the simulator passes r with shape
+    (1, 2), the filters with shape (2,)."""
+
+    out = g(x, r, u, em_params)
+    return out.at[..., 0].set(wrap_angle(out[..., 0]))
+
+def residual_wrapped(y, y_hat):
+    """Residual [wrap(y1 - y1_hat), y2 - y2_hat]: the bearing is an angle (D-30)."""
+
+    d = y - y_hat
+    return d.at[..., 0].set(wrap_angle(d[..., 0]))
+
+def setup(state_dim, emission_dim, input_dim, a=None, sigma2=None, wrap=False):
+    """a: turn parameter (default: acc of this module). sigma2: variance of the observation noise (default 2.5).
+    wrap: the bearing is an angle (D-30). The simulator wraps the noisy bearing into [-pi, pi), and all filters use the
+    residual [wrap(y1 - y1_hat), y2 - y2_hat]. Default False: the raw bearing, as in the first version of the paper."""
 
     param_names = [['mean', 'cov'],
                 ['bias', 'cov'],
@@ -53,7 +73,9 @@ def setup(state_dim, emission_dim, input_dim, a=None, sigma2=None):
     emission_dim = 2
     emission_noise_dim = 2
 
-    out['ssm'] = NonlinearSSM(state_dim, state_noise_dim, emission_dim, emission_noise_dim, f if a is None else make_f(a), g)
+    out['ssm'] = NonlinearSSM(state_dim, state_noise_dim, emission_dim, emission_noise_dim, f if a is None else make_f(a), g_wrapped if wrap else g)
+    if wrap:
+        out['ssm'].emission_residual = residual_wrapped
     out['props'] = props
     out['exp_info'] = {
         'sim' : 'mtt',

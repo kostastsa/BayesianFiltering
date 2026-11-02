@@ -423,6 +423,9 @@ class NonlinearSSM(SSM):
         self.dynamics_fn = dynamics_fn
         self.emission_fn = emission_fn
         self.input_dim = input_dim
+        # Optional residual(y, y_hat) of the observation, for components that are angles (D-30). None: y - y_hat.
+        # The likelihood below and the EKF and UKF update steps (filters/steps.py) use it.
+        self.emission_residual = None
 
     @property
     def emission_shape(self):
@@ -507,6 +510,11 @@ class NonlinearSSM(SSM):
 
         h = self.emission_fn
         mean = h(state, params.emissions.bias.value, inputs, params)
+
+        if self.emission_residual is not None:
+            d = self.emission_residual(emissions, mean)
+            return MVN(jnp.zeros_like(d), params.emissions.cov.value).log_prob(d)
+
         dist = MVN(mean, params.emissions.cov.value)
 
         return dist.log_prob(emissions)
