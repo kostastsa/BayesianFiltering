@@ -1,0 +1,3328 @@
+Working on trial 1
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 6
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 7
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 8
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 9
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 10
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 11
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 12
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_2.5_wrap/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9/agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.2
+trials: 12
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 6.37417 +- 0.568115, 5.84649
+bias: 2.63544 +- 0.281418, 2.15788
+minerr: 0.865213 +- 0.106495, 0.726532
+mse: 14.479 +- 4.02148, 9.13651
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.0304867 +- 0.014354, 0.008
+trials with > 20 % of steps outside: 1 of 12
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 6
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 7
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 8
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 9
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 10
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 11
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 12
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_2.5_wrap/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9/agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4
+trials: 12
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 6
+bootstrap mean +- sd (B=100), median over trials
+lpe: 5.92308 +- 0.25117, 5.66735
+bias: 2.70252 +- 0.262025, 2.47776
+minerr: 0.8124 +- 0.0602652, 0.761301
+mse: 15.5035 +- 3.85163, 10.9901
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.019165 +- 0.00667793, 0.01
+trials with > 20 % of steps outside: 0 of 12
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 6
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 7
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 8
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 9
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 10
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 11
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 12
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_2.5_wrap/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9/agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.8
+trials: 12
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 6
+bootstrap mean +- sd (B=100), median over trials
+lpe: 7.02112 +- 0.83384, 5.657
+bias: 2.71951 +- 0.345133, 2.27766
+minerr: 0.977585 +- 0.128083, 0.777826
+mse: 16.8767 +- 4.70361, 9.57282
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.0550217 +- 0.0323335, 0.004
+trials with > 20 % of steps outside: 1 of 12
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 6
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 7
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 8
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 9
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 10
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 11
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 12
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_2.5_wrap/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9/agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_auto_r1_0.4_ac2_auto_r2_0.4
+trials: 12
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 8
+bootstrap mean +- sd (B=100), median over trials
+lpe: 6.35014 +- 0.48757, 5.79791
+bias: 2.71373 +- 0.299424, 2.59846
+minerr: 0.920809 +- 0.135364, 0.739487
+mse: 14.612 +- 3.18253, 11.4379
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.0390333 +- 0.0179655, 0.007
+trials with > 20 % of steps outside: 1 of 12
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 6
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 7
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 8
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 9
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 10
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 11
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 12
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.2
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_2.5_wrap/data_agsf_uagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9/agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.2
+trials: 12
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 4.26631 +- 0.578975, 3.6112
+bias: 2.03546 +- 0.153325, 1.75556
+minerr: 0.704458 +- 0.0937642, 0.631642
+mse: 9.0984 +- 1.44783, 6.74314
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.0698383 +- 0.0191611, 0.053
+trials with > 20 % of steps outside: 1 of 12
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 6
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 7
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 8
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 9
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 10
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 11
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 12
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_2.5_wrap/data_agsf_uagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9/agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4
+trials: 12
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 3
+bootstrap mean +- sd (B=100), median over trials
+lpe: 3.97255 +- 0.595378, 3.01099
+bias: 1.93026 +- 0.130758, 1.84623
+minerr: 0.618624 +- 0.0810683, 0.533342
+mse: 8.1978 +- 1.21545, 7.58145
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.047285 +- 0.0165327, 0.021
+trials with > 20 % of steps outside: 0 of 12
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 6
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 7
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 8
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 9
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 10
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 11
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 12
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: auto,
+		r2: 0.8
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_2.5_wrap/data_agsf_uagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9/agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.8
+trials: 12
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 4
+bootstrap mean +- sd (B=100), median over trials
+lpe: 3.91669 +- 0.473195, 3.25406
+bias: 2.01062 +- 0.130723, 1.96087
+minerr: 0.655528 +- 0.0741317, 0.581719
+mse: 8.04631 +- 0.915456, 7.32757
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.04833 +- 0.0140026, 0.025
+trials with > 20 % of steps outside: 0 of 12
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 6
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 7
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 8
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 9
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 10
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 11
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+Working on trial 12
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 2.5,
+		wrap: 1
+	},
+
+	inf: uagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9,
+		trials: 100
+	}
+}
+
+mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_2.5_wrap/data_agsf_uagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9/agsf/uagsf/M_100_N_5_L_5_iters_1_ac1_auto_r1_0.4_ac2_auto_r2_0.4
+trials: 12
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 4
+bootstrap mean +- sd (B=100), median over trials
+lpe: 6.46131 +- 1.66586, 4.97617
+bias: 2.21674 +- 0.196451, 2.00113
+minerr: 0.896806 +- 0.153146, 0.706902
+mse: 10.2725 +- 2.05681, 7.71383
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.0996567 +- 0.0381268, 0.051
+trials with > 20 % of steps outside: 2 of 12
+trials without NEES (no results.pkl and no nees.pkl): 0
+

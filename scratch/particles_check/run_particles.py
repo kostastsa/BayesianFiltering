@@ -72,6 +72,8 @@ class Obs(dists.ProbDist):
         if y is None:
             return np.zeros(self.x.shape[0])
         d = y - np.stack([np.arctan2(self.x[:, 2], self.x[:, 0]), np.sqrt(self.x[:, 0] ** 2 + self.x[:, 2] ** 2)], axis=1)
+        if WRAP:   # the bearing is an angle (D-30): the same wrapped residual as simulators/mtt.py
+            d[:, 0] = (d[:, 0] + np.pi) % (2 * np.pi) - np.pi
         return -np.log(2 * np.pi) - 0.5 * np.sum(np.log(self.r)) - 0.5 * np.sum(d ** 2 / self.r, axis=1)
 
 
@@ -104,7 +106,8 @@ def run(fk, n, seed):
     return np.array(means), pf.logLt
 
 
-TAG = f'a{sys.argv[1]}_sigma2_{sys.argv[2]}'
+WRAP = len(sys.argv) > 3 and sys.argv[3] == 'wrap'    # wrapped bearing (D-33)
+TAG = f'a{sys.argv[1]}_sigma2_{sys.argv[2]}' + ('_wrap' if WRAP else '')
 d = np.load(os.path.join(HERE, 'out', f'gt_{TAG}.npz'))
 assert np.allclose(np.diag(np.diag(d['Q'])), d['Q']) and np.allclose(np.diag(np.diag(d['R'])), d['R']), 'Q and R must be diagonal'
 assert not np.any(d['q_bias']) and not np.any(d['r_bias']), 'the noise must have zero mean'
@@ -115,7 +118,7 @@ model = Mtt(m0=d['m0'], P0=d['P0'], u=d['inputs'].astype(int), acc=acc, q=np.dia
 for ui in range(3):
     err_f = np.max(np.abs(mean_fn(d['xt'], ui, acc) - d['chk_f'][ui]))
     assert err_f < 1e-4, f'dynamics differ for u={ui}: {err_f}'
-ref_g = Obs(d['xt'], np.diag(d['R'])).logpdf(d['y_chk'])
+ref_g = Obs(d['xt'].astype(float), np.diag(d['R'])).logpdf(d['y_chk'].astype(float))   # float64, as the particles in the runs
 err_g = np.max(np.abs(ref_g - d['chk_g']) / np.maximum(1.0, np.abs(d['chk_g'])))   # relative: JAX uses float32
 assert err_g < 1e-5, f'emission log prob differs: {err_g}'
 print(f'model check passed: max dynamics error {err_f:.1e}, emission rel. error {err_g:.1e}', flush=True)

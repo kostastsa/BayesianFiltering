@@ -18,8 +18,10 @@ import util.io
 from simulators import mtt
 
 A, SIGMA2 = sys.argv[1], sys.argv[2]
+WRAP = len(sys.argv) > 3 and sys.argv[3] == 'wrap'    # wrapped bearing (D-30, D-33): the '_wrap' folders and the wrapped residual
+W = '_wrap' if WRAP else ''
 M, N_TRIALS, T = 1000, 30, 500
-EXP = os.path.join(ROOT, 'data.nosync', 'experiments', 'mtt', f'state-dim_4_emission-dim_2_num-timesteps_{T}_a_{A}_sigma2_{SIGMA2}', 'pf')
+EXP = os.path.join(ROOT, 'data.nosync', 'experiments', 'mtt', f'state-dim_4_emission-dim_2_num-timesteps_{T}_a_{A}_sigma2_{SIGMA2}{W}', 'pf')
 
 data = {}
 for f in ('bpf', 'apf'):
@@ -32,15 +34,26 @@ for f in ('bpf', 'apf'):
             assert onp.array_equal(onp.array(v), onp.array(w))
 ps = gts[0][2]
 
-out = mtt.setup(4, 2, 0, float(A), float(SIGMA2))
+out = mtt.setup(4, 2, 0, float(A), float(SIGMA2), WRAP)
 ssm = out['ssm']
 inputs = mtt.get_inputs(None, T)
 xt = data['states_bpf'][0][[0, 50, 150, 250, 350, 450]]
 chk_f = onp.stack([[onp.array(ssm.dynamics_function(ps, jnp.array(x), jnp.zeros(2), u)) for x in xt] for u in (0, 1, 2)])
-chk_g = onp.array([ssm.emission_log_prob(ps, jnp.array(data['obs_bpf'][0][10]), jnp.array(x), 0) for x in xt])
+# Reference of the emission log prob in float64: with the wrapped bearing and a small R (sigma2 = 2.5e-05), the float32 wrap
+# (pi in float32) gives a relative error near 1e-4, larger than the tolerance of the check in run_particles.py. In float64 the
+# reference uses the same JAX functions as NonlinearSSM.emission_log_prob: the emission function g (or g_wrapped), the
+# residual (residual_wrapped or y - y_hat) and a Gaussian log density with R.
+from jax.experimental import enable_x64
+from jax.scipy.stats import multivariate_normal as jmvn
+with enable_x64():
+    f64 = lambda v: jnp.asarray(onp.array(v), dtype=jnp.float64)
+    g_fn = mtt.g_wrapped if WRAP else mtt.g
+    res = mtt.residual_wrapped if WRAP else (lambda y, yh: y - yh)
+    R64, r0_64, y64 = f64(ps.emissions.cov.value), f64(ps.emissions.bias.value), f64(data['obs_bpf'][0][10])
+    chk_g = onp.array([jmvn.logpdf(res(y64, g_fn(f64(x), r0_64, 0, None)), jnp.zeros(2, dtype=jnp.float64), R64) for x in xt])
 
 os.makedirs(os.path.join(HERE, 'out'), exist_ok=True)
-onp.savez(os.path.join(HERE, 'out', f'gt_a{A}_sigma2_{SIGMA2}.npz'), **data, inputs=onp.array(inputs),
+onp.savez(os.path.join(HERE, 'out', f'gt_a{A}_sigma2_{SIGMA2}{W}.npz'), **data, inputs=onp.array(inputs), wrap=WRAP,
           m0=onp.array(ps.initial.mean.value), P0=onp.array(ps.initial.cov.value), Q=onp.array(ps.dynamics.cov.value),
           R=onp.array(ps.emissions.cov.value), q_bias=onp.array(ps.dynamics.bias.value), r_bias=onp.array(ps.emissions.bias.value),
           a=float(A), M=M, xt=xt, chk_f=chk_f, chk_g=chk_g, y_chk=data['obs_bpf'][0][10])

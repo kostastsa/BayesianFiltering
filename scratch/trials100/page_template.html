@@ -1,0 +1,180 @@
+<title>Tables I–III, 100 Trials</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* Layout: manuscript-style tables, one tab per table; noise settings side by side; the table scrolls sideways inside its box only. */
+:root {
+  --bg: #f5f7f9; --surface: #ffffff; --fg: #1b2430; --muted: #5a6573; --line: #dbe1e7; --rule: #9aa5b1; --accent: #1f5a7d;
+  --best-bg: #e6eff6; --warn: #b03f2c; --up: #b03f2c; --down: #2d7a4f; --newtag: #7a4b00; --newtag-bg: #fbefd9;
+  --f-display: "IBM Plex Serif", Georgia, serif; --f-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12171d; --surface: #1a2129; --fg: #e3e8ee; --muted: #9aa6b3; --line: #2c3540; --rule: #56616d; --accent: #7fb6d9;
+  --best-bg: #1f3242; --warn: #f08b78; --up: #f08b78; --down: #7fcf9c; --newtag: #f3c77a; --newtag-bg: #3a2d14; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12171d; --surface: #1a2129; --fg: #e3e8ee; --muted: #9aa6b3; --line: #2c3540; --rule: #56616d; --accent: #7fb6d9;
+  --best-bg: #1f3242; --warn: #f08b78; --up: #f08b78; --down: #7fcf9c; --newtag: #f3c77a; --newtag-bg: #3a2d14; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1400px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+.wrap > * { min-width: 0; }
+h1 { font-family: var(--f-display); font-weight: 600; font-size: clamp(26px, 4vw, 34px); line-height: 1.15; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 18px; margin: 0 0 6px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.lede { max-width: 75ch; color: var(--muted); margin: 10px 0 0; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: center; border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 14px; border: 0; background: var(--surface); color: var(--fg); padding: 7px 14px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--bg); font-weight: 600; }
+.seg button:focus-visible, .toggle input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; color: var(--muted); cursor: pointer; }
+.caption { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; font-size: 14px; max-width: 115ch; }
+.caption b { font-family: var(--f-display); }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 5px 10px; text-align: center; white-space: nowrap; vertical-align: top; }
+thead tr:first-child th { border-top: 2px solid var(--rule); }
+thead tr:last-child th { border-bottom: 1px solid var(--rule); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+th.set { font-family: var(--f-mono); font-weight: 600; font-size: 13px; border-bottom: 1px solid var(--line); }
+td { font-family: var(--f-mono); font-size: 13px; }
+td.fam { font-family: var(--f-body); font-weight: 600; text-align: left; vertical-align: middle; border-right: 1px solid var(--line); }
+td.par { font-family: var(--f-body); text-align: left; font-size: 13.5px; }
+tr.fam-start td { border-top: 1px solid var(--rule); }
+tbody tr:last-child td { border-bottom: 2px solid var(--rule); }
+td.gs { border-left: 1px solid var(--line); }
+td.best { background: var(--best-bg); font-weight: 600; }
+td.lost.bad > .v { color: var(--warn); }
+.sd { color: var(--muted); font-weight: 400; }
+.was { display: block; font-size: 11.5px; color: var(--muted); font-weight: 400; line-height: 1.3; }
+.was .up { color: var(--up); } .was .down { color: var(--down); }
+.newtag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--newtag); background: var(--newtag-bg); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
+.changes { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; font-size: 14px; }
+.changes p { margin: 0; color: var(--muted); max-width: 100ch; }
+.changes ul { margin: 8px 0 0; padding-left: 20px; columns: 2 420px; column-gap: 32px; }
+.changes li { margin-block: 3px; break-inside: avoid; }
+.changes code, .note code { font-family: var(--f-mono); font-size: 12.5px; }
+.note { color: var(--muted); font-size: 13px; max-width: 105ch; margin: 0; padding-left: 20px; }
+.note li { margin-block: 4px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">AGSF paper · revision · task T3 (D-34)</p>
+    <h1>Tables I–III with 100 trials</h1>
+    <p class="lede">All rows of the three result tables now use 100 simulations. Before, the GSF and AGSF rows used 20 and the particle filter rows used 30. Switch on "Show earlier values" to see the value of the 20- or 30-trial table under each new value.</p>
+  </header>
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Table">
+      <button id="btn-I" type="button" aria-pressed="true" data-table="I">Table I · Exp. A, a = 0.5</button>
+      <button id="btn-II" type="button" aria-pressed="false" data-table="II">Table II · Exp. B</button>
+      <button id="btn-III" type="button" aria-pressed="false" data-table="III">Table III · Exp. A, a = 0.05</button>
+    </div>
+    <label class="toggle" for="show-sd"><input id="show-sd" type="checkbox" checked> Show ± sd</label>
+    <label class="toggle" for="show-prev"><input id="show-prev" type="checkbox"> Show earlier values (20/30 trials)</label>
+    <label class="toggle" for="show-new"><input id="show-new" type="checkbox" checked> Show RPF and UPF</label>
+  </div>
+  <div class="caption" id="caption"></div>
+  <div class="tablebox"><table id="tbl"></table></div>
+  <section class="changes" aria-labelledby="chg-h">
+    <h2 id="chg-h">Largest changes from the earlier table</h2>
+    <p id="chg-intro"></p>
+    <ul id="chg"></ul>
+  </section>
+  <ul class="note">
+    <li>Source: the <code>Error summary.txt</code> files that <code>main.py errors 1 100</code> wrote on 03-Nov-2026. The page builder is <code>scratch/trials100/make_page.py</code>.</li>
+    <li>The earlier values come from the preview pages of 02-Nov-2026 (<code>scratch/d30_pilot/page/</code>). Both use the fixed bootstrap key (K7). Trials 1 to 20 or 1 to 30 are the same simulations in both tables.</li>
+    <li>Shaded cells: the best value in the column (the smallest mean, the smallest fraction of lost tracks, the smallest NEES fraction).</li>
+    <li>Seed bases: GSF and AGSF 2000, BPF and APF 1000, RPF and UPF 3000 (Exp. A). All of Exp. B: 4000.</li>
+  </ul>
+</div>
+<script>
+const DATA = /*DATA*/[];
+const SETS = ["σ² = 25×10⁻¹", "σ² = 25×10⁻³", "σ² = 25×10⁻⁶"];
+function num(x) {
+  if (x === 0) return "0";
+  const ax = Math.abs(x);
+  if (ax >= 1e4 || ax < 1e-2) {
+    const e = Math.floor(Math.log10(ax)); const m = x / Math.pow(10, e);
+    return `${m.toFixed(2)}×10<sup>${e}</sup>`;
+  }
+  return x.toFixed(2);
+}
+const pct = (x) => (100 * x).toFixed(1) + " %";
+let current = "I";
+try { const t = localStorage.getItem("t100Table"); if (["I", "II", "III"].includes(t)) current = t; } catch (e) {}
+
+function arrow(nw, old) {  // lower is better for every column
+  if (old === undefined || old === null || nw === old) return "";
+  return nw > old ? '<span class="up">▲</span>' : '<span class="down">▼</span>';
+}
+function render() {
+  const sd = document.getElementById("show-sd").checked, prev = document.getElementById("show-prev").checked;
+  const showNew = document.getElementById("show-new").checked;
+  const T = DATA.find(t => t.table === current);
+  const A = T.exp === "A";
+  const nset = A ? 3 : 1;
+  const fams = T.families.filter(f => showNew || !f.new);
+  const all = fams.flatMap(f => f.rows);
+  const best = [...Array(nset).keys()].map(i => ({
+    mse: Math.min(...all.map(r => r.cells[i].mse[0])), lpe: Math.min(...all.map(r => r.cells[i].lpe[0])),
+    lost: Math.min(...all.map(r => r.cells[i].lost / r.cells[i].n)), out: Math.min(...all.map(r => r.cells[i].outside[0]))
+  }));
+  const n = [...new Set(all.flatMap(r => r.cells.map(c => c.n)))].join(", ");
+  document.getElementById("caption").innerHTML = A
+    ? `<b>Table ${current}.</b> Experiment A, a = ${T.a}. MSE and LPE of the filters for three noise values (lower is better). Each cell gives the mean ± the standard deviation of 100 bootstrap means over ${n} simulations. <b>Lost:</b> simulations with MSE above 10. <b>NEES:</b> the percentage of steps at which the true state is outside the 99.9 % region of the filter (NEES above the 0.999 quantile of χ²₄). In parentheses: the simulations with more than 20 % of such steps.`
+    : `<b>Table II.</b> Experiment B (lmsv, d = 4, 200 steps). MSE and LPE of the filters (lower is better). Each cell gives the mean ± the standard deviation of 100 bootstrap means over ${n} simulations. AGSF: N = L = 5, ρ₁ = 0.9, ρ₂ from the automatic rule (D-32). <b>NEES:</b> as in Tables I and III. The table has no Lost column, because the MSE of a good filter in Exp. B is near 15, above the threshold of 10.`;
+  const cols = A ? ["MSE", "LPE", "Lost", "NEES"] : ["MSE", "LPE", "NEES"];
+  let h = `<thead><tr><th rowspan="2"></th><th rowspan="2" style="text-align:left">Parameters</th>${
+    A ? SETS.map(s => `<th class="set" colspan="4">a = ${T.a}, ${s}</th>`).join("") : `<th class="set" colspan="3">Exp. B</th>`}</tr>
+    <tr>${[...Array(nset)].map(() => cols.map(c => `<th>${c}</th>`).join("")).join("")}</tr></thead><tbody>`;
+  for (const f of fams) {
+    f.rows.forEach((r, j) => {
+      h += `<tr class="${j === 0 ? "fam-start" : ""}">`;
+      if (j === 0) h += `<td class="fam" rowspan="${f.rows.length}">${f.name}${f.new ? '<span class="newtag">new</span>' : ""}</td>`;
+      h += `<td class="par">${r.label}</td>`;
+      r.cells.forEach((c, i) => {
+        const b = best[i], p = c.prev;
+        const v = (k) => `<span class="v">${num(c[k][0])}${sd ? ` <span class="sd">± ${num(c[k][1])}</span>` : ""}</span>`
+          + (prev && p ? `<span class="was">${arrow(c[k][0], p[k][0])} was ${num(p[k][0])}${sd ? " ± " + num(p[k][1]) : ""}</span>` : "");
+        h += `<td class="gs ${c.mse[0] === b.mse ? "best" : ""}">${v("mse")}</td>`;
+        h += `<td class="${c.lpe[0] === b.lpe ? "best" : ""}">${v("lpe")}</td>`;
+        if (A) h += `<td class="lost ${c.lost / c.n === b.lost ? "best" : ""} ${c.lost / c.n > 0.25 ? "bad" : ""}"><span class="v">${c.lost}/${c.n}</span>`
+          + (prev && p ? `<span class="was">${arrow(c.lost / c.n, p.lost / p.n)} was ${p.lost}/${p.n}</span>` : "") + `</td>`;
+        h += `<td class="${c.outside[0] === b.out ? "best" : ""}"><span class="v">${pct(c.outside[0])} <span class="sd">(${c.empty})</span></span>`
+          + (prev && p ? `<span class="was">${arrow(c.outside[0], p.outside[0])} was ${pct(p.outside[0])} (${p.empty})</span>` : "") + `</td>`;
+      });
+      h += `</tr>`;
+    });
+  }
+  document.getElementById("tbl").innerHTML = h + "</tbody>";
+  for (const b of document.querySelectorAll(".seg button")) b.setAttribute("aria-pressed", b.dataset.table === current ? "true" : "false");
+  changes(T, fams);
+}
+function changes(T, fams) {
+  // Cells where the MSE or LPE mean moved by more than 2 earlier sd, or the fraction of lost tracks moved by 10 points or more.
+  const items = [];
+  for (const f of fams) for (const r of f.rows) r.cells.forEach((c, i) => {
+    const p = c.prev; if (!p) return;
+    const where = `${f.name}, ${r.label}${T.exp === "A" ? ", " + SETS[i] : ""}`;
+    for (const k of ["mse", "lpe"]) {
+      const z = Math.abs(c[k][0] - p[k][0]) / Math.max(p[k][1], 1e-12);
+      if (z > 2) items.push({ s: z, t: `${where}: ${k.toUpperCase()} ${num(p[k][0])} → ${num(c[k][0])}` });
+    }
+    if (T.exp === "A") {
+      const d = Math.abs(c.lost / c.n - p.lost / p.n);
+      if (d >= 0.1) items.push({ s: 20 * d, t: `${where}: Lost ${p.lost}/${p.n} → ${c.lost}/${c.n}` });
+    }
+  });
+  items.sort((x, y) => y.s - x.s);
+  document.getElementById("chg-intro").textContent = items.length
+    ? `${items.length} cells in this table moved by more than 2 earlier standard deviations (MSE, LPE), or by 10 points or more of lost tracks. The largest changes are first.`
+    : "No cell in this table moved by more than 2 earlier standard deviations, and no fraction of lost tracks moved by 10 points or more.";
+  document.getElementById("chg").innerHTML = items.slice(0, 16).map(x => `<li>${x.t}</li>`).join("");
+}
+for (const b of document.querySelectorAll(".seg button")) b.addEventListener("click", () => { current = b.dataset.table; try { localStorage.setItem("t100Table", current); } catch (e) {} render(); });
+for (const id of ["show-sd", "show-prev", "show-new"]) document.getElementById(id).addEventListener("change", render);
+render();
+</script>
