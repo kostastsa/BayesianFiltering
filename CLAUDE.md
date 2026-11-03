@@ -68,6 +68,10 @@ SEED_BASE=3000 ./run_tables_I_III.zsh 1 30 0.5 rpf_wrap,upf_wrap
 # Markdown rows from the Error summary.txt files (run 'errors' first)
 python gaussfiltax/main.py table <descriptor files> [-o out.md]
 
+# Exp. B, sweep of a fixed rho2 (task A6), on the data of the adaptive Table II rows
+SIM=lmsv SEED_BASE=7000 ./run_tables_I_III.zsh 1 100 B lagsf_rho2sweep
+SIM=lmsv SEED_BASE=7100 ./run_tables_I_III.zsh 1 100 B uagsf_rho2sweep
+
 # R runs of the BPF or APF on each of the 30 stored data sets (data block, see "Descriptor syntax"), for the check against
 # the particles library in scratch/particles_check. Give each call its own SEED_BASE. Write sigma2 as in the folder names.
 SEED_BASE=5000 ./run_samedata.zsh 20 0.5 0.025,2.5,2.5e-05 apf
@@ -152,7 +156,7 @@ experiment
 - BPF, APF, RPF and UPF: `num_prt` particles. The filter resamples when the effective sample size is below `ess × num_prt`.
 - RPF: after each resampling, each particle moves by `h D e`. `D` is the square root of the weighted covariance before the resampling, `e` is standard normal, and `h = (4 / (N (d + 2)))^(1 / (d + 4))` (decision D-29).
 - UPF: for each particle, one square-root UKF update over the process noise `q` (prior `N(q0, Q)`) gives the proposal. The weight is `p(y|x) N(q; q0, Q) / N(q; m_q, P_q)`. Thus the UPF works when the noise enters through a singular matrix, as in `mtt` (decision D-26).
-- Optional `data` block after `inf` (particle filters only): the filter runs on the stored data of another experiment with the same `sim` block. The data is not simulated again. Only the filter key changes. Trial t uses the data of trial ((t - 1) mod `trials`) + 1 of the folder `from`. Thus trials 1 to R × `trials` are R runs on each data set. The results go to `<sim folder>/data_<from with _ for />/<inf folder>`. `create_exps.py` writes these files as `*_samedata_*`.
+- Optional `data` block after `inf` (particle filters, L-AGSF and U-AGSF): the filter runs on the stored data of another experiment with the same `sim` block. The data is not simulated again. Only the filter key changes. Trial t uses the data of trial ((t - 1) mod `trials`) + 1 of the folder `from`. Thus trials 1 to R × `trials` are R runs on each data set. The results go to `<sim folder>/data_<from with _ for />/<inf folder>`. `create_exps.py` writes these files as `*_samedata_*` (particle filters) and `lmsv_*_rho2sweep_*` (AGSF, task A6).
 
 ```
     data: data

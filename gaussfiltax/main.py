@@ -369,6 +369,9 @@ def make_table(args):
     names = {'lgsf': 'L-GSF', 'ugsf': 'U-GSF', 'lagsf': 'L-AGSF', 'uagsf': 'U-AGSF',
              'bpf': 'BPF', 'apf': 'APF', 'rpf': 'RPF', 'upf': 'UPF'}
     size = lambda inf: getattr(inf, 'num_prt', None) or getattr(inf, 'n_comps', None) or getattr(inf, 'M', None)
+    # AGSF: also the split rule of the update step (for example the rho2 sweep of task A6: '100, rho2 prop 0.3')
+    base_size = size
+    size = lambda inf: f'{inf.M}, rho2 {inf.ac2} {inf.r2}' if inf.name in ('lagsf', 'uagsf') else base_size(inf)
     fmt = lambda x: f'{x:.2e}' if x != 0 and (abs(x) >= 1e4 or abs(x) < 1e-2) else f'{x:.2f}'
 
     exp_descs = sum([ed.parse(util.io.load_txt(f)) for f in args.files], [])

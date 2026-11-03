@@ -34,6 +34,17 @@ for f in sys.argv[1:]:
             print(os.path.join(misc.get_root(), "experiments", e.get_dir()))
 ' $files 2>/dev/null)"} )
 echo "$(date +%T) raw results deleted after errors in ${#big_dirs} experiment folders"
+# KEEP_RESULTS=K (optional): for trials above K, delete results.pkl and aux_outputs.pkl of ALL runs of these files after
+# 'errors' (the metrics, nees.pkl and gt.pkl stay). Used for the 100-trial runs: the GSF/AGSF results need about 23 GB per 20 trials.
+all_dirs=( ${(f)"$(python -c '
+import os, sys
+sys.path.insert(0, "gaussfiltax")
+import experiment_descriptor as ed, util.io, misc
+for f in sys.argv[1:]:
+    for e in ed.parse(util.io.load_txt(f)):
+        print(os.path.join(misc.get_root(), "experiments", e.get_dir()))
+' $files 2>/dev/null)"} )
+KEEP_RESULTS=${KEEP_RESULTS:-1000000}
 
 for k in {$FIRST..$LAST}; do
 
@@ -48,6 +59,11 @@ for k in {$FIRST..$LAST}; do
     for d in $big_dirs; do
         rm -f $d/$k/results.pkl
     done
+    if (( k > KEEP_RESULTS )); then
+        for d in $all_dirs; do
+            rm -f $d/$k/results.pkl $d/$k/aux_outputs.pkl
+        done
+    fi
     echo "$(date +%T) DONE trial $k"
 done
 echo "$(date +%T) ALL DONE a=$A"
