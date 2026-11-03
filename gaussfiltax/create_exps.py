@@ -218,10 +218,14 @@ if __name__ == '__main__':
     # D-30 decided (c): the tables use the wrapped bearing. The GSF and AGSF rows are the '*_table_wrap' files (the pilot);
     # the PF rows are 'bpf_wrap', 'apf_wrap' (SEED_BASE 1000, as A2) and 'rpf_wrap', 'upf_wrap' (SEED_BASE 3000, as A1).
     algs_to_write = ['bpf_wrap', 'apf_wrap', 'rpf_wrap', 'upf_wrap']
+    # Table R1 with the wrapped bearing (D-33): runs on the 30 data sets of the wrapped BPF/APF runs with 1000 particles.
+    algs_to_write = ['bpf_wrap_samedata', 'apf_wrap_samedata']
     # Exp. B (lmsv), Table II of the paper: '*_tableII' (task T2 and A1, D-32).
     if ssm == 'lmsv':
         algs_to_write = ['lgsf_tableII', 'ugsf_tableII', 'lagsf_tableII', 'uagsf_tableII',
                          'bpf_tableII', 'apf_tableII', 'rpf_tableII', 'upf_tableII']
+        # A6 (D-35): sweep of a fixed rho2 (rule 'prop'), M = 100, on the 100 data sets of the adaptive Table II rows (data block).
+        algs_to_write = ['lagsf_rho2sweep', 'uagsf_rho2sweep']
 
     # mtt only: the (a, sigma2) settings. Each setting has its own folder of descriptor files and its own results folder.
     # (None, None) keeps the defaults of simulators/mtt.py (a = 0.05, sigma2 = 2.5) and writes to the folder state_dim_4.
@@ -311,6 +315,10 @@ if __name__ == '__main__':
     t2_agsf = {'M': [10, 100, 1000], 'N': [5], 'L': [5], 'n_iters': [1]}
     t2_split = {'ac1': ['prop'], 'r1': [0.9], 'ac2': ['auto'], 'r2': [0.4]}
     t2_pf = {'num_prt': [100, 1000, 10000], 'ess': [0.5]}
+    # A6 (D-35): fixed rho2 in {0.1, 0.3, 0.5, 0.7, 0.9}, M = 100, N = L = 5, rho1 = 0.9. Each run uses the data of the
+    # same trial of the adaptive row with M = 100 of Table II (T2_AGSF_SRC), so the comparison is paired.
+    t2_sweep = {'M': [100], 'N': [5], 'L': [5], 'n_iters': [1], 'ac1': ['prop'], 'r1': [0.9], 'ac2': ['prop'], 'r2': [0.1, 0.3, 0.5, 0.7, 0.9]}
+    T2_AGSF_SRC = 'agsf/{}/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4'
 
     # GSF and AGSF rows of Tables I and III (Exp. A): M = 1, 100, 1000 components for the GSF, and
     # M = 2, 10, 100 with N = L = 5 and rho1 = rho2 = 0.9 (rule 'prop') for the AGSF.
@@ -353,6 +361,8 @@ if __name__ == '__main__':
                                        ('apf_wrap', 'apf', custom_scan_params_bpf),
                                        ('rpf_wrap', 'rpf', table_params_rpf),
                                        ('upf_wrap', 'upf', table_params_upf),
+                                       ('bpf_wrap_samedata', 'bpf', {'num_prt': [1000], 'ess': [0.5]}),
+                                       ('apf_wrap_samedata', 'apf', {'num_prt': [1000], 'ess': [0.5]}),
                                        ('lgsf_tableII', 'lgsf', t2_gsf),
                                        ('ugsf_tableII', 'ugsf', {**t2_gsf, **t2_ukf}),
                                        ('lagsf_tableII', 'lagsf', {**t2_agsf, **t2_split}),
@@ -360,15 +370,19 @@ if __name__ == '__main__':
                                        ('bpf_tableII', 'bpf', t2_pf),
                                        ('apf_tableII', 'apf', t2_pf),
                                        ('rpf_tableII', 'rpf', t2_pf),
-                                       ('upf_tableII', 'upf', {**t2_pf, **t2_ukf})]:
+                                       ('upf_tableII', 'upf', {**t2_pf, **t2_ukf}),
+                                       ('lagsf_rho2sweep', 'lagsf', t2_sweep),
+                                       ('uagsf_rho2sweep', 'uagsf', {**t2_sweep, **t2_ukf})]:
 
             if name not in algs_to_write:
 
                 continue
 
             data_desc = ed.DataDescriptor().create_desc(f'pf/{alg}/numprt_1000_ess_0.5', 30) if name.endswith('_samedata') else None
+            if name.endswith('_rho2sweep'):
+                data_desc = ed.DataDescriptor().create_desc(T2_AGSF_SRC.format(alg), 100)
             exp_descs, (scan_param, scan_init, scan_fin) = create_descs(
-                sim_desc=sim.create_desc(state_dim, emission_dim, num_timesteps, a, sigma2, wrap=True) if name.endswith('_wrap') else sim_desc,
+                sim_desc=sim.create_desc(state_dim, emission_dim, num_timesteps, a, sigma2, wrap=True) if '_wrap' in name else sim_desc,
                 alg=alg,
                 scan_params=scan_params,
                 data_desc=data_desc

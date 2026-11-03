@@ -146,8 +146,9 @@ class ExperimentRunner:
         ssm = sim_setup['ssm']
         props = sim_setup['props']
 
-        if self.exp_desc.data is not None and not isinstance(inf_desc, (ed.BPF_Descriptor, ed.APF_Descriptor, ed.RPF_Descriptor, ed.UPF_Descriptor)):
-            raise NotImplementedError('the data block is implemented for the particle filters only')
+        if self.exp_desc.data is not None and not isinstance(inf_desc, (ed.BPF_Descriptor, ed.APF_Descriptor, ed.RPF_Descriptor, ed.UPF_Descriptor,
+                                                                                     ed.LAGSF_Descriptor, ed.UAGSF_Descriptor)):
+            raise NotImplementedError('the data block is implemented for the particle filters and the AGSF only')
 
         try:
 
@@ -161,11 +162,11 @@ class ExperimentRunner:
 
             elif isinstance(self.exp_desc.inf, ed.LAGSF_Descriptor):
 
-                self._run_lagsf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed)
+                self._run_lagsf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, self._load_data(trial))
 
             elif isinstance(self.exp_desc.inf, ed.UAGSF_Descriptor):
 
-                self._run_uagsf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed)
+                self._run_uagsf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, self._load_data(trial))
 
             elif isinstance(self.exp_desc.inf, ed.BPF_Descriptor):
 
@@ -290,7 +291,7 @@ class ExperimentRunner:
             jax.clear_caches()
             gc.collect()
 
-    def _run_lagsf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed):
+    def _run_lagsf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, data=None):
         """
         Runs the ABC experiments.
         """
@@ -302,7 +303,10 @@ class ExperimentRunner:
         
         true_ps = sample_prior(jr.PRNGKey(0), props, 1)[0]
         key, subkey = jr.split(key)
-        states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        if data is None:
+            states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        else:
+            states, observations, true_ps = data
 
         if plot_sims:
             _plot_states_observations(states, observations, exp_dir)
@@ -341,7 +345,7 @@ class ExperimentRunner:
             jax.clear_caches()
             gc.collect()
 
-    def _run_uagsf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed):
+    def _run_uagsf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, data=None):
         """
         Runs the ABC experiments.
         """
@@ -353,7 +357,10 @@ class ExperimentRunner:
         
         true_ps = sample_prior(jr.PRNGKey(0), props, 1)[0]
         key, subkey = jr.split(key)
-        states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        if data is None:
+            states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        else:
+            states, observations, true_ps = data
 
         if plot_sims:
             _plot_states_observations(states, observations, exp_dir)
