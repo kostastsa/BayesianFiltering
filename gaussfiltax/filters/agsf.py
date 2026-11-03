@@ -31,20 +31,175 @@ def swap_axes_on_values(outputs, axis1=0, axis2=1):
 
     return dict(map(lambda x: (x[0], jnp.swapaxes(x[1], axis1, axis2)), outputs.items()))
 
-def prop_cov_selection(m, P, jacobian, hessian_tensor, bias, u, alpha):
+# Selection of the augmentation covariance Delta (before the prediction) and Lambda (before the update).
+#
+# Each rule has the signature rule(m, P, jacobian, hessian_tensor, bias, u, alpha, noise_jacobian, noise_cov) and
+# returns (Delta, rho). P is the covariance Sigma of the component, alpha is r1 or r2 of the descriptor.
+#   'prop': Delta = alpha * P.
+#   'auto': Eq. (47), Delta = rho* P with rho* = alpha Tr(P J^T J) / sum_i Tr(H_i P)^2, clipped at RHO_MAX.
+#           alpha = 2/N gives Eq. (47) of the paper.
+#   'sdp':  the full program (45), min Psi(Delta) subject to 0 <= Delta <= Sigma, with the same weight 1/N = alpha/2.
+# 'auto' and 'sdp' whiten the outputs by the noise covariance S = G R G^T (G = d output / d noise) when noise_cov is
+# given and rescale is True. Then Psi does not depend on the units of the outputs. The filters give the noise only for
+# the update step: the process noise of mtt is singular (G Q G^T has rank 2), so S^{-1/2} does not exist there.
+
+RHO_MAX = 0.95   # Sigma - Delta must stay positive definite: the z-sample uses its Cholesky factor
+RHO_MIN = 1e-3   # 'sdp' only: Delta must stay positive definite, the EKF/UKF step uses its Cholesky factor
+SDP_ITERS = 200  # fixed number of FISTA iterations, so that the solver stays jittable
+
+
+def prop_cov_selection(m, P, jacobian, hessian_tensor, bias, u, alpha, noise_jacobian=None, noise_cov=None):
 
     cov = alpha * P
 
     return cov, alpha
 
-def auto_cov_selection(m, P, jacobian, hessian_tensor, bias, u, alpha):
 
-    hessian = hessian_tensor(m, bias, u)
+def _inv_sqrt_psd(S, rel_eps=1e-8):
+    """S^{-1/2} of a symmetric positive semidefinite S. Eigenvalues below rel_eps * max are raised to that value."""
+
+    lam, V = jnp.linalg.eigh(0.5 * (S + S.T))
+    lam = jnp.maximum(lam, rel_eps * jnp.max(lam))
+    return (V / jnp.sqrt(lam)) @ V.T
+
+
+def whiten_outputs(J, hessians, S):
+    """Derivatives of S^{-1/2} f from the derivatives of f: J -> S^{-1/2} J, H_i -> sum_j (S^{-1/2})_ij H_j."""
+
+    W = _inv_sqrt_psd(S)
+    return W @ J, jnp.einsum('ij,jkl->ikl', W, hessians)
+
+
+def _output_derivatives(m, jacobian, hessian_tensor, bias, u, noise_jacobian, noise_cov, rescale):
+    """J and H_i at the mean, whitened by the output noise covariance if noise_cov is given and rescale is True."""
+
     J = jacobian(m, bias, u)
-    rho = jnp.minimum(.95, alpha * jnp.trace(P @ J.T @ J) / jnp.sum(jnp.trace((hessian) @ P, axis1=1, axis2=2)**2))
+    hessians = hessian_tensor(m, bias, u)
+    if rescale and noise_cov is not None:
+        G = noise_jacobian(m, bias, u)
+        J, hessians = whiten_outputs(J, hessians, G @ noise_cov @ G.T)
+    return J, hessians
+
+
+def auto_cov_selection(m, P, jacobian, hessian_tensor, bias, u, alpha, noise_jacobian=None, noise_cov=None, rescale=True):
+
+    J, hessian = _output_derivatives(m, jacobian, hessian_tensor, bias, u, noise_jacobian, noise_cov, rescale)
+    rho = jnp.minimum(RHO_MAX, alpha * jnp.trace(P @ J.T @ J) / jnp.sum(jnp.trace((hessian) @ P, axis1=1, axis2=2)**2))
     cov = rho * P
 
     return cov, rho
+
+
+# The full program (45) in the whitened form. With Sigma = C C^T and Delta = C P C^T, the constraint
+# 0 <= Delta <= Sigma is 0 <= P <= I, and
+#     Psi(P) = c Tr((I - P) A) + 1/4 sum_i Tr(P H_i)^2,   A = C^T J^T J C,  H_i = C^T H_i C,  c = 1/N.
+# Psi is a convex quadratic. The solver is FISTA (Beck and Teboulle 2009) with the function-value restart of
+# O'Donoghue and Candes (2015). The projection clips the eigenvalues of P to [0, 1].
+
+def sdp_objective(P, A, hessians, c):
+
+    t = jnp.einsum('ab,kab->k', P, hessians)
+    return c * (jnp.trace(A) - jnp.sum(P * A)) + 0.25 * jnp.dot(t, t)
+
+
+def sdp_gradient(P, A, hessians, c):
+
+    t = jnp.einsum('ab,kab->k', P, hessians)
+    return -c * A + 0.5 * jnp.einsum('k,kab->ab', t, hessians)
+
+
+def sdp_fw_gap(P, G):
+    """Frank-Wolfe gap <G, P> - sum_k min(lambda_k(G), 0). It is an upper bound of Psi(P) - min Psi (Jaggi 2013)."""
+
+    lam = jnp.linalg.eigvalsh(0.5 * (G + G.T))
+    return jnp.sum(P * G) - jnp.sum(jnp.minimum(lam, 0.0))
+
+
+def _proj_unit_box(X):
+    """Projection onto {0 <= P <= I}: clip the eigenvalues to [0, 1]."""
+
+    lam, V = jnp.linalg.eigh(0.5 * (X + X.T))
+    return (V * jnp.clip(lam, 0.0, 1.0)) @ V.T
+
+
+def solve_cov_sdp(A, hessians, c, P0=None, num_iters=SDP_ITERS):
+    """Minimize sdp_objective over 0 <= P <= I. Returns P.
+
+    A: (d, d), hessians: (d_y, d, d), both in the whitened form. P0: start point (default 0.5 I). The function-value
+    restart rejects each step that increases Psi, so Psi(P) <= Psi(P0) for any number of iterations.
+    """
+
+    d = A.shape[0]
+    A = 0.5 * (A + A.T)
+    hessians = 0.5 * (hessians + jnp.swapaxes(hessians, 1, 2))
+
+    # Scale Psi to order 1. The minimizer does not change.
+    gram = jnp.einsum('iab,jab->ij', hessians, hessians)
+    lip = 0.5 * jnp.max(jnp.linalg.eigvalsh(gram))  # Lipschitz constant of the gradient
+    scale = c * jnp.max(jnp.linalg.eigvalsh(A)) + lip
+    scale = jnp.where(scale > 0, scale, 1.0)
+    A, c_s, hessians = A / scale, c, hessians / jnp.sqrt(scale)
+    step = 1.0 / jnp.maximum(lip / scale, 1e-3)
+
+    x = _proj_unit_box(0.5 * jnp.eye(d) if P0 is None else P0)
+    f = sdp_objective(x, A, hessians, c_s)
+
+    def body(_, state):
+        x, y, tk, f_old = state
+        x_new = _proj_unit_box(y - step * sdp_gradient(y, A, hessians, c_s))
+        f_new = sdp_objective(x_new, A, hessians, c_s)
+        restart = f_new > f_old
+        t_new = 0.5 * (1.0 + jnp.sqrt(1.0 + 4.0 * tk**2))
+        y_acc = x_new + ((tk - 1.0) / t_new) * (x_new - x)
+        return (jnp.where(restart, x, x_new),
+                jnp.where(restart, x, y_acc),
+                jnp.where(restart, 1.0, t_new),
+                jnp.where(restart, f_old, f_new))
+
+    x, _, _, _ = lax.fori_loop(0, num_iters, body, (x, x, jnp.asarray(1.0, x.dtype), f))
+    return x
+
+
+def sdp_cov_selection(m, P, jacobian, hessian_tensor, bias, u, alpha, noise_jacobian=None, noise_cov=None, rescale=True):
+    """Delta from the full program (45). The start point is the rho* of Eq. (47), so Psi(Delta) <= Psi(rho* Sigma).
+    The eigenvalues of Sigma^{-1} Delta are clipped to [RHO_MIN, RHO_MAX]. rho is their mean."""
+
+    J, hessians = _output_derivatives(m, jacobian, hessian_tensor, bias, u, noise_jacobian, noise_cov, rescale)
+    C = jnp.linalg.cholesky(P)
+    A = C.T @ J.T @ J @ C
+    Hw = jnp.einsum('ba,kbc,cd->kad', C, hessians, C)
+    c = 0.5 * alpha
+
+    a = jnp.trace(A)
+    b = jnp.sum(jnp.trace(Hw, axis1=1, axis2=2)**2)
+    rho0 = jnp.where(b > 0, alpha * a / jnp.where(b > 0, b, 1.0), 1.0)
+    P0 = jnp.clip(rho0, 0.0, 1.0) * jnp.eye(P.shape[0])
+
+    Pw = solve_cov_sdp(A, Hw, c, P0)
+    lam, V = jnp.linalg.eigh(Pw)
+    lam = jnp.clip(lam, RHO_MIN, RHO_MAX)
+    Pw = (V * lam) @ V.T
+    cov = C @ Pw @ C.T
+    cov = 0.5 * (cov + cov.T)
+
+    return cov, jnp.mean(lam)
+
+
+COV_SELECTION_RULES = {
+    'prop': prop_cov_selection,
+    'auto': auto_cov_selection,
+    'sdp': sdp_cov_selection,
+}
+
+
+def get_cov_selection(rule):
+    """The selection function of the descriptor value ac1 or ac2."""
+
+    if callable(rule):
+        return rule
+    if rule not in COV_SELECTION_RULES:
+        raise ValueError(f"Unknown covariance rule {rule!r}. Use one of {sorted(COV_SELECTION_RULES)}.")
+    return COV_SELECTION_RULES[rule]
 
 class LAGSF():
 
@@ -95,22 +250,9 @@ class LAGSF():
         F_xx, H_xx = jit(jacrev(F_x)), jit(jacrev(H_x))
         inputs = _process_input(inputs, num_timesteps)
 
-        # Autocovariance functions
-        if autocov1 == 'prop':
-
-            autocov1 = prop_cov_selection
-
-        elif autocov1 == 'auto':
-
-            autocov1 = auto_cov_selection
-
-        if autocov2 == 'prop':
-
-            autocov2 = prop_cov_selection
-
-        elif autocov2 == 'auto':
-
-            autocov2 = auto_cov_selection
+        # Rules for the augmentation covariances ('prop', 'auto' or 'sdp')
+        autocov1 = get_cov_selection(autocov1)
+        autocov2 = get_cov_selection(autocov2)
 
         def _step(carry, t):
 
@@ -126,7 +268,7 @@ class LAGSF():
             state_dim = filtered_covs[0].shape[0]
 
             # Autocov before predict
-            Deltas, rho1s = vmap(autocov1, in_axes=(0, 0, None, None, None, None, None))(filtered_means, filtered_covs, F_x, F_xx, q0, u, r1)
+            Deltas, rho1s = vmap(lambda m, P: autocov1(m, P, F_x, F_xx, q0, u, r1, None, None))(filtered_means, filtered_covs)
 
             # Compute the z-sample
             key, subkey = jr.split(key)
@@ -154,7 +296,7 @@ class LAGSF():
 
             # Autocov before update
             # Compute Lambdas using covariance space; predicted_covs reconstructed above
-            Lambdas, rho2s = vmap(autocov2, in_axes=(0, 0, None, None, None, None, None))(predicted_means, predicted_covs, H_x, H_xx, r0, u, r2)
+            Lambdas, rho2s = vmap(lambda m, P: autocov2(m, P, H_x, H_xx, r0, u, r2, H_r, R))(predicted_means, predicted_covs)
 
             # Compute the s-sample
             key, subkey = jr.split(key)
@@ -268,25 +410,13 @@ class UAGSF():
 
         # Dynamics and emission functions and their Jacobians
         F_x, H_x = jacfwd(dynamics_fn, argnums=0), jacfwd(emission_fn, argnums=0)
+        H_r = jacfwd(emission_fn, argnums=1)
         F_xx, H_xx = jit(jacrev(F_x)), jit(jacrev(H_x))
         inputs = _process_input(inputs, num_timesteps)
 
-        # Autocovariance functions
-        if autocov1 == 'prop':
-
-            autocov1 = prop_cov_selection
-
-        elif autocov1 == 'auto':
-
-            autocov1 = auto_cov_selection
-
-        if autocov2 == 'prop':
-
-            autocov2 = prop_cov_selection
-
-        elif autocov2 == 'auto':
-
-            autocov2 = auto_cov_selection
+        # Rules for the augmentation covariances ('prop', 'auto' or 'sdp')
+        autocov1 = get_cov_selection(autocov1)
+        autocov2 = get_cov_selection(autocov2)
 
         def _step(carry, t):
 
@@ -302,7 +432,7 @@ class UAGSF():
             state_dim = filtered_covs[0].shape[0]
 
             # Autocov 1
-            Deltas, rho1s = vmap(autocov1, in_axes=(0, 0, None, None, None, None, None))(filtered_means, filtered_covs, F_x, F_xx, q0, u, r1)
+            Deltas, rho1s = vmap(lambda m, P: autocov1(m, P, F_x, F_xx, q0, u, r1, None, None))(filtered_means, filtered_covs)
 
             # Compute the z-sample
             key, subkey = jr.split(key)
@@ -329,7 +459,7 @@ class UAGSF():
             predicted_sqrts = vmap(jnp.linalg.cholesky)(predicted_covs)
 
             # Autocov before update
-            Lambdas, rho2s = vmap(autocov2, in_axes=(0, 0, None, None, None, None, None))(predicted_means, predicted_covs, H_x, H_xx, r0, u, r2) 
+            Lambdas, rho2s = vmap(lambda m, P: autocov2(m, P, H_x, H_xx, r0, u, r2, H_r, R))(predicted_means, predicted_covs) 
 
             # Compute the s-sample
             key, subkey = jr.split(key)
