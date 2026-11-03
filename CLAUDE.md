@@ -82,6 +82,7 @@ python tests/test_numerics_weights.py
 python tests/test_gsf_weights.py
 python tests/test_wrapped_bearing.py
 python tests/test_nees.py
+python tests/test_cov_selection.py
 python test_sqrt_filter.py
 ```
 
@@ -152,7 +153,11 @@ experiment
 - `mtt`: the keys `a` (turn parameter, default 0.05) and `sigma2` (variance of the observation noise, default 2.5) are optional. Write both or none. Each pair has its own results folder.
 - `mtt`, `wrap: 1` (only after `a` and `sigma2`): the bearing is an angle (decision D-30). Tables I and III use this key. The simulator wraps the noisy bearing into [-pi, pi), and all filters use the residual `[wrap(y1 - y1_hat), y2 - y2_hat]`. The results folder ends in `_wrap`. Without the key, the bearing is the raw value of `arctan2` plus noise, with a jump of 2 pi on the negative x1-axis.
 - `n_comps`: number of Gaussian components. `n_iters`: number of relinearizations in the update step. `alpha`, `beta`, `kappa`: parameters of the unscented transform.
-- AGSF: `M` components stay after each step. Each component splits into `N` points before the prediction and `L` points before the update. The filter then resamples the `M·N·L` candidates down to `M`. `ac1` is the split rule for the prediction and `ac2` is the rule for the update. The value is `prop` or `auto`. `r1` and `r2` set the covariance of the new components as a fraction of the covariance P (`prop`) or as the scale of the automatic rule (`auto`).
+- AGSF: `M` components stay after each step. Each component splits into `N` points before the prediction and `L` points before the update. The filter then resamples the `M·N·L` candidates down to `M`. `ac1` is the split rule for the prediction and `ac2` is the rule for the update. `r1` and `r2` are the parameter of the rule. The rules are in `filters/agsf.py` (`COV_SELECTION_RULES`):
+  - `prop`: Delta = r P (a fixed fraction of the covariance P).
+  - `auto`: Eq. (47), Delta = rho P with rho = min(0.95, r Tr(P J^T J) / sum_i Tr(H_i P)^2). The value r = 2/N gives Eq. (47) of the paper.
+  - `sdp`: the full program (45), min Psi(Delta) with 0 <= Delta <= P. The weight of the variance term is r/2 (thus r = 2/N, as for `auto`). The solver is FISTA with 200 iterations. The eigenvalues of P^-1 Delta are clipped to [0.001, 0.95]. `rho1s` and `rho2s` hold the mean of these eigenvalues. One L-AGSF run of Exp. A with M = 100 and `sdp` / `sdp` takes about 50 s (`prop`: 3 s).
+  - In the update, `auto` and `sdp` divide the outputs by the square root of the noise covariance G R G^T (G is the derivative of g in the noise). Thus rho does not depend on the units of the outputs. In Exp. A and Exp. B, R is a multiple of the identity, so this does not change rho. The prediction does not use this scale, because the process noise of `mtt` is singular. Test: `tests/test_cov_selection.py`.
 - BPF, APF, RPF and UPF: `num_prt` particles. The filter resamples when the effective sample size is below `ess × num_prt`.
 - RPF: after each resampling, each particle moves by `h D e`. `D` is the square root of the weighted covariance before the resampling, `e` is standard normal, and `h = (4 / (N (d + 2)))^(1 / (d + 4))` (decision D-29).
 - UPF: for each particle, one square-root UKF update over the process noise `q` (prior `N(q0, Q)`) gives the proposal. The weight is `p(y|x) N(q; q0, Q) / N(q; m_q, P_q)`. Thus the UPF works when the noise enters through a singular matrix, as in `mtt` (decision D-26).
