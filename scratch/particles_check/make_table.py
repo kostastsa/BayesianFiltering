@@ -27,6 +27,7 @@ import util.io
 import util.numerics
 
 A, SIGMAS = sys.argv[1], sys.argv[2].split(',')
+W = '_wrap' if len(sys.argv) > 3 and sys.argv[3] == 'wrap' else ''    # wrapped bearing (D-33)
 M, N_DATA, LOST = 1000, 30, 10.0
 
 
@@ -59,9 +60,9 @@ def cmh_p(ours, part):
 
 rows = []
 for s in SIGMAS:
-    sim_dir = os.path.join(ROOT, 'data.nosync', 'experiments', 'mtt', f'state-dim_4_emission-dim_2_num-timesteps_500_a_{A}_sigma2_{s}')
-    d = onp.load(os.path.join(HERE, 'out', f'gt_a{A}_sigma2_{s}.npz'))
-    p = onp.load(os.path.join(HERE, 'out', f'particles_a{A}_sigma2_{s}.npz'))
+    sim_dir = os.path.join(ROOT, 'data.nosync', 'experiments', 'mtt', f'state-dim_4_emission-dim_2_num-timesteps_500_a_{A}_sigma2_{s}{W}')
+    d = onp.load(os.path.join(HERE, 'out', f'gt_a{A}_sigma2_{s}{W}.npz'))
+    p = onp.load(os.path.join(HERE, 'out', f'particles_a{A}_sigma2_{s}{W}.npz'))
     for f in ('bpf', 'apf'):
         ours = ours_mse(sim_dir, f)
         part = onp.array(vmap(lambda ms, st: vmap(lambda m: particles_mse(m, st))(ms))(jnp.array(p[f'means_{f}']), jnp.array(d[f'states_{f}'])))
@@ -78,7 +79,7 @@ md = [hdr] + [f"| {r['sigma2']} | {r['filter']} | {r['r_ours']} / {r['r_part']} 
               f"| {r['lost_ours']:.1f}% | {r['lost_part']:.1f}% | {fmt_p(r['p_lost'])} | {r['below']}/{N_DATA} | {r['p_sign']:.2f} |" for r in rows]
 note = (f"Exp. A (mtt), a = {A}, M = {M}, {N_DATA} data sets for each setting and filter. Ours: main.py runs. "
         f"particles: run_particles.py. MSE: util.numerics.mse. Lost track: MSE > {LOST:g}.")
-open(os.path.join(HERE, 'out', 'table.md'), 'w').write(note + '\n\n' + '\n'.join(md) + '\n')
+open(os.path.join(HERE, 'out', f'table{W}.md'), 'w').write(note + '\n\n' + '\n'.join(md) + '\n')
 
 tex = [r'\begin{tabular}{llcccccc}', r'\toprule',
        r' & & \multicolumn{2}{c}{Median MSE} & \multicolumn{2}{c}{Lost tracks} & & \\',
@@ -86,5 +87,5 @@ tex = [r'\begin{tabular}{llcccccc}', r'\toprule',
 tex += [f"{r['sigma2']} & {r['filter']} & {r['med_ours']:.3f} & {r['med_part']:.3f} & {r['lost_ours']:.1f}\\% & "
         f"{r['lost_part']:.1f}\\% & {fmt_p(r['p_lost'])} & {r['p_sign']:.2f} \\\\" for r in rows]
 tex += [r'\bottomrule', r'\end{tabular}']
-open(os.path.join(HERE, 'out', 'table.tex'), 'w').write('\n'.join(tex) + '\n')
+open(os.path.join(HERE, 'out', f'table{W}.tex'), 'w').write('\n'.join(tex) + '\n')
 print(note + '\n\n' + '\n'.join(md))
