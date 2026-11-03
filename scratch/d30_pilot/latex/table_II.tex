@@ -1,0 +1,43 @@
+\begin{table}
+\centering
+\caption{\textbf{Experiment B.}  {Comparison between the MSE and LPE of various settings of GSF, AGSF, and PF algorithms. Lower values are better. \cblue{MSE and LPE: mean $\pm$ the standard deviation of $100$ bootstrap means over $100$ simulations. NEES: percentage of time steps at which the true state is outside the $99.9\%$ region of the filter (see Table~\ref{table::Exp A.1}); in parentheses, the number of simulations with more than $20\%$ of such steps.}}}
+\label{Table::Experiment B.1}
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{llccc}
+\toprule
+& \textsc{parameters} & MSE & LPE & \cblue{NEES} \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{L-GSF}} & $M=10$ & \cblue{$50.60\pm0.80$} & \cblue{$6.57\pm0.01$} & \cblue{$0.1\%$ (0)} \\
+ & $M=100$ & \cblue{$50.98\pm0.63$} & \cblue{$6.58\pm0.01$} & \cblue{$0.1\%$ (0)} \\
+ & $M=1000$ & \cblue{$49.43\pm0.70$} & \cblue{$6.55\pm0.01$} & \cblue{$0.1\%$ (0)} \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{U-GSF}} & $M=10$ & \cblue{$50.48\pm0.68$} & \cblue{$6.58\pm0.02$} & \cblue{$0.1\%$ (0)} \\
+ & $M=100$ & \cblue{$50.95\pm0.66$} & \cblue{$6.58\pm0.01$} & \cblue{$0.1\%$ (0)} \\
+ & $M=1000$ & \cblue{$49.43\pm0.66$} & \cblue{$6.55\pm0.01$} & \cblue{$0.1\%$ (0)} \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{BPF}} & $M=100$ & \cblue{$21.69\pm0.21$} & \cblue{$2.00\times 10^{6}\pm3.31\times 10^{4}$} & \cblue{$56.1\%$ (100)} \\
+ & $M=1000$ & \cblue{$16.27\pm0.13$} & \cblue{$4.31\times 10^{5}\pm8.79\times 10^{3}$} & \cblue{$49.2\%$ (100)} \\
+ & $M=10000$ & \cblue{$14.75\pm0.14$} & \cblue{$1.21\times 10^{5}\pm3.51\times 10^{3}$} & \cblue{$30.7\%$ (100)} \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{APF}} & $M=100$ & \cblue{$19.07\pm0.17$} & \cblue{$7.43\times 10^{5}\pm1.48\times 10^{4}$} & \cblue{$52.6\%$ (100)} \\
+ & $M=1000$ & \cblue{$15.92\pm0.14$} & \cblue{$6.37\times 10^{4}\pm2.57\times 10^{3}$} & \cblue{$47.8\%$ (100)} \\
+ & $M=10000$ & \cblue{$15.61\pm0.16$} & \cblue{$2.14\times 10^{4}\pm6.06\times 10^{3}$} & \cblue{$28.6\%$ (100)} \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{RPF}} & $M=100$ & \cblue{$21.82\pm0.18$} & \cblue{$1.78\times 10^{6}\pm2.75\times 10^{4}$} & \cblue{$54.4\%$ (100)} \\
+ & $M=1000$ & \cblue{$16.29\pm0.12$} & \cblue{$4.26\times 10^{5}\pm8.60\times 10^{3}$} & \cblue{$48.8\%$ (100)} \\
+ & $M=10000$ & \cblue{$14.71\pm0.16$} & \cblue{$1.06\times 10^{5}\pm3.61\times 10^{3}$} & \cblue{$29.9\%$ (100)} \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{UPF}} & $M=100$ & \cblue{$17.01\pm0.18$} & \cblue{$6.40\times 10^{4}\pm1.05\times 10^{4}$} & \cblue{$6.1\%$ (0)} \\
+ & $M=1000$ & \cblue{$14.96\pm0.14$} & \cblue{$2794.52\pm1433.01$} & \cblue{$0.7\%$ (0)} \\
+ & $M=10000$ & \cblue{$14.95\pm0.15$} & \cblue{$1001.37\pm102.14$} & \cblue{$0.3\%$ (0)} \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{L-AGSF}} & $M=10, N=5, L=5$ & \cblue{$18.05\pm0.19$} & \cblue{$5.63\pm0.01$} & \cblue{$0.2\%$ (0)} \\
+ & $M=100, N=5, L=5$ & \cblue{$15.37\pm0.14$} & \cblue{$5.45\pm8.41\times 10^{-3}$} & \cblue{$0.0\%$ (0)} \\
+ & $M=1000, N=5, L=5$ & \cblue{$15.37\pm0.15$} & \cblue{$5.45\pm8.53\times 10^{-3}$} & \cblue{$0.0\%$ (0)} \\
+\midrule
+\multirow{3}{*}{\rotatebox[origin=c]{90}{U-AGSF}} & $M=10, N=5, L=5$ & \cblue{$18.08\pm0.19$} & \cblue{$5.62\pm0.01$} & \cblue{$0.2\%$ (0)} \\
+ & $M=100, N=5, L=5$ & \cblue{$15.38\pm0.14$} & \cblue{$5.45\pm9.15\times 10^{-3}$} & \cblue{$0.0\%$ (0)} \\
+ & $M=1000, N=5, L=5$ & \cblue{$15.41\pm0.16$} & \cblue{$5.45\pm8.94\times 10^{-3}$} & \cblue{$0.0\%$ (0)} \\
+\bottomrule
+\end{tabular}}
+\end{table}
