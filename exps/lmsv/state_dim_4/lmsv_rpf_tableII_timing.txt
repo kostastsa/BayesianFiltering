@@ -1,0 +1,63 @@
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: rpf
+	{
+		num_prt: 100,
+		ess: 0.5
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_10_iters_1,
+		trials: 5
+	}
+}
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: rpf
+	{
+		num_prt: 1000,
+		ess: 0.5
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_10_iters_1,
+		trials: 5
+	}
+}
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: rpf
+	{
+		num_prt: 10000,
+		ess: 0.5
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_10_iters_1,
+		trials: 5
+	}
+}
