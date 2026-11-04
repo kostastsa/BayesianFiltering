@@ -1,0 +1,1431 @@
+Working on trial 1
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4/agsf/lagsf/M_10_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9
+trials: 5
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 5.93824 +- 0.0195863, 5.93851
+bias: 3.49058 +- 0.0224357, 3.48459
+minerr: 2.72091 +- 0.0265191, 2.73087
+mse: 24.1614 +- 0.367248, 24.5777
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.00102 +- 0.00096933, 0
+trials with > 20 % of steps outside: 0 of 5
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4/agsf/lagsf/M_10_N_5_L_5_iters_1_ac1_auto_r1_0.4_ac2_auto_r2_0.4
+trials: 5
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 5.6997 +- 0.0409308, 5.70396
+bias: 3.22068 +- 0.0699371, 3.14148
+minerr: 2.40229 +- 0.0436308, 2.39371
+mse: 20.4282 +- 0.71006, 19.3479
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.00093 +- 0.000777882, 0
+trials with > 20 % of steps outside: 0 of 5
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.4,
+		ac2: sdp,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.4,
+		ac2: sdp,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.4,
+		ac2: sdp,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.4,
+		ac2: sdp,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.4,
+		ac2: sdp,
+		r2: 0.4
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4/agsf/lagsf/M_10_N_5_L_5_iters_1_ac1_sdp_r1_0.4_ac2_sdp_r2_0.4
+trials: 5
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 5.62387 +- 0.0233883, 5.64123
+bias: 3.05395 +- 0.0345593, 3.05301
+minerr: 2.34741 +- 0.0277119, 2.33182
+mse: 18.0034 +- 0.336582, 17.7648
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.00381 +- 0.00258726, 0
+trials with > 20 % of steps outside: 0 of 5
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4/agsf/lagsf/M_10_N_20_L_20_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9
+trials: 5
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 5.93399 +- 0.0211557, 5.91453
+bias: 3.47531 +- 0.0416931, 3.46459
+minerr: 2.62306 +- 0.0305843, 2.62868
+mse: 24.0305 +- 0.566758, 23.2823
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.00101 +- 0.000964313, 0
+trials with > 20 % of steps outside: 0 of 5
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.1,
+		ac2: auto,
+		r2: 0.1
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.1,
+		ac2: auto,
+		r2: 0.1
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.1,
+		ac2: auto,
+		r2: 0.1
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.1,
+		ac2: auto,
+		r2: 0.1
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.1,
+		ac2: auto,
+		r2: 0.1
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4/agsf/lagsf/M_10_N_20_L_20_iters_1_ac1_auto_r1_0.1_ac2_auto_r2_0.1
+trials: 5
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 6.66893 +- 0.0588504, 6.68346
+bias: 3.05416 +- 0.0377194, 3.03914
+minerr: 2.25234 +- 0.0231861, 2.25529
+mse: 18.1363 +- 0.304045, 18.2213
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.02724 +- 0.00573955, 0.025
+trials with > 20 % of steps outside: 0 of 5
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.1,
+		ac2: sdp,
+		r2: 0.1
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.1,
+		ac2: sdp,
+		r2: 0.1
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.1,
+		ac2: sdp,
+		r2: 0.1
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.1,
+		ac2: sdp,
+		r2: 0.1
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.1,
+		ac2: sdp,
+		r2: 0.1
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4/agsf/lagsf/M_10_N_20_L_20_iters_1_ac1_sdp_r1_0.1_ac2_sdp_r2_0.1
+trials: 5
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 6.60249 +- 0.0879306, 6.53213
+bias: 3.06044 +- 0.0482927, 3.08636
+minerr: 2.2336 +- 0.0341839, 2.2113
+mse: 18.0182 +- 0.431637, 18.4067
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.02215 +- 0.0030541, 0.02
+trials with > 20 % of steps outside: 0 of 5
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4/agsf/lagsf/M_10_N_100_L_100_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9
+trials: 5
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 5.90669 +- 0.0201938, 5.91545
+bias: 3.39372 +- 0.0366151, 3.39493
+minerr: 2.5485 +- 0.0342538, 2.55143
+mse: 22.7733 +- 0.608543, 22.8304
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.00094 +- 0.000869713, 0
+trials with > 20 % of steps outside: 0 of 5
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.02,
+		ac2: auto,
+		r2: 0.02
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.02,
+		ac2: auto,
+		r2: 0.02
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.02,
+		ac2: auto,
+		r2: 0.02
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.02,
+		ac2: auto,
+		r2: 0.02
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.02,
+		ac2: auto,
+		r2: 0.02
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4/agsf/lagsf/M_10_N_100_L_100_iters_1_ac1_auto_r1_0.02_ac2_auto_r2_0.02
+trials: 5
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 15.4065 +- 0.544785, 15.3643
+bias: 2.99681 +- 0.0304293, 3.0064
+minerr: 2.18056 +- 0.0332579, 2.16278
+mse: 17.179 +- 0.397022, 17.4091
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.06548 +- 0.0049749, 0.065
+trials with > 20 % of steps outside: 0 of 5
+trials without NEES (no results.pkl and no nees.pkl): 0
+
+Working on trial 1
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.02,
+		ac2: sdp,
+		r2: 0.02
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 2
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.02,
+		ac2: sdp,
+		r2: 0.02
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 3
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.02,
+		ac2: sdp,
+		r2: 0.02
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 4
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.02,
+		ac2: sdp,
+		r2: 0.02
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+Working on trial 5
+experiment
+{
+	sim: lmsv
+	{
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.02,
+		ac2: sdp,
+		r2: 0.02
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_agsf_lagsf_M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4/agsf/lagsf/M_10_N_100_L_100_iters_1_ac1_sdp_r1_0.02_ac2_sdp_r2_0.02
+trials: 5
+non-finite trials (lpe, bias, minerr, mse): 0, 0, 0, 0
+trials with mse > 10: 5
+bootstrap mean +- sd (B=100), median over trials
+lpe: 14.9839 +- 0.509289, 14.711
+bias: 2.98668 +- 0.0633482, 3.05449
+minerr: 2.16673 +- 0.0337874, 2.18461
+mse: 17.0981 +- 0.618259, 17.9818
+NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter
+outside: 0.04932 +- 0.00672589, 0.045
+trials with > 20 % of steps outside: 0 of 5
+trials without NEES (no results.pkl and no nees.pkl): 0
+
