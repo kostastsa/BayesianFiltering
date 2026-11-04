@@ -1,0 +1,81 @@
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 0.025,
+		wrap: 1
+	},
+
+	inf: ugsf
+	{
+		n_comps: 1,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 5
+	}
+}
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 0.025,
+		wrap: 1
+	},
+
+	inf: ugsf
+	{
+		n_comps: 100,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 5
+	}
+}
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 0.025,
+		wrap: 1
+	},
+
+	inf: ugsf
+	{
+		n_comps: 1000,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 5
+	}
+}

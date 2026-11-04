@@ -15,6 +15,51 @@ import matplotlib_inline # type: ignore
 from util.param import sample_prior, to_train_array
 from functools import partial
 
+
+# Task A3: with GAUSSFILTAX_WARM_TIME=1, each filter runs two times with the same arguments. The first call compiles
+# the code (JIT). The run time in runtime.txt is the time of the second call, so it has no compile time.
+WARM_TIME = os.environ.get('GAUSSFILTAX_WARM_TIME', '0') == '1'
+
+
+def _timed(call):
+    """
+    Runs call() and waits for the result. Returns (output, run time, time of the first call).
+    Without GAUSSFILTAX_WARM_TIME=1, there is one call, and its time includes the compile time.
+    """
+    if WARM_TIME:
+        # One jit object for both calls: the second call uses the compiled program. (A plain second call of the
+        # filter compiles its scan again, because the run method makes a new scan body at each call.)
+        try:
+            f = jax.jit(call)
+            start = time.time()
+            out = f()
+            jax.block_until_ready(out)
+            first = time.time() - start
+        except jax.errors.JAXTypeError as err:  # the run method has Python code that jit cannot trace
+            print(f'_timed: jit of the filter call failed ({type(err).__name__}), the run time includes the compile time')
+            f = call
+            start = time.time()
+            out = f()
+            jax.block_until_ready(out)
+            first = time.time() - start
+        start = time.time()
+        out = f()
+        jax.block_until_ready(out)
+        return out, time.time() - start, first
+    start = time.time()
+    out = call()
+    jax.block_until_ready(out)  # wait for the computation, not only the dispatch
+    first = time.time() - start
+    return out, first, first
+
+
+def _runtime_txt(elapsed, first):
+    """Text of runtime.txt. The first line keeps the old format."""
+    txt = f"Runtime: {elapsed:.6f} seconds\n"
+    if WARM_TIME:
+        txt += f"First call (with the JIT compile): {first:.6f} seconds\n"
+    return txt
+
 plt.style.use(['science', 'ieee'])
 matplotlib_inline.backend_inline.set_matplotlib_formats('svg')
 
@@ -230,19 +275,16 @@ class ExperimentRunner:
             filter = gsf.LGSF(props, ssm)
             key, subkey = jr.split(key)
             
-            start_time = time.time()
-            results = filter.run(
+            results, elapsed_time, first_time = _timed(lambda: filter.run(
                             true_ps, 
                             observations,
                             inf_desc.n_comps,
                             inf_desc.n_iters,
                             subkey,
-                            inputs)
-            jax.block_until_ready(results)  # wait for the computation, not only the dispatch
-            elapsed_time = time.time() - start_time
+                            inputs))
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
-            util.io.save_txt(f"Runtime: {elapsed_time:.6f} seconds\n", os.path.join(exp_dir, 'runtime.txt'))
+            util.io.save_txt(_runtime_txt(elapsed_time, first_time), os.path.join(exp_dir, 'runtime.txt'))
             util.io.save((states, observations, true_ps), os.path.join(exp_dir, 'gt'))
             util.io.save_txt(self.exp_desc.pprint(), os.path.join(exp_dir, 'exp_desc.txt'))
 
@@ -277,8 +319,7 @@ class ExperimentRunner:
             filter = gsf.UGSF(props, ssm)
             key, subkey = jr.split(key)
             
-            start_time = time.time()
-            results = filter.run(
+            results, elapsed_time, first_time = _timed(lambda: filter.run(
                             key,
                             true_ps, 
                             observations,
@@ -287,12 +328,10 @@ class ExperimentRunner:
                             inf_desc.alpha,
                             inf_desc.beta,
                             inf_desc.kappa,
-                            inputs)
-            jax.block_until_ready(results)  # wait for the computation, not only the dispatch
-            elapsed_time = time.time() - start_time
+                            inputs))
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
-            util.io.save_txt(f"Runtime: {elapsed_time:.6f} seconds\n", os.path.join(exp_dir, 'runtime.txt'))
+            util.io.save_txt(_runtime_txt(elapsed_time, first_time), os.path.join(exp_dir, 'runtime.txt'))
             util.io.save((states, observations,true_ps), os.path.join(exp_dir, 'gt'))
             util.io.save_txt(self.exp_desc.pprint(), os.path.join(exp_dir, 'exp_desc.txt'))
 
@@ -327,8 +366,7 @@ class ExperimentRunner:
             filter = agsf.LAGSF(props, ssm)
             key, subkey = jr.split(key)
             
-            start_time = time.time()
-            results, aux_out = filter.run(
+            (results, aux_out), elapsed_time, first_time = _timed(lambda: filter.run(
                                 subkey,
                                 true_ps,
                                 observations,
@@ -341,12 +379,10 @@ class ExperimentRunner:
                                 inf_desc.L,
                                 inf_desc.n_iters,
                                 inputs
-            )
-            jax.block_until_ready((results, aux_out))  # wait for the computation, not only the dispatch
-            elapsed_time = time.time() - start_time
+            ))
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
-            util.io.save_txt(f"Runtime: {elapsed_time:.6f} seconds\n", os.path.join(exp_dir, 'runtime.txt'))
+            util.io.save_txt(_runtime_txt(elapsed_time, first_time), os.path.join(exp_dir, 'runtime.txt'))
             util.io.save(aux_out, os.path.join(exp_dir, 'aux_outputs'))
             util.io.save((states, observations,true_ps), os.path.join(exp_dir, 'gt'))
             util.io.save_txt(self.exp_desc.pprint(), os.path.join(exp_dir, 'exp_desc.txt'))
@@ -381,8 +417,7 @@ class ExperimentRunner:
             filter = agsf.UAGSF(props, ssm)
             key, subkey = jr.split(key)
             
-            start_time = time.time()
-            results, aux_out = filter.run(
+            (results, aux_out), elapsed_time, first_time = _timed(lambda: filter.run(
                                 subkey,
                                 true_ps,
                                 observations,
@@ -398,12 +433,10 @@ class ExperimentRunner:
                                 inf_desc.beta,
                                 inf_desc.kappa,
                                 inputs
-            )
-            jax.block_until_ready((results, aux_out))  # wait for the computation, not only the dispatch
-            elapsed_time = time.time() - start_time
+            ))
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
-            util.io.save_txt(f"Runtime: {elapsed_time:.6f} seconds\n", os.path.join(exp_dir, 'runtime.txt'))
+            util.io.save_txt(_runtime_txt(elapsed_time, first_time), os.path.join(exp_dir, 'runtime.txt'))
             util.io.save(aux_out, os.path.join(exp_dir, 'aux_outputs'))
             util.io.save((states, observations, true_ps), os.path.join(exp_dir, 'gt'))
             util.io.save_txt(self.exp_desc.pprint(), os.path.join(exp_dir, 'exp_desc.txt'))
@@ -438,20 +471,17 @@ class ExperimentRunner:
             filter = pf.BPF(props, ssm)
             key, subkey = jr.split(key)
             
-            start_time = time.time()
-            results = filter.run(
+            results, elapsed_time, first_time = _timed(lambda: filter.run(
                             true_ps,
                             observations,
                             inf_desc.num_prt,
                             subkey,
                             inputs,
                             inf_desc.ess
-                            )
-            jax.block_until_ready(results)  # wait for the computation, not only the dispatch
-            elapsed_time = time.time() - start_time
+                            ))
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
-            util.io.save_txt(f"Runtime: {elapsed_time:.6f} seconds\n", os.path.join(exp_dir, 'runtime.txt'))
+            util.io.save_txt(_runtime_txt(elapsed_time, first_time), os.path.join(exp_dir, 'runtime.txt'))
             util.io.save((states, observations, true_ps), os.path.join(exp_dir, 'gt'))
             util.io.save_txt(self.exp_desc.pprint(), os.path.join(exp_dir, 'exp_desc.txt'))
 
@@ -482,20 +512,17 @@ class ExperimentRunner:
             filter = pf.APF(props, ssm)
             key, subkey = jr.split(key)
             
-            start_time = time.time()
-            results = filter.run(
+            results, elapsed_time, first_time = _timed(lambda: filter.run(
                             true_ps,
                             observations,
                             inf_desc.num_prt,
                             subkey,
                             inputs,
                             inf_desc.ess
-                            )
-            jax.block_until_ready(results)  # wait for the computation, not only the dispatch
-            elapsed_time = time.time() - start_time
+                            ))
             
             util.io.save(results, os.path.join(exp_dir, 'results'))
-            util.io.save_txt(f"Runtime: {elapsed_time:.6f} seconds\n", os.path.join(exp_dir, 'runtime.txt'))
+            util.io.save_txt(_runtime_txt(elapsed_time, first_time), os.path.join(exp_dir, 'runtime.txt'))
             util.io.save((states, observations,true_ps), os.path.join(exp_dir, 'gt'))
             util.io.save_txt(self.exp_desc.pprint(), os.path.join(exp_dir, 'exp_desc.txt'))
 
@@ -533,13 +560,10 @@ class ExperimentRunner:
 
             key, subkey = jr.split(key)
 
-            start_time = time.time()
-            results = filter.run(true_ps, observations, inf_desc.num_prt, subkey, inputs, inf_desc.ess, **extra)
-            jax.block_until_ready(results)  # wait for the computation, not only the dispatch
-            elapsed_time = time.time() - start_time
+            results, elapsed_time, first_time = _timed(lambda: filter.run(true_ps, observations, inf_desc.num_prt, subkey, inputs, inf_desc.ess, **extra))
 
             util.io.save(results, os.path.join(exp_dir, 'results'))
-            util.io.save_txt(f"Runtime: {elapsed_time:.6f} seconds\n", os.path.join(exp_dir, 'runtime.txt'))
+            util.io.save_txt(_runtime_txt(elapsed_time, first_time), os.path.join(exp_dir, 'runtime.txt'))
             util.io.save((states, observations, true_ps), os.path.join(exp_dir, 'gt'))
             util.io.save_txt(self.exp_desc.pprint(), os.path.join(exp_dir, 'exp_desc.txt'))
 

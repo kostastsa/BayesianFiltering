@@ -97,6 +97,13 @@ def parse_args():
     parser_time.add_argument('-o', '--out', type=str, default=None, help='output file (default: figures/time_<sim>.pdf)')
     parser_time.set_defaults(func=plot_time)
 
+    parser_cost = subparsers.add_parser('cost', help='MSE and LPE of the table rows against the run time of the timing runs (task A3)')
+    parser_cost.add_argument('src', type=str, help="data source of the timing runs (the SRC of 'create_exps.py timing')")
+    parser_cost.add_argument('files', nargs='+', type=str, help='descriptor files of the table rows (one simulator setting)')
+    parser_cost.add_argument('-o', '--out', type=str, default=None, help='output figure (default: figures/cost_<sim>.pdf)')
+    parser_cost.add_argument('--md', type=str, default=None, help='also write a Markdown table of the run times to this file')
+    parser_cost.set_defaults(func=plot_cost)
+
     return parser.parse_args()
 
 
@@ -456,6 +463,86 @@ def plot_time(args):
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     fig.savefig(out)
     print('saved', out)
+
+
+def _read_runtimes(folder):
+    """Run times of the trials in folder (runtime.txt): arrays of the timed call and of the first call (NaN if absent)."""
+    import re
+    import numpy as onp
+    run, first = [], []
+    for t in sorted(int(d) for d in os.listdir(folder) if d.isdigit()) if os.path.isdir(folder) else []:
+        path = os.path.join(folder, str(t), 'runtime.txt')
+        if not os.path.exists(path):
+            continue
+        nums = [float(x) for x in re.findall(r'([\d.]+) seconds', util.io.load_txt(path))]
+        run.append(nums[0])
+        first.append(nums[1] if len(nums) > 1 else float('nan'))
+    return onp.array(run), onp.array(first)
+
+
+def plot_cost(args):
+    """
+    Task A3. For each table row in the files: the MSE and the LPE (bootstrap mean and sd of 'Error summary.txt') against
+    the mean run time of its timing run. The timing run is the same filter on the stored data of the row 'src'
+    (create_exps.py timing SRC, run_timing.zsh), and its runtime.txt has the time without the JIT compile (GAUSSFILTAX_WARM_TIME=1).
+    Also writes a Markdown table with the run time, the time of the first call and the number of simulations (get_num_sims).
+    """
+    import numpy as onp
+
+    exp_descs = sum([ed.parse(util.io.load_txt(f)) for f in args.files], [])
+    sims = {e.sim.get_dir() for e in exp_descs}
+    assert len(sims) == 1, f'cost: give the files of one simulator setting, not {sims}'
+    rows, curves = [], {}
+    for e in exp_descs:
+        row_dir = os.path.join(misc.get_root(), 'experiments', e.get_dir())
+        timing_dir = os.path.join(misc.get_root(), 'experiments', e.sim.get_dir(),
+                                  'data_' + args.src.replace('/', '_'), e.inf.get_dir())
+        run, first = _read_runtimes(timing_dir)
+        summ = os.path.join(row_dir, 'Error summary.txt')
+        if run.size == 0 or not os.path.exists(summ):
+            print(f'cost: no timing runs or no summary for {e.get_dir()}, left out')
+            continue
+        v = read_error_summary(summ)
+        res = RESULTS_CLASSES[e.inf.name]()
+        n_sims = int(util.numerics.get_num_sims(e))
+        rows.append((res.name, _setting_label(e.inf), run.mean(), run.std(), onp.nanmean(first), run.size, n_sims, v['mse'], v['lpe'], v['trials']))
+        curves.setdefault(e.inf.name, (res, []))[1].append((run.mean(), v['mse'][0], v['mse'][1], v['lpe'][0], v['lpe'][1]))
+
+    fig, axes = plt.subplots(2, 1, sharex=True, figsize=(3.5, 3.6))
+    for name, (res, pts) in curves.items():
+        pts = onp.array(sorted(pts))
+        for ax, k in ((axes[0], 1), (axes[1], 3)):
+            ax.errorbar(pts[:, 0], pts[:, k], yerr=pts[:, k + 1], color=res.color, marker=res.marker, ms=3, lw=0.8,
+                        ls='dotted', capsize=1.5, label=res.name)
+    axes[0].set_xscale('log')
+    axes[0].set_yscale('log')
+    axes[0].set_ylabel('MSE')
+    axes[1].set_yscale('symlog', linthresh=10)
+    lo = min(min(p[3] - p[4] for p in pts) for _, pts in curves.values())
+    axes[1].set_ylim(bottom=min(lo, 0) - 2)   # symlog: no empty negative decades below the data
+    axes[1].set_ylabel('LPE')
+    axes[1].set_xlabel('run time without compile (s)')
+    axes[0].legend(fontsize=5, ncol=4, loc='lower left', bbox_to_anchor=(0, 1.02, 1, 0.2), mode='expand', frameon=False)
+    fig.tight_layout()
+    sim_name = exp_descs[0].sim.name
+    out = args.out or os.path.join(fig_dir, f'cost_{sim_name}.pdf')
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+    fig.savefig(out)
+    print('saved', out)
+
+    fmt = lambda x: f'{x:.2e}' if x != 0 and (abs(x) >= 1e4 or abs(x) < 1e-2) else f'{x:.2f}'
+    import platform
+    machine = f'{platform.platform()}, {platform.processor() or platform.machine()}, JAX {jax.__version__} on {jax.devices()[0].platform}'
+    text = (f'### {sims.pop()}\n\nRun time: mean and sd over the timing runs (without the JIT compile). First call: with the '
+            f'compile. MSE and LPE: bootstrap mean and sd of the table row. Timing data: {args.src}. Machine: {machine}.\n\n'
+            '| Filter | Setting | Run time (s) | First call (s) | Timing runs | Simulations | MSE | LPE | Trials |\n'
+            '|---|---|---|---|---|---|---|---|---|\n')
+    for name, lab, rm, rs, fc, nr, ns, mse_v, lpe_v, nt in rows:
+        text += (f'| {name} | {lab} | {rm:.4f} ± {rs:.4f} | {fc:.3f} | {nr} | {ns:.2e} | {fmt(mse_v[0])} ± {fmt(mse_v[1])} '
+                 f'| {fmt(lpe_v[0])} ± {fmt(lpe_v[1])} | {nt} |\n')
+    if args.md:
+        util.io.save_txt(text, args.md)
+    print(text)
 
 
 def make_table(args):

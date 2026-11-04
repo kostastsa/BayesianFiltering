@@ -1,0 +1,90 @@
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 0.025,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 2,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 5
+	}
+}
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 0.025,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 5
+	}
+}
+experiment
+{
+	sim: mtt
+	{
+		state_dim: 4,
+		emission_dim: 2,
+		num_timesteps: 500,
+		a: 0.5,
+		sigma2: 0.025,
+		wrap: 1
+	},
+
+	inf: lagsf
+	{
+		M: 100,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 5
+	}
+}

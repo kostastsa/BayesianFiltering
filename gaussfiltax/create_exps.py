@@ -1,4 +1,6 @@
 import experiment_descriptor as ed
+import util.io
+import misc
 import sys
 import os
 import itertools
@@ -198,9 +200,38 @@ def create_descs(
     
     return exp_descs, scan_info
 
+def write_timing_descs(src, files, trials=5):
+    """
+    Task A3: for each descriptor file, writes '<name>_timing.txt' next to it. Each experiment of the file gets a data
+    block with the stored data of trials 1 to 'trials' of the row 'src' (an inference folder of the same simulator
+    setting, for example gsf/lgsf/ncomps_1_iters_1). Run these files with GAUSSFILTAX_WARM_TIME=1 (run_timing.zsh).
+    The timing folder of a filter is then <sim folder>/data_<src>/<filter folder>.
+    Guard: if a timing folder already has trial folders, stop. 'main.py trials' deletes a trial folder without
+    results.pkl and runs it again, so a timing run in the folder of other runs deletes their metrics.
+    """
+    for f in files:
+        out = []
+        for e in ed.parse(util.io.load_txt(f)):
+            assert e.data is None, f'{f}: the experiment already has a data block'
+            e.data = ed.DataDescriptor()
+            e.data.src, e.data.trials = src, trials
+            d = os.path.join(misc.get_root(), 'experiments', e.get_dir())
+            if os.path.isdir(d) and any(x.isdigit() for x in os.listdir(d)):
+                raise SystemExit(f'STOP: {d} already has trial folders. Use another src, or delete the old timing runs first.')
+            out.append(e.pprint())
+        path = f[:-len('_scan_num_prt.txt')] + '_timing.txt' if f.endswith('_scan_num_prt.txt') else f[:-4] + '_timing.txt'
+        with open(path, 'w') as fh:
+            fh.write(''.join(out))
+        print(path, len(out), 'experiments')
+
+
 if __name__ == '__main__':
 
     exp_root = '/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/exps'
+    # A3: python gaussfiltax/create_exps.py timing SRC <descriptor files>  writes the '*_timing.txt' files (write_timing_descs)
+    if len(sys.argv) > 1 and sys.argv[1] == 'timing':
+        write_timing_descs(sys.argv[2], sys.argv[3:])
+        sys.exit(0)
     # The simulator is the first argument (default mtt): python gaussfiltax/create_exps.py lmsv
     ssm = sys.argv[1] if len(sys.argv) > 1 else 'mtt'
     sim = ed.SimulatorDescriptor().get_descriptor(ssm)

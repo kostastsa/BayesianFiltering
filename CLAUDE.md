@@ -72,6 +72,14 @@ python gaussfiltax/main.py table <descriptor files> [-o out.md]
 # Fig. 3 of the paper (task A7): the five experiments of exps/lmsv/state_dim_4/lmsv_fig3.txt
 python gaussfiltax/main.py time 1 100 "exps/lmsv/state_dim_4/lmsv_fig3.txt" -o figures/fig3_expB_time.pdf
 
+# Run time without the JIT compile (task A3), in three steps. Run step 2 alone on the computer.
+# 1. Write the '*_timing.txt' files: all filters on the stored data of trials 1 to 5 of one source row (here the L-GSF, M = 1).
+python gaussfiltax/create_exps.py timing gsf/lgsf/ncomps_1_iters_1 <table-row descriptor files of Exp. A, a = 0.5, sigma2 = 0.025>
+# 2. Run them with GAUSSFILTAX_WARM_TIME=1 (the script sets it)
+./run_timing.zsh 1 5 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/*_timing.txt
+# 3. MSE and LPE of the table rows against the run time, and a Markdown table of the run times (Exp. B: source gsf/lgsf/ncomps_10_iters_1)
+python gaussfiltax/main.py cost gsf/lgsf/ncomps_1_iters_1 <the same table-row files> -o figures/cost_expA_sigma2_0.025.pdf --md figures/tables/A3_runtime_expA.md
+
 # Exp. B, sweep of a fixed rho2 (task A6), on the data of the adaptive Table II rows
 SIM=lmsv SEED_BASE=7000 ./run_tables_I_III.zsh 1 100 B lagsf_rho2sweep
 SIM=lmsv SEED_BASE=7100 ./run_tables_I_III.zsh 1 100 B uagsf_rho2sweep
@@ -110,7 +118,7 @@ create_exps.py → exps/**/*.txt → main.py trials → experiment_runner.py →
 
 1. **Descriptor** (`experiment_descriptor.py`): Text configurations that regular expressions parse into typed objects. The descriptor gives the storage folder through `get_dir()`.
 2. **Runner** (`experiment_runner.py`, class `ExperimentRunner`): Builds the simulator with `misc.get_simulator`, simulates states and observations, runs the filter, and saves the results. Each filter has a method `_run_<name>`.
-3. **Main** (`main.py`): The command line with six subcommands: `trials`, `errors`, `ensemble`, `table`, `time`, `view`.
+3. **Main** (`main.py`): The command line with seven subcommands: `trials`, `errors`, `ensemble`, `table`, `time`, `cost`, `view`.
 4. **Results** (`experiment_results.py`): Containers with the plot name, marker, and color of each algorithm.
 5. **Create Exps** (`create_exps.py`): The function `create_descs(sim_desc, alg, scan_params)` writes descriptors for all combinations of the values in `scan_params`. The default values are in `DEFAULT_SCAN_PARAMS`. The hyperparameters live in this code, not in other configuration files.
 
@@ -251,6 +259,8 @@ The names encode every descriptor field. If you change one field, the folder cha
 
 When `results.pkl` exists, `trials` skips the trial. If the trial folder exists but `results.pkl` does not (a crash), `trials` deletes the files and runs the trial again. To redo a finished trial, delete its folder by hand.
 
+**CAUTION:** Do not run a new descriptor in the results folder of other runs. Most finished runs have no `results.pkl` (it is deleted after `errors`). Thus `trials` deletes their metrics and runs them again with the new seed. On 04-Nov-2026 a timing run with a data block deleted the metrics of trials 1 to 5 of two Table R1 settings in this way. We ran them again with the old seeds. `create_exps.py timing` stops if a timing folder already has trial folders.
+
 ### Large runs
 
 One `results.pkl` of a BPF or APF run with 100000 particles and 500 steps has 1.2 GB. The runs with 10000 particles have 115 MB. Do not keep all of them.
@@ -304,7 +314,7 @@ The experiment code came from the `neuralssm` project and from older versions of
 - **`gaussfilt.py`, `gausssumfilt.py`, `particlefilt.py`, `static_utils.py`, `mean_estimators.py`**: Older API. They import `gaussfiltax.utils` or `utils`, which moved to `util/`. The experiment code does not use them.
 - **`ssm.py`, `models.py`, `_parameters.py`, `simulation.py`, `nonlinearities.py`** in `gaussfiltax/`: Older API. The experiments use `simulators/ssm.py` and `parameters.py`.
 - **`util/numerics.py`**: `bootstrap` is defined twice. The second definition (the one in use) returns a vector of `B` means. `sdev` uses names that are not defined. It imports `jax.tree_map`, which is deprecated (use `jax.tree_util.tree_map`). `util/ml.py` imports `theano`. `misc.find_epsilon` is from `neuralssm` and is not used.
-- **`runtime.txt`**: Since 01-Nov-2026 the `_run_*` methods call `jax.block_until_ready` before the time measurement (task K1). Runs before this date measured only the dispatch of the call. The value also includes the JIT compile time, because the runner clears the caches after each trial. To compare run times (task A3), measure the compile time separately or use a warm-up call.
+- **`runtime.txt`**: Since 01-Nov-2026 the `_run_*` methods call `jax.block_until_ready` before the time measurement (task K1). Runs before this date measured only the dispatch of the call. The value also includes the JIT compile time, because the runner clears the caches after each trial. To compare run times, use the timing runs of task A3 (`run_timing.zsh`). With `GAUSSFILTAX_WARM_TIME=1`, the runner wraps the filter call in one `jax.jit` object, calls it two times, and saves the time of the second call (`experiment_runner._timed`). The second line of `runtime.txt` has the time of the first call. A plain second call of the filter is not enough. The `run` method makes a new `scan` body at each call, and JAX compiles it again.
 - **`test_lgsf_sqrt.py`** (repository root): It fails with `ImportError`, because `simulators/lgssm.py` has no `get_constrained_bijectors`.
 - **`docs/`, `notebooks/`, `ALA/`, `build/`, `dist/`**: Older exploratory code. The API there can differ from the current one.
 - **`scratch/apf_study/`**: Scratch scripts of the APF study of 21-Oct-2026 (see its `README.md`). They are checks and diagnostics, and some use the `particles` library. Do not use them as a template for new experiments.
