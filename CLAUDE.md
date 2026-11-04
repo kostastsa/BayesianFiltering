@@ -80,6 +80,10 @@ python gaussfiltax/create_exps.py timing gsf/lgsf/ncomps_1_iters_1 <table-row de
 # 3. MSE and LPE of the table rows against the run time, and a Markdown table of the run times (Exp. B: source gsf/lgsf/ncomps_10_iters_1)
 python gaussfiltax/main.py cost gsf/lgsf/ncomps_1_iters_1 <the same table-row files> -o figures/cost_expA_sigma2_0.025.pdf --md figures/tables/A3_runtime_expA.md
 
+# sinlin showcase for the Supplementary (task A10, D-42): eigenvalues of the AGSF split and the RMSE of x_2..x_d against d,
+# and a Markdown table of all settings. The runs: scratch/sinlin_showcase/run100.zsh. Run 'errors' first.
+python gaussfiltax/main.py dim 1 100 exps/sinlin/sinlin_showcase.txt -o figures/dim_sinlin.pdf --md figures/tables/A10_sinlin.md
+
 # Exp. B, sweep of a fixed rho2 (task A6), on the data of the adaptive Table II rows
 SIM=lmsv SEED_BASE=7000 ./run_tables_I_III.zsh 1 100 B lagsf_rho2sweep
 SIM=lmsv SEED_BASE=7100 ./run_tables_I_III.zsh 1 100 B uagsf_rho2sweep
@@ -118,7 +122,7 @@ create_exps.py → exps/**/*.txt → main.py trials → experiment_runner.py →
 
 1. **Descriptor** (`experiment_descriptor.py`): Text configurations that regular expressions parse into typed objects. The descriptor gives the storage folder through `get_dir()`.
 2. **Runner** (`experiment_runner.py`, class `ExperimentRunner`): Builds the simulator with `misc.get_simulator`, simulates states and observations, runs the filter, and saves the results. Each filter has a method `_run_<name>`.
-3. **Main** (`main.py`): The command line with seven subcommands: `trials`, `errors`, `ensemble`, `table`, `time`, `cost`, `view`.
+3. **Main** (`main.py`): The command line with eight subcommands: `trials`, `errors`, `ensemble`, `table`, `time`, `cost`, `dim`, `view`.
 4. **Results** (`experiment_results.py`): Containers with the plot name, marker, and color of each algorithm.
 5. **Create Exps** (`create_exps.py`): The function `create_descs(sim_desc, alg, scan_params)` writes descriptors for all combinations of the values in `scan_params`. The default values are in `DEFAULT_SCAN_PARAMS`. The hyperparameters live in this code, not in other configuration files.
 
@@ -251,6 +255,7 @@ The names encode every descriptor field. If you change one field, the folder cha
 | `results.pkl`, `gt.pkl` | Filter output. Ground truth: `(states, observations, true_params)`. | `trials` |
 | `exp_desc.txt`, `out.log`, `runtime.txt`, `observations.png` | Descriptor, log, run time, plot of the simulated data | `trials` |
 | `aux_outputs.pkl` | `aux_outputs` of the AGSF | `trials` |
+| `eig2_mm.pkl` | AGSF: the means over the components of the smallest and the largest eigenvalue of Sigma^-1 Lambda at each step, `(lam_min_t, lam_max_t)`. `main.py dim` reads it. | `errors` (if `aux_outputs.pkl` exists) |
 | `lpe.pkl`, `bs.pkl`, `me.pkl`, `mse.pkl`, `nees.pkl`, `mse_x1.pkl`, `mse_rest.pkl`, `num_sims.pkl` | Metrics of the trial (see "Metrics") | `errors` |
 | `Error histograms.png`, `Errors vs Trials.png` | Plots over all trials. These are in the experiment folder, above the trial folders. | `errors` (not with `--no-plots`) |
 | `Error summary.txt` | Number of trials, number of non-finite trials, and number of trials with MSE above 10. The bootstrap mean, standard deviation and median of each metric. The number of trials with more than 20 % of the steps outside the 99.9 % region (NEES). This file is in the experiment folder, above the trial folders. Use it for the tables of the paper. | `errors` |
