@@ -14,3 +14,6 @@ notebooks/Experiment A.ipynb
 
 # Large outputs of scratch checks (made again by their scripts)
 scratch/particles_check/out/particles_*.npz
+
+# Run logs of scratch checks (the results are committed)
+scratch/**/*.log
