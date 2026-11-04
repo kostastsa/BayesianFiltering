@@ -104,6 +104,14 @@ def parse_args():
     parser_cost.add_argument('--md', type=str, default=None, help='also write a Markdown table of the run times to this file')
     parser_cost.set_defaults(func=plot_cost)
 
+    parser_dim = subparsers.add_parser('dim', help='sinlin: eigenvalues of the AGSF split and split errors against the state dimension (task A10)')
+    parser_dim.add_argument('start', type=int, help='# of first trial')
+    parser_dim.add_argument('end', type=int, help='# of last trial')
+    parser_dim.add_argument('files', nargs='+', type=str, help='file(s) describing experiments (several state dimensions)')
+    parser_dim.add_argument('-o', '--out', type=str, default=None, help='output figure (default: figures/dim_<sim>.pdf)')
+    parser_dim.add_argument('--md', type=str, default=None, help='also write a Markdown table to this file')
+    parser_dim.set_defaults(func=plot_dim)
+
     return parser.parse_args()
 
 
@@ -370,7 +378,7 @@ def read_error_summary(path):
         elif line.startswith('trials with > 20 % of steps outside:'):
             out['empty'] = line.split(':')[1].strip()
         else:
-            m = re.match(r'(lpe|bias|minerr|mse|outside): (\S+) \+- (\S+), (\S+)', line)
+            m = re.match(r'(lpe|bias|minerr|mse_x1|mse_rest|mse|outside): (\S+) \+- (\S+), (\S+)', line)
             if m:
                 out[m.group(1)] = tuple(float(v) for v in m.groups()[1:])
     return out
@@ -545,6 +553,127 @@ def plot_cost(args):
     print(text)
 
 
+def _save_eig_summary(exp_dir, inf_name):
+    """AGSF with aux_outputs.pkl: save eig2_mm.pkl, the means over the components of the smallest and the largest
+    eigenvalue of Sigma^-1 Lambda (eig2s, sorted) at each step, as (lam_min_t, lam_max_t), each of shape (T,)."""
+    import numpy as onp
+    aux = os.path.join(exp_dir, 'aux_outputs')
+    if inf_name not in ('lagsf', 'uagsf') or not os.path.exists(aux + '.pkl'):
+        return
+    aux_out = util.io.load(aux)
+    if 'eig2s' not in aux_out:
+        return
+    eig = onp.asarray(aux_out['eig2s'])
+    util.io.save((eig[..., 0].mean(axis=1), eig[..., -1].mean(axis=1)), os.path.join(exp_dir, 'eig2_mm'))
+
+
+def _filter_label(inf_desc):
+    """Label of a filter with its setting and, for the AGSF, the split rule of the update (e.g. 'L-AGSF (M=10,N=L=5) sdp 0.4')."""
+    label = f'{RESULTS_CLASSES[inf_desc.name]().name} ({_setting_label(inf_desc)})'
+    if inf_desc.name in ('lagsf', 'uagsf'):
+        label += f' {inf_desc.ac2} {inf_desc.r2}'
+    return label
+
+
+def plot_dim(args):
+    """
+    Task A10 (sinlin, D-42). For each filter and state dimension d of the experiments in the files:
+    - the RMSE of x_1 and of x_2..x_d: square roots of the bootstrap means of mse_x1 and mse_rest ('Error summary.txt');
+    - the mean LPE and the NEES value of the summary;
+    - AGSF: the mean over trials, steps and components of the smallest and the largest eigenvalue of Sigma^-1 Lambda
+      (eig2_mm.pkl of 'errors'). For a scalar rule (prop, auto) both are rho2.
+    The figure shows the settings with rot = 0 against d: the eigenvalues of the rules auto and sdp, and the RMSE of x_2..x_d.
+    The Markdown table has all settings.
+    """
+    import numpy as onp
+
+    exp_descs = sum([ed.parse(util.io.load_txt(f)) for f in args.files], [])
+    rows = {}   # (rot, filter label) -> list of (d, values)
+    for e in exp_descs:
+        folder = os.path.join(misc.get_root(), 'experiments', e.get_dir())
+        summ = os.path.join(folder, 'Error summary.txt')
+        if not os.path.exists(summ):
+            print(f'dim: no summary for {e.get_dir()}, left out')
+            continue
+        v = read_error_summary(summ)
+        val = {'res': RESULTS_CLASSES[e.inf.name](), 'trials': v['trials'], 'lpe': v['lpe'][0],
+               'rmse_x1': onp.sqrt(v['mse_x1'][0]), 'rmse_rest': onp.sqrt(v['mse_rest'][0]),
+               'outside': v['outside'][0] if 'outside' in v else float('nan'), 'rule': getattr(e.inf, 'ac2', None)}
+        if e.inf.name in ('lagsf', 'uagsf'):
+            mm = [util.io.load(os.path.join(folder, str(t), 'eig2_mm')) for t in range(args.start, args.end + 1)
+                  if os.path.exists(os.path.join(folder, str(t), 'eig2_mm.pkl'))]
+            if mm:
+                val['lam_min'] = float(onp.mean([m[0] for m in mm]))
+                val['lam_max'] = float(onp.mean([m[1] for m in mm]))
+                val['eig_trials'] = len(mm)
+        rows.setdefault((e.sim.rot, _filter_label(e.inf)), []).append((e.sim.state_dim, val))
+
+    def short(label, val):
+        # Legend label without the setting (the caption gives it); a GSF with one component is the EKF or the UKF
+        name = val['res'].name
+        if name in ('L-GSF', 'U-GSF') and '$M=1$' in label:
+            return {'L-GSF': 'EKF', 'U-GSF': 'UKF'}[name]
+        return name + (label[label.index(')') + 1:] if ')' in label else '')
+
+    def style(val, label):
+        rule = val['rule']
+        if rule == 'prop' and label.endswith(' 0.001'):
+            return '-.'
+        return {'sdp': '-', 'auto': '--'}.get(rule, ':')
+
+    fig, axes = plt.subplots(2, 1, sharex=True, figsize=(3.5, 4.0))
+    for (rot, label), pts in rows.items():
+        if rot != 0:
+            continue
+        pts = sorted(pts, key=lambda p: p[0])
+        ds = [p[0] for p in pts]
+        v0 = pts[0][1]
+        kw = dict(color=v0['res'].color, marker=v0['res'].marker, ms=3, lw=0.8, ls=style(v0, label))
+        if v0['rule'] in ('auto', 'sdp') and 'lam_max' in v0:
+            lab = short(label, v0) + (': largest' if v0['rule'] == 'sdp' else r' ($\rho_2$)')
+            axes[0].plot(ds, [p[1]['lam_max'] for p in pts], label=lab, **kw)
+            if v0['rule'] == 'sdp':
+                axes[0].plot(ds, [p[1]['lam_min'] for p in pts], label=short(label, v0) + ': smallest', **{**kw, 'marker': 'v'})
+        axes[1].plot(ds, [p[1]['rmse_rest'] for p in pts], label=short(label, v0), **kw)
+    axes[0].set_ylabel(r'eigenvalue of $\Sigma^{-1}\Lambda$')
+    axes[0].set_ylim(0, 1)
+    axes[0].legend(fontsize=5, loc='lower right', frameon=False)
+    axes[1].set_ylabel(r'RMSE $x_2,\ldots,x_d$')
+    axes[1].set_xscale('log')
+    axes[1].legend(fontsize=5, ncol=2, loc='upper left', frameon=False)
+    ds_all = sorted({p[0] for pts in rows.values() for p in pts})
+    axes[1].set_xticks(ds_all)
+    axes[1].set_xticklabels([str(d) for d in ds_all])
+    axes[1].xaxis.set_minor_locator(plt.NullLocator())
+    axes[1].set_xlabel('state dimension $d$')
+    fig.tight_layout()
+    sim_name = exp_descs[0].sim.name
+    out = args.out or os.path.join(fig_dir, f'dim_{sim_name}.pdf')
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+    fig.savefig(out)
+    print('saved', out)
+
+    text = ''
+    for rot in sorted({k[0] for k in rows}):
+        for d in sorted({p[0] for (r, _), pts in rows.items() if r == rot for p in pts}):
+            text += (f'### d = {d}' + (', rotated direction a' if rot else ', a = e_1') + '\n\n'
+                     '| Filter | RMSE $x_1$ | RMSE $x_2..x_d$ | LPE | NEES outside | lam min | lam max | Trials |\n'
+                     '|---|---|---|---|---|---|---|---|\n')
+            for (r, label), pts in rows.items():
+                if r != rot:
+                    continue
+                for dd, val in pts:
+                    if dd != d:
+                        continue
+                    lam = f"{val['lam_min']:.3f} | {val['lam_max']:.3f}" if 'lam_min' in val else '- | -'
+                    text += (f"| {label} | {val['rmse_x1']:.3f} | {val['rmse_rest']:.3f} | {val['lpe']:.4g} | "
+                             f"{100 * val['outside']:.1f} % | {lam} | {val['trials']} |\n")
+            text += '\n'
+    if args.md:
+        util.io.save_txt(text, args.md)
+    print(text)
+
+
 def make_table(args):
     """Markdown rows (MSE, LPE, lost tracks) of the experiments in the files, one table for each simulator setting.
     The values come from the 'Error summary.txt' files that 'main.py errors' writes (bootstrap mean +- sd)."""
@@ -635,6 +764,7 @@ def eval_and_plot_errors(args, show=False):
                     util.io.save((x1, x1_t), os.path.join(exp_dir, 'mse_x1'))
                     util.io.save((rest, rest_t), os.path.join(exp_dir, 'mse_rest'))
                     util.io.save(num_simulations, os.path.join(exp_dir, 'num_sims'))
+                    _save_eig_summary(exp_dir, inf_desc.name)
 
                     lpe_trials.append(lpe)
                     bs_trials.append(bs)
