@@ -1,0 +1,24 @@
+experiment
+
+{
+
+	sim: sinlin
+	{
+		state_dim: 10,
+		emission_dim: 10,
+		num_timesteps: 100,
+		kappa: 1.0,
+		omega: 2.0,
+		rot: 1
+	},
+
+	inf: lgsf
+
+	{
+
+		n_comps: 1,
+		n_iters: 1
+
+	}
+}
+

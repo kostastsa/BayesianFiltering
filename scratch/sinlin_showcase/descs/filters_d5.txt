@@ -1,0 +1,282 @@
+experiment
+
+{
+
+	sim: sinlin
+	{
+		state_dim: 5,
+		emission_dim: 5,
+		num_timesteps: 100,
+		kappa: 1.0,
+		omega: 2.0,
+		rot: 0
+	},
+
+	inf: ugsf
+
+	{
+
+		n_comps: 1,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0
+
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: sinlin
+	{
+		state_dim: 5,
+		emission_dim: 5,
+		num_timesteps: 100,
+		kappa: 1.0,
+		omega: 2.0,
+		rot: 0
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: sinlin
+	{
+		state_dim: 5,
+		emission_dim: 5,
+		num_timesteps: 100,
+		kappa: 1.0,
+		omega: 2.0,
+		rot: 0
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: sinlin
+	{
+		state_dim: 5,
+		emission_dim: 5,
+		num_timesteps: 100,
+		kappa: 1.0,
+		omega: 2.0,
+		rot: 0
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.4,
+		ac2: sdp,
+		r2: 0.4
+
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: sinlin
+	{
+		state_dim: 5,
+		emission_dim: 5,
+		num_timesteps: 100,
+		kappa: 1.0,
+		omega: 2.0,
+		rot: 0
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.001,
+		ac2: prop,
+		r2: 0.001
+
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: sinlin
+	{
+		state_dim: 5,
+		emission_dim: 5,
+		num_timesteps: 100,
+		kappa: 1.0,
+		omega: 2.0,
+		rot: 0
+	},
+
+	inf: uagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: sinlin
+	{
+		state_dim: 5,
+		emission_dim: 5,
+		num_timesteps: 100,
+		kappa: 1.0,
+		omega: 2.0,
+		rot: 0
+	},
+
+	inf: uagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		alpha: 1.0,
+		beta: 0.0,
+		kappa: 0.0,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: sinlin
+	{
+		state_dim: 5,
+		emission_dim: 5,
+		num_timesteps: 100,
+		kappa: 1.0,
+		omega: 2.0,
+		rot: 0
+	},
+
+	inf: bpf
+	{
+		num_prt: 1000,
+		ess: 0.5
+	},
+
+	data: data
+	{
+		from: gsf/lgsf/ncomps_1_iters_1,
+		trials: 100
+	}
+}
+

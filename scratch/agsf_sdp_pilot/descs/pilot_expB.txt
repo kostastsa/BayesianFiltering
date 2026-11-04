@@ -1,0 +1,324 @@
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.4,
+		ac2: auto,
+		r2: 0.4
+
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 5,
+		L: 5,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.4,
+		ac2: sdp,
+		r2: 0.4
+
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.1,
+		ac2: auto,
+		r2: 0.1
+
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 20,
+		L: 20,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.1,
+		ac2: sdp,
+		r2: 0.1
+
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: prop,
+		r1: 0.9,
+		ac2: prop,
+		r2: 0.9
+
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: auto,
+		r1: 0.02,
+		ac2: auto,
+		r2: 0.02
+
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
+experiment
+
+{
+
+	sim: lmsv
+
+	{
+
+		state_dim: 4,
+		emission_dim: 4,
+		num_timesteps: 200
+
+	},
+
+	inf: lagsf
+
+	{
+
+		M: 10,
+		N: 100,
+		L: 100,
+		n_iters: 1,
+		ac1: sdp,
+		r1: 0.02,
+		ac2: sdp,
+		r2: 0.02
+
+	},
+
+	data: data
+	{
+		from: agsf/lagsf/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4,
+		trials: 100
+	}
+}
+
