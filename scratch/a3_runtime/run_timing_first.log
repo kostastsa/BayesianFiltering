@@ -1,0 +1,105 @@
+17:20:50 exps/lmsv/state_dim_4/lmsv_apf_tableII_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_apf_numprt_100_ess_0.5/pf/apf/numprt_100_ess_0.5/*/aux_outputs.pkl
+   numprt_100_ess_0.5: Runtime: 0.013487 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_apf_numprt_1000_ess_0.5/pf/apf/numprt_1000_ess_0.5/*/aux_outputs.pkl
+   numprt_1000_ess_0.5: Runtime: 0.111951 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_apf_numprt_10000_ess_0.5/pf/apf/numprt_10000_ess_0.5/*/aux_outputs.pkl
+   numprt_10000_ess_0.5: Runtime: 0.921876 seconds
+17:21:22 exps/lmsv/state_dim_4/lmsv_bpf_tableII_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_bpf_numprt_100_ess_0.5/pf/bpf/numprt_100_ess_0.5/*/aux_outputs.pkl
+   numprt_100_ess_0.5: Runtime: 0.007079 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_bpf_numprt_1000_ess_0.5/pf/bpf/numprt_1000_ess_0.5/*/aux_outputs.pkl
+   numprt_1000_ess_0.5: Runtime: 0.064632 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_bpf_numprt_10000_ess_0.5/pf/bpf/numprt_10000_ess_0.5/*/aux_outputs.pkl
+   numprt_10000_ess_0.5: Runtime: 0.523909 seconds
+17:21:48 exps/lmsv/state_dim_4/lmsv_lagsf_tableII_timing.txt: trials 1 to 5
+   M_10_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 0.078492 seconds
+   M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 0.803273 seconds
+   M_1000_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 6.489414 seconds
+17:23:28 exps/lmsv/state_dim_4/lmsv_lgsf_tableII_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_gsf_lgsf_ncomps_10_iters_1/gsf/lgsf/ncomps_10_iters_1/*/aux_outputs.pkl
+   ncomps_10_iters_1: Runtime: 0.004851 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_gsf_lgsf_ncomps_100_iters_1/gsf/lgsf/ncomps_100_iters_1/*/aux_outputs.pkl
+   ncomps_100_iters_1: Runtime: 0.034878 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_gsf_lgsf_ncomps_1000_iters_1/gsf/lgsf/ncomps_1000_iters_1/*/aux_outputs.pkl
+   ncomps_1000_iters_1: Runtime: 0.334417 seconds
+17:24:05 exps/lmsv/state_dim_4/lmsv_rpf_tableII_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_rpf_numprt_100_ess_0.5/pf/rpf/numprt_100_ess_0.5/*/aux_outputs.pkl
+   numprt_100_ess_0.5: Runtime: 0.009186 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_rpf_numprt_1000_ess_0.5/pf/rpf/numprt_1000_ess_0.5/*/aux_outputs.pkl
+   numprt_1000_ess_0.5: Runtime: 0.075888 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_rpf_numprt_10000_ess_0.5/pf/rpf/numprt_10000_ess_0.5/*/aux_outputs.pkl
+   numprt_10000_ess_0.5: Runtime: 0.610164 seconds
+17:24:34 exps/lmsv/state_dim_4/lmsv_uagsf_tableII_timing.txt: trials 1 to 5
+   M_10_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 0.125128 seconds
+   M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 1.008022 seconds
+   M_1000_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 8.988762 seconds
+17:26:45 exps/lmsv/state_dim_4/lmsv_ugsf_tableII_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_gsf_ugsf_ncomps_10_iters_1_alpha_1.0_beta_0.0_kappa_0.0/gsf/ugsf/ncomps_10_iters_1_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   ncomps_10_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.019351 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_gsf_ugsf_ncomps_100_iters_1_alpha_1.0_beta_0.0_kappa_0.0/gsf/ugsf/ncomps_100_iters_1_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   ncomps_100_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.122055 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_gsf_ugsf_ncomps_1000_iters_1_alpha_1.0_beta_0.0_kappa_0.0/gsf/ugsf/ncomps_1000_iters_1_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   ncomps_1000_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 1.069987 seconds
+17:27:32 exps/lmsv/state_dim_4/lmsv_upf_tableII_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_upf_numprt_100_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/pf/upf/numprt_100_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   numprt_100_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.028508 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_upf_numprt_1000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/pf/upf/numprt_1000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   numprt_1000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.264678 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/lmsv/state-dim_4_emission-dim_4_num-timesteps_200/data_pf_upf_numprt_10000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/pf/upf/numprt_10000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   numprt_10000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 2.318072 seconds
+17:28:24 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_apf_wrap_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_apf_numprt_100_ess_0.5/pf/apf/numprt_100_ess_0.5/*/aux_outputs.pkl
+   numprt_100_ess_0.5: Runtime: 0.011146 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_apf_numprt_1000_ess_0.5/pf/apf/numprt_1000_ess_0.5/*/aux_outputs.pkl
+   numprt_1000_ess_0.5: Runtime: 0.105336 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_apf_numprt_10000_ess_0.5/pf/apf/numprt_10000_ess_0.5/*/aux_outputs.pkl
+   numprt_10000_ess_0.5: Runtime: 0.525035 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_apf_numprt_100000_ess_0.5/pf/apf/numprt_100000_ess_0.5/*/aux_outputs.pkl
+   numprt_100000_ess_0.5: Runtime: 3.326293 seconds
+17:29:44 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_bpf_wrap_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_bpf_numprt_100_ess_0.5/pf/bpf/numprt_100_ess_0.5/*/aux_outputs.pkl
+   numprt_100_ess_0.5: Runtime: 0.005746 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_bpf_numprt_1000_ess_0.5/pf/bpf/numprt_1000_ess_0.5/*/aux_outputs.pkl
+   numprt_1000_ess_0.5: Runtime: 0.063465 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_bpf_numprt_10000_ess_0.5/pf/bpf/numprt_10000_ess_0.5/*/aux_outputs.pkl
+   numprt_10000_ess_0.5: Runtime: 0.383033 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_bpf_numprt_100000_ess_0.5/pf/bpf/numprt_100000_ess_0.5/*/aux_outputs.pkl
+   numprt_100000_ess_0.5: Runtime: 2.137698 seconds
+17:31:01 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_lagsf_table_wrap_timing.txt: trials 1 to 5
+   M_2_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 0.038498 seconds
+   M_10_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 0.130937 seconds
+   M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 1.123263 seconds
+17:31:45 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_lgsf_table_wrap_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_gsf_lgsf_ncomps_1_iters_1/gsf/lgsf/ncomps_1_iters_1/*/aux_outputs.pkl
+   ncomps_1_iters_1: Runtime: 0.003090 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_gsf_lgsf_ncomps_100_iters_1/gsf/lgsf/ncomps_100_iters_1/*/aux_outputs.pkl
+   ncomps_100_iters_1: Runtime: 0.079839 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_gsf_lgsf_ncomps_1000_iters_1/gsf/lgsf/ncomps_1000_iters_1/*/aux_outputs.pkl
+   ncomps_1000_iters_1: Runtime: 0.708701 seconds
+17:32:30 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_rpf_wrap_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_rpf_numprt_100_ess_0.5/pf/rpf/numprt_100_ess_0.5/*/aux_outputs.pkl
+   numprt_100_ess_0.5: Runtime: 0.007810 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_rpf_numprt_1000_ess_0.5/pf/rpf/numprt_1000_ess_0.5/*/aux_outputs.pkl
+   numprt_1000_ess_0.5: Runtime: 0.072656 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_rpf_numprt_10000_ess_0.5/pf/rpf/numprt_10000_ess_0.5/*/aux_outputs.pkl
+   numprt_10000_ess_0.5: Runtime: 0.422028 seconds
+17:32:57 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_uagsf_table_wrap_timing.txt: trials 1 to 5
+   M_2_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 0.062857 seconds
+   M_10_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 0.228147 seconds
+   M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 2.024277 seconds
+17:33:51 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_ugsf_table_wrap_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_gsf_ugsf_ncomps_1_iters_1_alpha_1.0_beta_0.0_kappa_0.0/gsf/ugsf/ncomps_1_iters_1_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   ncomps_1_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.009039 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_gsf_ugsf_ncomps_100_iters_1_alpha_1.0_beta_0.0_kappa_0.0/gsf/ugsf/ncomps_100_iters_1_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   ncomps_100_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.334275 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_gsf_ugsf_ncomps_1000_iters_1_alpha_1.0_beta_0.0_kappa_0.0/gsf/ugsf/ncomps_1000_iters_1_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   ncomps_1000_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 3.100989 seconds
+17:35:02 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_upf_wrap_timing.txt: trials 1 to 5
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_upf_numprt_100_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/pf/upf/numprt_100_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   numprt_100_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.023137 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_upf_numprt_1000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/pf/upf/numprt_1000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   numprt_1000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.240638 seconds
+./run_timing.zsh:25: no matches found: /Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync/experiments/mtt/state-dim_4_emission-dim_2_num-timesteps_500_a_0.5_sigma2_0.025_wrap/data_pf_upf_numprt_10000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/pf/upf/numprt_10000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0/*/aux_outputs.pkl
+   numprt_10000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 1.753442 seconds
+17:35:49 TIMING DONE
