@@ -1,0 +1,67 @@
+17:41:10 exps/lmsv/state_dim_4/lmsv_apf_tableII_timing.txt: trials 1 to 5
+   numprt_100_ess_0.5: Runtime: 0.013010 seconds
+   numprt_1000_ess_0.5: Runtime: 0.111519 seconds
+   numprt_10000_ess_0.5: Runtime: 0.907567 seconds
+17:41:42 exps/lmsv/state_dim_4/lmsv_bpf_tableII_timing.txt: trials 1 to 5
+   numprt_100_ess_0.5: Runtime: 0.007173 seconds
+   numprt_1000_ess_0.5: Runtime: 0.068359 seconds
+   numprt_10000_ess_0.5: Runtime: 0.521885 seconds
+17:42:09 exps/lmsv/state_dim_4/lmsv_lagsf_tableII_timing.txt: trials 1 to 5
+   M_10_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 0.081432 seconds
+   M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 0.763340 seconds
+   M_1000_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 6.584795 seconds
+17:43:49 exps/lmsv/state_dim_4/lmsv_lgsf_tableII_timing.txt: trials 1 to 5
+   ncomps_10_iters_1: Runtime: 0.005138 seconds
+   ncomps_100_iters_1: Runtime: 0.035282 seconds
+   ncomps_1000_iters_1: Runtime: 0.331758 seconds
+17:44:26 exps/lmsv/state_dim_4/lmsv_rpf_tableII_timing.txt: trials 1 to 5
+   numprt_100_ess_0.5: Runtime: 0.009197 seconds
+   numprt_1000_ess_0.5: Runtime: 0.076407 seconds
+   numprt_10000_ess_0.5: Runtime: 0.603900 seconds
+17:44:54 exps/lmsv/state_dim_4/lmsv_uagsf_tableII_timing.txt: trials 1 to 5
+   M_10_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 0.125702 seconds
+   M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 1.048241 seconds
+   M_1000_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4: Runtime: 9.034120 seconds
+17:47:05 exps/lmsv/state_dim_4/lmsv_ugsf_tableII_timing.txt: trials 1 to 5
+   ncomps_10_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.019087 seconds
+   ncomps_100_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.122657 seconds
+   ncomps_1000_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 1.101815 seconds
+17:47:51 exps/lmsv/state_dim_4/lmsv_upf_tableII_timing.txt: trials 1 to 5
+   numprt_100_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.030241 seconds
+   numprt_1000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.266053 seconds
+   numprt_10000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 2.303176 seconds
+17:48:42 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_apf_wrap_timing.txt: trials 1 to 5
+   numprt_100_ess_0.5: Runtime: 0.011300 seconds
+   numprt_1000_ess_0.5: Runtime: 0.102283 seconds
+   numprt_10000_ess_0.5: Runtime: 0.612278 seconds
+   numprt_100000_ess_0.5: Runtime: 3.330699 seconds
+17:49:57 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_bpf_wrap_timing.txt: trials 1 to 5
+   numprt_100_ess_0.5: Runtime: 0.005402 seconds
+   numprt_1000_ess_0.5: Runtime: 0.068197 seconds
+   numprt_10000_ess_0.5: Runtime: 0.367669 seconds
+   numprt_100000_ess_0.5: Runtime: 2.071406 seconds
+17:50:54 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_lagsf_table_wrap_timing.txt: trials 1 to 5
+   M_2_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 0.038771 seconds
+   M_10_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 0.129524 seconds
+   M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 1.134364 seconds
+17:51:36 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_lgsf_table_wrap_timing.txt: trials 1 to 5
+   ncomps_1_iters_1: Runtime: 0.002914 seconds
+   ncomps_100_iters_1: Runtime: 0.079198 seconds
+   ncomps_1000_iters_1: Runtime: 0.702718 seconds
+17:52:20 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_rpf_wrap_timing.txt: trials 1 to 5
+   numprt_100_ess_0.5: Runtime: 0.008796 seconds
+   numprt_1000_ess_0.5: Runtime: 0.070427 seconds
+   numprt_10000_ess_0.5: Runtime: 0.414090 seconds
+17:52:46 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_uagsf_table_wrap_timing.txt: trials 1 to 5
+   M_2_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 0.063087 seconds
+   M_10_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 0.232642 seconds
+   M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_prop_r2_0.9: Runtime: 2.069264 seconds
+17:53:41 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_ugsf_table_wrap_timing.txt: trials 1 to 5
+   ncomps_1_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.009227 seconds
+   ncomps_100_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.342351 seconds
+   ncomps_1000_iters_1_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 3.097441 seconds
+17:54:51 exps/mtt/state_dim_4/a_0.5_sigma2_0.025/mtt_upf_wrap_timing.txt: trials 1 to 5
+   numprt_100_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.022268 seconds
+   numprt_1000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 0.239879 seconds
+   numprt_10000_ess_0.5_alpha_1.0_beta_0.0_kappa_0.0: Runtime: 1.671475 seconds
+17:55:36 TIMING DONE
