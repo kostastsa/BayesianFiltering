@@ -226,6 +226,8 @@ if __name__ == '__main__':
                          'bpf_tableII', 'apf_tableII', 'rpf_tableII', 'upf_tableII']
         # A6 (D-35): sweep of a fixed rho2 (rule 'prop'), M = 100, on the 100 data sets of the adaptive Table II rows (data block).
         algs_to_write = ['lagsf_rho2sweep', 'uagsf_rho2sweep']
+        # D-38: the rule 'auto' in the update with r2 in {0.1, 0.2, 0.8} (Table II uses 0.4), on the same 100 data sets as A6.
+        algs_to_write = ['lagsf_r2auto', 'uagsf_r2auto']
 
     # mtt only: the (a, sigma2) settings. Each setting has its own folder of descriptor files and its own results folder.
     # (None, None) keeps the defaults of simulators/mtt.py (a = 0.05, sigma2 = 2.5) and writes to the folder state_dim_4.
@@ -319,6 +321,8 @@ if __name__ == '__main__':
     # same trial of the adaptive row with M = 100 of Table II (T2_AGSF_SRC), so the comparison is paired.
     t2_sweep = {'M': [100], 'N': [5], 'L': [5], 'n_iters': [1], 'ac1': ['prop'], 'r1': [0.9], 'ac2': ['prop'], 'r2': [0.1, 0.3, 0.5, 0.7, 0.9]}
     T2_AGSF_SRC = 'agsf/{}/M_100_N_5_L_5_iters_1_ac1_prop_r1_0.9_ac2_auto_r2_0.4'
+    # D-38: as A6, but with the rule 'auto' in the update and other values of r2.
+    t2_r2auto = {**t2_sweep, 'ac2': ['auto'], 'r2': [0.1, 0.2, 0.8]}
 
     # GSF and AGSF rows of Tables I and III (Exp. A): M = 1, 100, 1000 components for the GSF, and
     # M = 2, 10, 100 with N = L = 5 and rho1 = rho2 = 0.9 (rule 'prop') for the AGSF.
@@ -372,14 +376,16 @@ if __name__ == '__main__':
                                        ('rpf_tableII', 'rpf', t2_pf),
                                        ('upf_tableII', 'upf', {**t2_pf, **t2_ukf}),
                                        ('lagsf_rho2sweep', 'lagsf', t2_sweep),
-                                       ('uagsf_rho2sweep', 'uagsf', {**t2_sweep, **t2_ukf})]:
+                                       ('uagsf_rho2sweep', 'uagsf', {**t2_sweep, **t2_ukf}),
+                                       ('lagsf_r2auto', 'lagsf', t2_r2auto),
+                                       ('uagsf_r2auto', 'uagsf', {**t2_r2auto, **t2_ukf})]:
 
             if name not in algs_to_write:
 
                 continue
 
             data_desc = ed.DataDescriptor().create_desc(f'pf/{alg}/numprt_1000_ess_0.5', 30) if name.endswith('_samedata') else None
-            if name.endswith('_rho2sweep'):
+            if name.endswith(('_rho2sweep', '_r2auto')):
                 data_desc = ed.DataDescriptor().create_desc(T2_AGSF_SRC.format(alg), 100)
             exp_descs, (scan_param, scan_init, scan_fin) = create_descs(
                 sim_desc=sim.create_desc(state_dim, emission_dim, num_timesteps, a, sigma2, wrap=True) if '_wrap' in name else sim_desc,

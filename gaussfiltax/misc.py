@@ -53,6 +53,10 @@ def get_simulator(sim_desc):
 
         from simulators import mtt as sim
 
+    elif isinstance(sim_desc, ed.SINLIN_Descriptor):
+
+        from simulators import sinlin as sim
+
     else:
 
         raise ValueError('unknown simulator')

@@ -139,6 +139,10 @@ class ExperimentRunner:
 
             sim_setup = self.sim.setup(sim_desc.state_dim, sim_desc.emission_dim, sim_desc.input_dim, sim_desc.a, sim_desc.sigma2, sim_desc.wrap)
 
+        elif sim_desc.name == 'sinlin':
+
+            sim_setup = self.sim.setup(sim_desc.state_dim, sim_desc.emission_dim, sim_desc.input_dim, sim_desc.kappa, sim_desc.omega, sim_desc.rot)
+
         else:
 
             sim_setup = self.sim.setup(sim_desc.state_dim, sim_desc.emission_dim, sim_desc.input_dim)
@@ -147,18 +151,19 @@ class ExperimentRunner:
         props = sim_setup['props']
 
         if self.exp_desc.data is not None and not isinstance(inf_desc, (ed.BPF_Descriptor, ed.APF_Descriptor, ed.RPF_Descriptor, ed.UPF_Descriptor,
-                                                                                     ed.LAGSF_Descriptor, ed.UAGSF_Descriptor)):
-            raise NotImplementedError('the data block is implemented for the particle filters and the AGSF only')
+                                                                                     ed.LAGSF_Descriptor, ed.UAGSF_Descriptor,
+                                                                                     ed.LGSF_Descriptor, ed.UGSF_Descriptor)):
+            raise NotImplementedError('the data block is implemented for the particle filters, the GSF and the AGSF only')
 
         try:
 
             if isinstance(self.exp_desc.inf, ed.LGSF_Descriptor):
 
-                self._run_lgsf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed)
+                self._run_lgsf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, self._load_data(trial))
 
             elif isinstance(self.exp_desc.inf, ed.UGSF_Descriptor):
 
-                self._run_ugsf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed)
+                self._run_ugsf(ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, self._load_data(trial))
 
             elif isinstance(self.exp_desc.inf, ed.LAGSF_Descriptor):
 
@@ -201,7 +206,7 @@ class ExperimentRunner:
 
         return states, observations, true_ps
 
-    def _run_lgsf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed):
+    def _run_lgsf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, data=None):
         """
         Runs the ABC experiments.
         """
@@ -212,7 +217,10 @@ class ExperimentRunner:
         inputs = self.sim.get_inputs(subkey, sim_desc.num_timesteps)
         true_ps = sample_prior(jr.PRNGKey(0), props, 1)[0] 
         key, subkey = jr.split(key)
-        states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        if data is None:
+            states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        else:
+            states, observations, true_ps = data
 
         if plot_sims:
             _plot_states_observations(states, observations, exp_dir)
@@ -244,7 +252,7 @@ class ExperimentRunner:
             jax.clear_caches()
             gc.collect()
 
-    def _run_ugsf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed):
+    def _run_ugsf(self, ssm, sim_desc, inf_desc, props, exp_dir, plot_sims, key, seed, data=None):
 
         """
         Runs the ABC experiments.
@@ -256,7 +264,10 @@ class ExperimentRunner:
         inputs = self.sim.get_inputs(subkey, sim_desc.num_timesteps)
         true_ps = sample_prior(jr.PRNGKey(0), props, 1)[0]
         key, subkey = jr.split(key)
-        states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        if data is None:
+            states, observations = ssm.simulate(subkey, true_ps, sim_desc.num_timesteps, inputs)
+        else:
+            states, observations, true_ps = data
 
         if plot_sims:
             _plot_states_observations(states, observations, exp_dir)

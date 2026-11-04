@@ -72,6 +72,27 @@ def mse(data, inf, true_states):
 
     return jnp.mean(mse_t), mse_t
 
+def _mse_coords(data, inf, true_states, lo, hi):
+    """Squared error of the weighted mean estimate in the coordinates lo to hi - 1, divided by their number."""
+
+    means, _ = get_means_covs(data, inf, with_covs=False)
+    weights = get_weights(data, inf)
+    mean_est = jnp.einsum('kt,ktd->td', weights, means)
+    err = (mean_est - true_states)[:, lo:hi]
+    mse_t = jnp.mean(err**2, axis=1)
+
+    return jnp.mean(mse_t), mse_t
+
+def mse_x1(data, inf, true_states):
+    """Squared error of the first coordinate of the weighted mean estimate (the curved direction of sinlin)."""
+
+    return _mse_coords(data, inf, true_states, 0, 1)
+
+def mse_rest(data, inf, true_states):
+    """Squared error of the coordinates 2 to d of the weighted mean estimate, divided by d - 1 (thus per coordinate)."""
+
+    return _mse_coords(data, inf, true_states, 1, true_states.shape[1])
+
 def get_means_covs(data, inf, eps: float = 1e-6, with_covs: bool = True):
     """Means and covariances of the mixture components. With with_covs=False the covariances of BPF and APF
     (n_prt copies of the same matrix, large for many particles) are not built and None is returned for them."""

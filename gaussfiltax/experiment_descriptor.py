@@ -42,6 +42,10 @@ class SimulatorDescriptor:
 
             return COVINFL_Descriptor(str)
 
+        elif re.match('sinlin', str):
+
+            return SINLIN_Descriptor(str)
+
         else:
 
             raise ParseError(str)
@@ -332,6 +336,85 @@ class MTT_Descriptor(SimulatorDescriptor):
 
         return os.path.join('mtt', name)
     
+
+class SINLIN_Descriptor(SimulatorDescriptor):
+    """Showcase model of plan step 6 (simulators/sinlin.py): linear dynamics, one sine channel along a direction a,
+    and linear channels. Keys: state_dim, emission_dim (= state_dim), num_timesteps, kappa, omega, rot (0: a = e_1,
+    1: a fixed random unit vector)."""
+
+    def __init__(self, str=None):
+
+        self.state_dim = None
+        self.emission_dim = None
+        self.input_dim = 0
+        self.num_timesteps = None
+        self.kappa = None
+        self.omega = None
+        self.rot = False
+        self.name = 'sinlin'
+
+        try:
+
+            self.parse(str)
+
+        except:
+
+            pass
+
+    def pprint(self):
+
+        str = 'sinlin\n'
+        str += '\t{\n'
+        str += '\t\tstate_dim: {0},\n'.format(self.state_dim)
+        str += '\t\temission_dim: {0},\n'.format(self.emission_dim)
+        str += '\t\tnum_timesteps: {0},\n'.format(self.num_timesteps)
+        str += '\t\tkappa: {0},\n'.format(self.kappa)
+        str += '\t\tomega: {0},\n'.format(self.omega)
+        str += '\t\trot: {0}\n'.format(int(self.rot))
+        str += '\t}'
+
+        return str
+
+    def create_desc(self, state_dim, emission_dim, num_timesteps, kappa=1.0, omega=2.0, rot=False):
+
+        str = 'sim: sinlin\n'
+        str += '\t{\n'
+        str += '\t\tstate_dim: {0},\n'.format(state_dim)
+        str += '\t\temission_dim: {0},\n'.format(emission_dim)
+        str += '\t\tnum_timesteps: {0},\n'.format(num_timesteps)
+        str += '\t\tkappa: {0},\n'.format(float(kappa))
+        str += '\t\tomega: {0},\n'.format(float(omega))
+        str += '\t\trot: {0}\n'.format(int(rot))
+        str += '\t}'
+
+        return str
+
+    def parse(self, str):
+
+        str = util.misc.remove_whitespace(str)
+        m = re.match(r'sinlin\{state_dim:([^,]*),emission_dim:([^,]*),num_timesteps:([^,]*),kappa:([^,]*),omega:([^,]*),rot:([01])\}\Z', str)
+
+        if m is None:
+            raise ParseError(str)
+
+        self.state_dim = int(m.group(1))
+        self.emission_dim = int(m.group(2))
+        self.num_timesteps = int(m.group(3))
+        self.kappa = float(m.group(4))
+        self.omega = float(m.group(5))
+        self.rot = m.group(6) == '1'
+
+    def get_dir(self):
+
+        name = 'state-dim_{0}_emission-dim_{1}_num-timesteps_{2}_kappa_{3}_omega_{4}'.format(
+            self.state_dim, self.emission_dim, self.num_timesteps, self.kappa, self.omega)
+
+        if self.rot:
+
+            name += '_rot'
+
+        return os.path.join('sinlin', name)
+
 
 class InferenceDescriptor:
 
