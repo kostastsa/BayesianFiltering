@@ -23,7 +23,7 @@ import experiment_results as er
 import jax.random as jr  # type: ignore
 import misc
 
-from util.numerics import log_prob_error, min_error, bias, get_num_sims, nees
+from util.numerics import log_prob_error, min_error, bias, get_num_sims, nees, mse_x1, mse_rest
 # from util.sample import sim_emissions, generate_emissions
 # from util.train import find_mle, loglik_fn
 # from inference.diagnostics.two_sample import sq_maximum_mean_discrepancy as mmd
@@ -89,6 +89,13 @@ def parse_args():
     parser_table.add_argument('files', nargs='+', type=str, help='file(s) describing experiments')
     parser_table.add_argument('-o', '--out', type=str, default=None, help='write the table to this file (default: print it)')
     parser_table.set_defaults(func=make_table)
+
+    parser_time = subparsers.add_parser('time', help='plot the MSE over time and the rho2 of the AGSF, mean over trials (run errors first)')
+    parser_time.add_argument('start', type=int, help='# of first trial')
+    parser_time.add_argument('end', type=int, help='# of last trial')
+    parser_time.add_argument('files', nargs='+', type=str, help='file(s) describing experiments')
+    parser_time.add_argument('-o', '--out', type=str, default=None, help='output file (default: figures/time_<sim>.pdf)')
+    parser_time.set_defaults(func=plot_time)
 
     return parser.parse_args()
 
@@ -362,6 +369,95 @@ def read_error_summary(path):
     return out
 
 
+# Results class of each filter (name, marker and color of the plots).
+RESULTS_CLASSES = {'lgsf': er.LGSF_Results, 'ugsf': er.UGSF_Results, 'lagsf': er.LAGSF_Results, 'uagsf': er.UAGSF_Results,
+                   'bpf': er.BPF_Results, 'apf': er.APF_Results, 'rpf': er.RPF_Results, 'upf': er.UPF_Results}
+# Simulators with a fixed input sequence (get_inputs does not use the key): 'time' shades the steps with input 1.
+FIXED_INPUT_SIMS = ('lmsv',)
+
+
+def _setting_label(inf_desc):
+    """Short label of the setting of a filter, e.g. 'M = 100' or 'M = 100, N = L = 5'."""
+    name = inf_desc.name
+    if name in ('lgsf', 'ugsf'):
+        return f'$M={inf_desc.n_comps}$'
+    if name in ('lagsf', 'uagsf'):
+        nl = f'N=L={inf_desc.N}' if inf_desc.N == inf_desc.L else f'N={inf_desc.N},L={inf_desc.L}'
+        return f'$M={inf_desc.M},{nl}$'
+    return f'$M={inf_desc.num_prt}$'
+
+
+def plot_time(args):
+    """
+    Plots the mean over trials of the MSE over time (mse.pkl of 'errors', util.numerics.mse) of each experiment.
+    If an experiment is an AGSF with aux_outputs.pkl, a second panel shows its rho2 over time: the mean over the
+    components, with the mean and the 10 % and 90 % quantiles over the trials that have the file.
+    Trials with a non-finite MSE are left out of the mean, and their number is printed.
+    """
+    import numpy as onp
+
+    exp_descs = sum([ed.parse(util.io.load_txt(f)) for f in args.files], [])
+    mse_curves, rho_curves = [], []
+    for exp_desc in exp_descs:
+        folder = os.path.join(misc.get_root(), 'experiments', exp_desc.get_dir())
+        res = RESULTS_CLASSES[exp_desc.inf.name]()
+        label = f'{res.name} ({_setting_label(exp_desc.inf)})'
+        mse_t, rho_t = [], []
+        for trial in range(args.start, args.end + 1):
+            trial_dir = os.path.join(folder, str(trial))
+            mse_t.append(onp.asarray(util.io.load(os.path.join(trial_dir, 'mse'))[1]))
+            aux = os.path.join(trial_dir, 'aux_outputs')
+            if exp_desc.inf.name in ('lagsf', 'uagsf') and os.path.exists(aux + '.pkl'):
+                rho2s = onp.asarray(util.io.load(aux)['rho2s'])
+                rho_t.append(rho2s.reshape(rho2s.shape[0], -1).mean(axis=1))
+        mse_t = onp.array(mse_t)
+        ok = onp.all(onp.isfinite(mse_t), axis=1)
+        print(f'{label}: {ok.sum()} of {len(ok)} trials finite, time mean of the MSE {mse_t[ok].mean():.3f}')
+        mse_curves.append((res, label, mse_t[ok].mean(axis=0)))
+        if rho_t:
+            rho_t = onp.array(rho_t)
+            print(f'{label}: rho2 from {len(rho_t)} trials, min {rho_t.mean(axis=0).min():.3f}, max {rho_t.mean(axis=0).max():.3f}')
+            rho_curves.append((res, label, rho_t))
+
+    T = mse_curves[0][2].shape[0]
+    sim = exp_descs[0].sim
+    shade = None
+    if sim.name in FIXED_INPUT_SIMS:
+        shade = onp.asarray(misc.get_simulator(sim).get_inputs(jr.PRNGKey(0), T)) > 0.5
+
+    n_rows = 2 if rho_curves else 1
+    fig, axes = plt.subplots(n_rows, 1, sharex=True, figsize=(3.5, 1.6 * n_rows + 0.7), squeeze=False)
+    axes = axes[:, 0]
+    ts = onp.arange(1, T + 1)
+    every = max(T // 10, 1)
+    for ax in axes:
+        if shade is not None:
+            for t in onp.flatnonzero(shade & ~onp.concatenate([[False], shade[:-1]])):
+                end = t + onp.argmin(onp.concatenate([shade[t:], [False]]))
+                ax.axvspan(t + 0.5, end + 0.5, color='0.9', lw=0, zorder=0)
+    for res, label, curve in mse_curves:
+        axes[0].plot(ts, curve, color=res.color, marker=res.marker, markevery=every, ms=2.5, lw=0.8, label=label)
+    axes[0].set_yscale('log')
+    axes[0].set_ylabel('MSE')
+    # Legend above the top panel, so that it does not cover the curves
+    axes[0].legend(fontsize=5, ncol=2, loc='lower left', bbox_to_anchor=(0, 1.02, 1, 0.2), mode='expand', frameon=False)
+    if rho_curves:
+        styles = ['-', '--', ':', '-.']
+        for k, (res, label, rho_t) in enumerate(rho_curves):
+            axes[1].fill_between(ts, onp.quantile(rho_t, 0.1, axis=0), onp.quantile(rho_t, 0.9, axis=0), color=res.color, alpha=0.2, lw=0)
+            axes[1].plot(ts, rho_t.mean(axis=0), color=res.color, ls=styles[k % 4], marker=res.marker, markevery=every, ms=2.5, lw=0.8, label=label)
+        axes[1].set_ylabel(r'$\rho_2$')
+        axes[1].set_ylim(0, 1)
+        axes[1].legend(fontsize=5, loc='lower left', frameon=True)
+    axes[-1].set_xlabel('time step $t$')
+    axes[-1].set_xlim(1, T)
+    fig.tight_layout()
+    out = args.out or os.path.join(fig_dir, f'time_{sim.name}.pdf')
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+    fig.savefig(out)
+    print('saved', out)
+
+
 def make_table(args):
     """Markdown rows (MSE, LPE, lost tracks) of the experiments in the files, one table for each simulator setting.
     The values come from the 'Error summary.txt' files that 'main.py errors' writes (bootstrap mean +- sd)."""
@@ -414,6 +510,8 @@ def eval_and_plot_errors(args, show=False):
         bs_trials = []
         me_trials = []
         mse_trials = []
+        x1_trials = []     # mse_x1 and mse_rest (split error, sinlin); NaN if a trial has neither results nor the saved files
+        rest_trials = []
         out_trials = []    # fraction of steps with NEES above chi2_d(0.999) (nees.pkl); NaN if a trial has neither results nor nees.pkl
         inf_desc = exp_desc.inf
         sim_desc = exp_desc.sim
@@ -438,6 +536,8 @@ def eval_and_plot_errors(args, show=False):
                     me, me_t = min_error(results, inf_desc.name, states)
                     mse, mse_t = util.numerics.mse(results, inf_desc.name, states)
                     out, nees_t = nees(results, inf_desc.name, states)
+                    x1, x1_t = mse_x1(results, inf_desc.name, states)
+                    rest, rest_t = mse_rest(results, inf_desc.name, states)
                     num_simulations = get_num_sims(exp_desc)
 
                     util.io.save((lpe, lpe_t), os.path.join(exp_dir, 'lpe'))
@@ -445,6 +545,8 @@ def eval_and_plot_errors(args, show=False):
                     util.io.save((me, me_t), os.path.join(exp_dir, 'me'))
                     util.io.save((mse, mse_t), os.path.join(exp_dir, 'mse'))
                     util.io.save((out, nees_t), os.path.join(exp_dir, 'nees'))
+                    util.io.save((x1, x1_t), os.path.join(exp_dir, 'mse_x1'))
+                    util.io.save((rest, rest_t), os.path.join(exp_dir, 'mse_rest'))
                     util.io.save(num_simulations, os.path.join(exp_dir, 'num_sims'))
 
                     lpe_trials.append(lpe)
@@ -452,6 +554,8 @@ def eval_and_plot_errors(args, show=False):
                     me_trials.append(me)
                     mse_trials.append(mse)
                     out_trials.append(out)
+                    x1_trials.append(x1)
+                    rest_trials.append(rest)
 
                 except FileNotFoundError:
 
@@ -466,6 +570,12 @@ def eval_and_plot_errors(args, show=False):
                             out_trials.append(util.io.load(os.path.join(exp_dir, 'nees'))[0])
                         except FileNotFoundError:
                             out_trials.append(float('nan'))    # runs from before the NEES metric, with deleted results
+                        try:
+                            x1_trials.append(util.io.load(os.path.join(exp_dir, 'mse_x1'))[0])
+                            rest_trials.append(util.io.load(os.path.join(exp_dir, 'mse_rest'))[0])
+                        except FileNotFoundError:
+                            x1_trials.append(float('nan'))     # runs from before the split error, with deleted results
+                            rest_trials.append(float('nan'))
                         print('Results not found, saved metrics used')
 
                     except FileNotFoundError:
@@ -513,6 +623,16 @@ def eval_and_plot_errors(args, show=False):
             else:
                 out_line = 'outside: nan +- nan, nan\n'
 
+            # Split error (mse_x1, mse_rest): bootstrap over the trials that have it
+            split_lines = ''
+            for lab, arr in (('mse_x1', x1_trials), ('mse_rest', rest_trials)):
+                arr = jnp.array(arr)
+                arr = arr[~jnp.isnan(arr)]
+                key, subkey = jr.split(key)
+                if arr.size:
+                    bs_arr = util.numerics.bootstrap(subkey, arr, B)
+                    split_lines += f'{lab}: {jnp.mean(bs_arr):.6g} +- {jnp.std(bs_arr):.6g}, {jnp.median(arr):.6g}\n'
+
             # Summary over the trials, printed and saved next to the histograms. The tables of the paper are made from this file.
             n_bad = lambda x: int(jnp.sum(jnp.isnan(x) + jnp.isinf(x)))
             summary = (f'{exp_desc.get_dir()}\n'
@@ -524,6 +644,7 @@ def eval_and_plot_errors(args, show=False):
                        f'bias: {bs_avg:.6g} +- {bs_std:.6g}, {jnp.nanmedian(bs_trials):.6g}\n'
                        f'minerr: {me_avg:.6g} +- {me_std:.6g}, {jnp.nanmedian(me_trials):.6g}\n'
                        f'mse: {mse_avg:.6g} +- {mse_std:.6g}, {jnp.nanmedian(mse_trials):.6g}\n'
+                       + split_lines +
                        f'NEES: fraction of steps with NEES > chi2_d(0.999), the truth outside the 99.9 % region of the filter\n'
                        + out_line +
                        f'trials with > 20 % of steps outside: {int(jnp.sum(out_ok > 0.2))} of {out_ok.size}\n'

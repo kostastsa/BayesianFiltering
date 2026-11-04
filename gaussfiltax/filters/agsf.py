@@ -1,3 +1,5 @@
+import jax #type: ignore
+import jax.scipy.linalg #type: ignore
 import jax.numpy as jnp #type: ignore
 import jax.random as jr #type: ignore
 import jax.tree_util as jtu #type: ignore
@@ -185,6 +187,16 @@ def sdp_cov_selection(m, P, jacobian, hessian_tensor, bias, u, alpha, noise_jaco
     return cov, jnp.mean(lam)
 
 
+def rel_eigvals(Delta, P):
+    """Eigenvalues of Sigma^-1 Delta (Sigma = P), in ascending order. They are the eigenvalues of C^-1 Delta C^-T with
+    P = C C^T. 'prop' and 'auto' give d equal values (rho). 'sdp' can give different values in different directions."""
+
+    C = jnp.linalg.cholesky(P)
+    X = jax.scipy.linalg.solve_triangular(C, Delta, lower=True)
+    X = jax.scipy.linalg.solve_triangular(C, X.T, lower=True)
+    return jnp.linalg.eigvalsh(0.5 * (X + X.T))
+
+
 COV_SELECTION_RULES = {
     'prop': prop_cov_selection,
     'auto': auto_cov_selection,
@@ -268,6 +280,7 @@ class LAGSF():
             state_dim = filtered_covs[0].shape[0]
 
             # Autocov before predict
+            filtered_covs_prev = filtered_covs
             Deltas, rho1s = vmap(lambda m, P: autocov1(m, P, F_x, F_xx, q0, u, r1, None, None))(filtered_means, filtered_covs)
 
             # Compute the z-sample
@@ -347,7 +360,9 @@ class LAGSF():
                 "Deltas": Deltas,
                 "Lambdas": Lambdas,
                 "rho1s": rho1s,
-                "rho2s": rho2s                
+                "rho2s": rho2s,
+                "eig1s": vmap(rel_eigvals)(Deltas, filtered_covs_prev),    # eigenvalues of Sigma^-1 Delta, (M, d)
+                "eig2s": vmap(rel_eigvals)(Lambdas, predicted_covs)        # eigenvalues of Sigma^-1 Lambda, (M N, d)                
             }
 
             return carry, (outputs, aux_outputs)
@@ -432,6 +447,7 @@ class UAGSF():
             state_dim = filtered_covs[0].shape[0]
 
             # Autocov 1
+            filtered_covs_prev = filtered_covs
             Deltas, rho1s = vmap(lambda m, P: autocov1(m, P, F_x, F_xx, q0, u, r1, None, None))(filtered_means, filtered_covs)
 
             # Compute the z-sample
@@ -504,7 +520,9 @@ class UAGSF():
                 "Deltas": Deltas,
                 "Lambdas": Lambdas,
                 "rho1s": rho1s,
-                "rho2s": rho2s
+                "rho2s": rho2s,
+                "eig1s": vmap(rel_eigvals)(Deltas, filtered_covs_prev),    # eigenvalues of Sigma^-1 Delta, (M, d)
+                "eig2s": vmap(rel_eigvals)(Lambdas, predicted_covs)        # eigenvalues of Sigma^-1 Lambda, (M N, d)
             }   
 
             return carry, (outputs, aux_outputs)

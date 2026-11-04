@@ -15,7 +15,7 @@ This file gives guidance to Claude Code (claude.ai/code) for work in this reposi
 | RPF | Regularized particle filter (Gaussian kernel after each resampling) |
 | UPF | Unscented particle filter (UKF proposal over the process noise) |
 
-The simulators are `lgssm`, `lmsv`, `covinfl`, and `mtt`. The filters run with the true model parameters. The parameters are fixed values, not random draws. Only the simulated states and observations change from trial to trial.
+The simulators are `lgssm`, `lmsv`, `covinfl`, `mtt`, and `sinlin` (the showcase model of plan step 6). The filters run with the true model parameters. The parameters are fixed values, not random draws. Only the simulated states and observations change from trial to trial.
 
 ## Working rules
 
@@ -68,6 +68,10 @@ SEED_BASE=3000 ./run_tables_I_III.zsh 1 30 0.5 rpf_wrap,upf_wrap
 # Markdown rows from the Error summary.txt files (run 'errors' first)
 python gaussfiltax/main.py table <descriptor files> [-o out.md]
 
+# MSE over time (mean over trials of mse.pkl) and the rho2 of the AGSF (aux_outputs.pkl). Run 'errors' first.
+# Fig. 3 of the paper (task A7): the five experiments of exps/lmsv/state_dim_4/lmsv_fig3.txt
+python gaussfiltax/main.py time 1 100 "exps/lmsv/state_dim_4/lmsv_fig3.txt" -o figures/fig3_expB_time.pdf
+
 # Exp. B, sweep of a fixed rho2 (task A6), on the data of the adaptive Table II rows
 SIM=lmsv SEED_BASE=7000 ./run_tables_I_III.zsh 1 100 B lagsf_rho2sweep
 SIM=lmsv SEED_BASE=7100 ./run_tables_I_III.zsh 1 100 B uagsf_rho2sweep
@@ -83,6 +87,7 @@ python tests/test_gsf_weights.py
 python tests/test_wrapped_bearing.py
 python tests/test_nees.py
 python tests/test_cov_selection.py
+python tests/test_sinlin.py
 python test_sqrt_filter.py
 ```
 
@@ -105,7 +110,7 @@ create_exps.py → exps/**/*.txt → main.py trials → experiment_runner.py →
 
 1. **Descriptor** (`experiment_descriptor.py`): Text configurations that regular expressions parse into typed objects. The descriptor gives the storage folder through `get_dir()`.
 2. **Runner** (`experiment_runner.py`, class `ExperimentRunner`): Builds the simulator with `misc.get_simulator`, simulates states and observations, runs the filter, and saves the results. Each filter has a method `_run_<name>`.
-3. **Main** (`main.py`): The command line with four subcommands: `trials`, `errors`, `ensemble`, `view`.
+3. **Main** (`main.py`): The command line with six subcommands: `trials`, `errors`, `ensemble`, `table`, `time`, `view`.
 4. **Results** (`experiment_results.py`): Containers with the plot name, marker, and color of each algorithm.
 5. **Create Exps** (`create_exps.py`): The function `create_descs(sim_desc, alg, scan_params)` writes descriptors for all combinations of the values in `scan_params`. The default values are in `DEFAULT_SCAN_PARAMS`. The hyperparameters live in this code, not in other configuration files.
 
@@ -140,6 +145,7 @@ experiment
 | `mtt` with two more keys | `state_dim`, `emission_dim`, `num_timesteps`, `a`, `sigma2` |
 | `mtt` with the wrapped bearing | `state_dim`, `emission_dim`, `num_timesteps`, `a`, `sigma2`, `wrap` |
 | `covinfl` | `emission_dim`, `num_timesteps`, `a`, `b` (the state dimension is always 1) |
+| `sinlin` | `state_dim`, `emission_dim` (= `state_dim`), `num_timesteps`, `kappa`, `omega`, `rot` (0 or 1) |
 
 | `inf:` | Keys, in order |
 |---|---|
@@ -161,7 +167,7 @@ experiment
 - BPF, APF, RPF and UPF: `num_prt` particles. The filter resamples when the effective sample size is below `ess × num_prt`.
 - RPF: after each resampling, each particle moves by `h D e`. `D` is the square root of the weighted covariance before the resampling, `e` is standard normal, and `h = (4 / (N (d + 2)))^(1 / (d + 4))` (decision D-29).
 - UPF: for each particle, one square-root UKF update over the process noise `q` (prior `N(q0, Q)`) gives the proposal. The weight is `p(y|x) N(q; q0, Q) / N(q; m_q, P_q)`. Thus the UPF works when the noise enters through a singular matrix, as in `mtt` (decision D-26).
-- Optional `data` block after `inf` (particle filters, L-AGSF and U-AGSF): the filter runs on the stored data of another experiment with the same `sim` block. The data is not simulated again. Only the filter key changes. Trial t uses the data of trial ((t - 1) mod `trials`) + 1 of the folder `from`. Thus trials 1 to R × `trials` are R runs on each data set. The results go to `<sim folder>/data_<from with _ for />/<inf folder>`. `create_exps.py` writes these files as `*_samedata_*` (particle filters) and `lmsv_*_rho2sweep_*` (AGSF, task A6).
+- Optional `data` block after `inf` (particle filters, L-GSF, U-GSF, L-AGSF and U-AGSF): the filter runs on the stored data of another experiment with the same `sim` block. The data is not simulated again. Only the filter key changes. Trial t uses the data of trial ((t - 1) mod `trials`) + 1 of the folder `from`. Thus trials 1 to R × `trials` are R runs on each data set. The results go to `<sim folder>/data_<from with _ for />/<inf folder>`. `create_exps.py` writes these files as `*_samedata_*` (particle filters) and `lmsv_*_rho2sweep_*` (AGSF, task A6).
 
 ```
     data: data
@@ -179,6 +185,7 @@ experiment
 | `lmsv` | Linear dynamics `x' = Phi x + q`. The input `u` mixes a linear emission (`u = 0`) with a multiplicative stochastic-volatility emission (`u = 1`). The default input switches every 20 steps. |
 | `covinfl` | Scalar state with dynamics `sin(c x) + q` and a quadratic emission |
 | `mtt` | Maneuvering target tracking. The state is position and velocity in 2D. The input (0, 1, or 2) selects straight motion or a turn in one of two directions. The emission is bearing and range. |
+| `sinlin` | Showcase model of plan step 6. Linear dynamics `x' = 0.9 x + q`, `Q = R = 0.1 I`, `x_0 ~ N(0, I)`. The emission is `y_1 = kappa sin(omega a^T x) + r_1` and `y_j = x_j + r_j` for j = 2 to d. Thus it is nonlinear in one direction a only. `rot: 0` gives a = e_1, `rot: 1` gives a fixed random unit vector. The model has no input. Test: `tests/test_sinlin.py`. |
 
 Each simulator module has these functions:
 - `setup(...)` returns a dictionary with `ssm`, `props` (parameter properties and values), and `exp_info`. The `ssm` is a `NonlinearSSM` or `LGSSM` from `simulators/ssm.py`.
@@ -202,7 +209,7 @@ The filters use square-root covariances and `lax.scan` over time. The `run` meth
 | Class | Module | Saved `results` |
 |---|---|---|
 | `LGSF`, `UGSF` | `gsf.py` | Dictionary with `means` (K, T, d), `covariances` (K, T, d, d), `weights` (K, T), and the predicted values |
-| `LAGSF`, `UAGSF` | `agsf.py` | Same dictionary without the predicted values. A second output, `aux_outputs`, holds `Deltas`, `Lambdas`, `rho1s`, `rho2s`. |
+| `LAGSF`, `UAGSF` | `agsf.py` | Same dictionary without the predicted values. A second output, `aux_outputs`, holds `Deltas`, `Lambdas`, `rho1s`, `rho2s`, `eig1s` and `eig2s`. Since 03-Nov-2026, `eig1s` (T, M, d) and `eig2s` (T, M·N, d) hold the eigenvalues of Sigma^-1 Delta and Sigma^-1 Lambda. |
 | `BPF`, `APF`, `RPF`, `UPF` | `pf.py` | Tuple of a dictionary and the log likelihood. The dictionary has `particles` (N, T, d), `weights` (N, T), and `u_weights`. |
 
 `steps.py` holds the Kalman and unscented prediction and update steps. The filters share them.
@@ -236,7 +243,7 @@ The names encode every descriptor field. If you change one field, the folder cha
 | `results.pkl`, `gt.pkl` | Filter output. Ground truth: `(states, observations, true_params)`. | `trials` |
 | `exp_desc.txt`, `out.log`, `runtime.txt`, `observations.png` | Descriptor, log, run time, plot of the simulated data | `trials` |
 | `aux_outputs.pkl` | `aux_outputs` of the AGSF | `trials` |
-| `lpe.pkl`, `bs.pkl`, `me.pkl`, `mse.pkl`, `nees.pkl`, `num_sims.pkl` | Metrics of the trial (see "Metrics") | `errors` |
+| `lpe.pkl`, `bs.pkl`, `me.pkl`, `mse.pkl`, `nees.pkl`, `mse_x1.pkl`, `mse_rest.pkl`, `num_sims.pkl` | Metrics of the trial (see "Metrics") | `errors` |
 | `Error histograms.png`, `Errors vs Trials.png` | Plots over all trials. These are in the experiment folder, above the trial folders. | `errors` (not with `--no-plots`) |
 | `Error summary.txt` | Number of trials, number of non-finite trials, and number of trials with MSE above 10. The bootstrap mean, standard deviation and median of each metric. The number of trials with more than 20 % of the steps outside the 99.9 % region (NEES). This file is in the experiment folder, above the trial folders. Use it for the tables of the paper. | `errors` |
 
@@ -266,6 +273,8 @@ All metrics are in `util/numerics.py`. Each takes `(data, inf_name, true_states)
 | `min_error` | `me` | Norm of the error of the best single component mean |
 | `mse` | `mse` | Squared norm of the error of the weighted mean estimate |
 | `nees` | `nees` | Fraction of the steps with NEES above the 0.999 quantile of chi2 (d degrees of freedom). The NEES uses the mean and covariance of the whole posterior, so it needs no kernel for the particle filters. A high value means that the filter is confident in a region where the target is not. |
+| `mse_x1` | `mse_x1` | Squared error of the first coordinate of the weighted mean estimate (the curved direction of `sinlin`) |
+| `mse_rest` | `mse_rest` | Squared error of the coordinates 2 to d of the weighted mean estimate, divided by d - 1 |
 | `get_num_sims(exp_desc)` | `num_sims` | Number of simulations that the filter uses. This is the cost axis of the plots. |
 
 `bootstrap(key, array, B)` returns `B` bootstrap means over trials. `main.py` uses `B = 100`. The plots show the mean and the standard deviation of these means. Since 02-Nov-2026 the bootstrap key of each experiment is fixed: `BOOTSTRAP_SEED` (in `main.py`) and a hash of the results folder. Thus `errors` and `ensemble` give the same numbers at each run, in any order of the descriptor files.
