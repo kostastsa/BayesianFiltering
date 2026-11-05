@@ -63,6 +63,9 @@ def parse_args():
     parser_trials.add_argument('start', type=int, help='# of first trial')
     parser_trials.add_argument('end', type=int, help='# of last trial')
     parser_trials.add_argument('files', nargs='+', type=str, help='file(s) describing experiments')
+    parser_trials.add_argument('--only', action='append', default=None,
+                               help='run only the experiments whose folder contains this text (repeatable). The key is still '
+                                    'split for every experiment, so the selected runs get the same keys as in a full call.')
     parser_trials.set_defaults(func=run_trials)
 
     parser_view = subparsers.add_parser('view', help='view results')
@@ -138,6 +141,9 @@ def run_trials(args):
             trial_dir = os.path.join(exp_dir, str(trial))
             # one split for every trial, also for a trial that is skipped: a trial gets the same key after a restart
             key, subkey = jr.split(key)
+
+            if args.only and not any(o in exp_desc.get_dir() for o in args.only):
+                continue
 
             if os.path.exists(trial_dir + '/results.pkl'):
 
