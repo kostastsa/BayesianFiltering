@@ -17,3 +17,5 @@ scratch/particles_check/out/particles_*.npz
 
 # Run logs of scratch checks (the results are committed)
 scratch/**/*.log
+scratch/scatter_panels/figures/
+scratch/scatter_panels/page/figs/

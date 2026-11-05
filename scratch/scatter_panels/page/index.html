@@ -1,0 +1,192 @@
+<title>Exp. A Scatter Panels</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a figure viewer. A 2 x 3 grid of the (a, sigma2) settings picks one setting; the two versions stack below it. */
+:root {
+  --bg: #f3f5f7; --surface: #ffffff; --fg: #17202a; --muted: #5a6774; --line: #d5dce2;
+  --accent: #2357a4; --accent-soft: #e3ebf7; --lost: #b3261e; --lost-soft: #fbe9e7; --plate: #ffffff;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161b; --surface: #182029; --fg: #e5eaef; --muted: #93a0ad; --line: #2b3540;
+  --accent: #82aaeb; --accent-soft: #1d2b40; --lost: #ff8f85; --lost-soft: #3a1f1d; --plate: #ffffff; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11161b; --surface: #182029; --fg: #e5eaef; --muted: #93a0ad; --line: #2b3540;
+  --accent: #82aaeb; --accent-soft: #1d2b40; --lost: #ff8f85; --lost-soft: #3a1f1d; --plate: #ffffff; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+header { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(26px, 4vw, 36px); line-height: 1.1; margin: 0; text-wrap: balance; }
+.lede { max-width: 68ch; margin: 0; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: flex-start; }
+.ctl { display: grid; gap: 8px; min-width: 0; }
+.ctl-label { font-family: var(--mono); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.grid { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 6px; align-items: center; }
+.grid .h { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; }
+.grid .rh { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-right: 6px; white-space: nowrap; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.cell { font-family: var(--mono); font-size: 13px; padding: 8px 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; }
+.cell[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 8px 14px; font-size: 14px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+select { font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--fg); }
+.setting-title { font-family: var(--display); font-weight: 600; font-size: 24px; margin: 0; }
+.version { display: grid; gap: 12px; min-width: 0; }
+.version h2 { font-family: var(--display); font-weight: 600; font-size: 20px; margin: 0; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.version h2 .tag { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 4px; }
+.version p { margin: 0; max-width: 72ch; color: var(--muted); }
+.plate { background: var(--plate); border: 1px solid var(--line); border-radius: 6px; overflow-x: auto; }
+.plate img { display: block; width: 100%; height: auto; cursor: zoom-in; }
+.plate.zoom img { width: var(--zoomw, 3000px); max-width: none; cursor: zoom-out; }
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 13px; }
+th, td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+thead th { font-family: var(--display); font-weight: 600; font-size: 14px; color: var(--fg); }
+tbody th { text-align: left; font-weight: 500; font-family: var(--body); }
+tbody th small { display: block; font-family: var(--mono); font-weight: 400; color: var(--muted); font-size: 12px; }
+tr:last-child th, tr:last-child td { border-bottom: 0; }
+td { font-family: var(--mono); }
+td small { color: var(--muted); }
+td.lost { color: var(--lost); background: var(--lost-soft); font-weight: 500; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.note b { color: var(--lost); font-weight: 500; }
+.cols { display: grid; gap: 36px; }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 6px; }
+code { font-family: var(--mono); font-size: 12.5px; }
+@media (max-width: 560px) { .grid { grid-template-columns: auto repeat(3, minmax(0, 1fr)); } .cell { padding: 8px 6px; font-size: 12px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">gaussfiltax · Exp. A (mtt, wrapped bearing) · table runs · task A12</div>
+    <h1>Scatter panels of the eight filters</h1>
+    <p class="lede">For each setting of Tables I and III: the true position track (red), the component means (gold) and posterior samples or particles (black), for the best, median and worst table run of each filter, ranked by MSE or by LPE. Columns: L-GSF and U-GSF with M = 100, L-AGSF and U-AGSF with M = 10 (N = L = 5), and the BPF, APF, RPF and UPF with 1000 particles. Each filter has its own 100 trials, so each cell shows its own trajectory.</p>
+  </header>
+
+  <div class="controls">
+    <div class="ctl">
+      <span class="ctl-label">Setting</span>
+      <div class="grid" id="grid" role="group" aria-label="Setting"></div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label">Rank the runs by</span>
+      <div class="seg" id="seg" role="group" aria-label="Rank the runs by">
+        <button type="button" data-v="both">Both</button>
+        <button type="button" data-v="mse">MSE</button>
+        <button type="button" data-v="lpe">LPE</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <label class="ctl-label" for="zoom">Figure width</label>
+      <select id="zoom">
+        <option value="fit">Fit the page</option>
+        <option value="3000">3000 px (scroll)</option>
+        <option value="6000">6000 px, full size (scroll)</option>
+      </select>
+    </div>
+  </div>
+
+  <h2 class="setting-title" id="stitle"></h2>
+  <div class="cols" id="cols"></div>
+
+  <footer>
+    <p class="note">A cell in the tables is <b>red</b> when the MSE of its run is above 10: the "lost track" rule of Tables I and III. The LPE table uses the same rule.</p>
+    <div>The figures show exact repeats of the table trials: each repeat gives the MSE and the LPE of the table. Lower is better for both metrics, so "best" is the lowest value. Source: <code>scratch/scatter_panels/</code>.</div>
+    <div>Click a figure to switch between the page width and 3000 px.</div>
+  </footer>
+</div>
+
+<script id="sel" type="application/json">{"a0.5_s2.5":{"mse":[[[93,1.31145,6895.2256],[14,0.2937,-4.1925],[90,2.21562,5.6309],[44,1.18655,2.6096],[82,0.13715,84.1441],[59,0.06078,42.1686],[79,0.05847,35.5675],[59,0.1635,85.6035]],[[59,65.7268,15469.9404],[68,2.50874,2.0767],[51,19.98606,14.0485],[10,9.99442,11.8139],[47,1.91884,1429.4292],[20,2.11687,93.0241],[33,1.47036,68.917],[8,1.68963,777.755]],[[90,1342.06213,30851.2422],[76,88.96404,31.1977],[13,431.37445,360.6213],[61,834.97266,2040.5775],[30,64.39816,607193.25],[73,691.57489,91528032.0],[13,158.36282,2118.145],[52,295.26413,3890226.25]]],"lpe":[[[9,291.88687,2093.2686],[14,0.2937,-4.1925],[90,2.21562,5.6309],[60,1.45187,2.522],[36,0.72696,35.8949],[32,0.17789,31.431],[87,0.19092,29.7928],[18,0.18707,31.3649]],[[21,146.18535,10850.2705],[88,4.1372,2.8448],[16,15.55482,19.4133],[68,9.27996,13.1228],[45,7.31872,212.5155],[7,3.46684,184.6042],[69,0.18922,60.2022],[9,2.18577,249.8709]],[[40,319.39417,62664.4766],[45,40.84103,99.1769],[13,431.37445,360.6213],[61,834.97266,2040.5775],[46,56.27765,5839555.0],[73,691.57489,91528032.0],[12,33.06632,2898.3484],[73,99.28348,33405454.0]]]},"a0.5_s0.025":{"mse":[[[81,0.07958,1689.4968],[30,0.00137,-11.1844],[53,0.10273,-1.2332],[100,0.03743,-2.8889],[7,0.00427,86.325],[36,0.0039,77.0539],[18,0.00407,18.044],[57,0.0013,114.5265]],[[62,0.16997,1374.7426],[59,0.03042,-7.499],[3,0.28859,-0.2507],[12,0.19037,-1.8641],[93,0.03843,161.6762],[90,0.0433,384.6407],[7,0.03332,35.2855],[62,0.08323,117.9866]],[[96,8.63299,32893.5625],[21,0.2993,52.8474],[7,1.27885,1.1474],[92,1.67145,2.5348],[23,200.39211,99611920.0],[25,55.79279,25317296.0],[62,0.326,45.1319],[55,198.54269,96328168.0]]],"lpe":[[[79,0.16849,496.9286],[30,0.00137,-11.1844],[53,0.10273,-1.2332],[46,0.04405,-2.8933],[5,0.01246,19.7754],[82,0.03679,14.9632],[18,0.00407,18.044],[56,0.00974,15.611]],[[16,0.2805,1999.6327],[62,0.02316,1.1887],[23,0.21291,-0.3646],[3,0.22631,-1.8734],[75,0.0207,706.1094],[67,0.01351,843.0219],[41,0.01454,34.7287],[30,0.06776,2936.436]],[[96,8.63299,32893.5625],[63,0.10244,106.821],[7,1.27885,1.1474],[92,1.67145,2.5348],[23,200.39211,99611920.0],[37,54.92271,26919462.0],[100,0.03823,804.9492],[55,198.54269,96328168.0]]]},"a0.5_s2.5e-05":{"mse":[[[50,0.00336,175.8172],[61,0.00034,-16.2796],[36,0.0098,-3.5815],[42,0.00126,-8.1037],[85,0.00039,-12.7901],[84,0.00059,109.4171],[97,0.00029,-15.4366],[58,0.0004,-4.1816]],[[79,0.01738,2114.8799],[11,0.00448,11.0188],[63,0.02341,-3.6909],[21,0.01216,-7.6229],[72,0.02608,10861.54],[74,0.01346,6185.8906],[53,0.00335,1306.2096],[53,0.01139,5384.7715]],[[84,0.03778,4477.8462],[18,0.0168,733.6625],[11,0.04586,-3.3129],[100,0.02185,-5.5548],[100,1397.68201,698128000.0],[34,1839.30127,918728000.0],[20,1340.94336,669798400.0],[32,103.09375,51474316.0]]],"lpe":[[[30,0.00347,167.9974],[61,0.00034,-16.2796],[85,0.02084,-3.7511],[13,0.00197,-8.4926],[51,0.00055,-13.9862],[85,0.00112,-12.0115],[97,0.00029,-15.4366],[58,0.0004,-4.1816]],[[5,0.01433,1885.9745],[24,0.0045,9.1437],[48,0.02655,-3.427],[77,0.00762,-7.3942],[72,0.02608,10861.54],[74,0.01346,6185.8906],[5,0.00475,1169.9773],[45,0.01149,5245.1938]],[[13,0.03154,4802.6826],[18,0.0168,733.6625],[88,0.04064,-3.0564],[100,0.02185,-5.5548],[100,1397.68201,698128000.0],[34,1839.30127,918728000.0],[20,1340.94336,669798400.0],[32,103.09375,51474316.0]]]},"a0.05_s2.5":{"mse":[[[82,0.48869,26.7499],[38,0.20471,-4.6444],[8,2.354,3.1715],[17,1.86393,1.9477],[78,0.08172,515.8842],[31,0.0724,47.5257],[87,0.10835,29.0625],[50,0.09812,26.3359]],[[75,4.08781,49.0878],[11,1.74702,0.206],[73,34.63142,10.8691],[89,30.90273,34.3375],[87,1.61988,136.448],[75,1.70685,2609.7424],[49,1.62908,96.9217],[65,1.49889,41.6211]],[[85,62.56169,17.2404],[24,114.85918,81.732],[89,349.23373,363.2653],[53,755.08905,1200.3716],[96,59.51252,4773551.5],[45,540.96008,53357868.0],[12,29.60548,1429.0802],[99,812.30804,7826754.0]]],"lpe":[[[70,0.78757,-4.4167],[38,0.20471,-4.6444],[8,2.354,3.1715],[17,1.86393,1.9477],[54,0.79202,18.9112],[61,1.32918,31.8917],[40,14.05737,28.9347],[55,7.09017,21.5047]],[[35,3.43784,41.3428],[3,0.66802,0.4827],[84,36.91017,22.5465],[91,49.65967,26.6052],[15,3.76348,166.0549],[38,0.71426,181.6651],[2,0.36667,52.0235],[16,10.00313,219.6013]],[[27,2.18462,539.2551],[24,114.85918,81.732],[89,349.23373,363.2653],[53,755.08905,1200.3716],[96,59.51252,4773551.5],[45,540.96008,53357868.0],[12,29.60548,1429.0802],[36,324.70004,13328134.0]]]},"a0.05_s0.025":{"mse":[[[94,0.01184,-6.4409],[30,0.003,-9.8138],[41,0.06271,-2.2141],[43,0.03619,-3.3653],[88,0.00206,42.7631],[11,0.00203,15.2312],[18,0.00342,11.0868],[57,0.00412,43.6503]],[[21,0.03101,15.2669],[100,0.02619,-6.926],[77,0.42227,-1.1502],[25,0.37611,-2.1269],[95,0.02243,632.8592],[83,0.02621,298.4166],[82,0.02526,11.5491],[13,0.02802,60.2322]],[[97,0.30394,-7.4528],[91,0.28048,-6.746],[21,1.87498,-0.335],[92,2.8391,-0.343],[63,1100.72729,532912288.0],[68,611.76147,247525712.0],[62,0.29095,1.0152],[23,879.75555,420871008.0]]],"lpe":[[[58,0.03228,-9.4111],[55,0.00372,-10.1396],[53,0.06428,-2.2966],[43,0.03619,-3.3653],[59,0.00978,8.9531],[51,0.01205,12.6001],[45,0.04921,-2.4843],[92,0.00678,7.9818]],[[24,0.10088,-4.62],[16,0.05201,-7.3966],[93,0.36686,-1.2939],[7,0.25376,-2.0563],[38,0.02489,388.7671],[72,0.01787,382.5542],[30,0.02182,8.4218],[99,0.05784,364.4365]],[[54,0.04759,232.9716],[69,0.08658,0.0014],[21,1.87498,-0.335],[92,2.8391,-0.343],[63,1100.72729,532912288.0],[68,611.76147,247525712.0],[8,0.07354,113.6418],[23,879.75555,420871008.0]]]},"a0.05_s2.5e-05":{"mse":[[[92,0.0001,-16.0761],[100,9e-05,-16.2983],[28,0.00157,-4.2664],[5,0.0011,-7.3517],[51,0.00013,-15.1293],[42,0.0001,-6.2658],[51,0.00017,-17.6158],[34,0.0002,1.0397]],[[5,0.00025,-6.0841],[9,0.00024,-14.8026],[82,0.00348,-4.209],[54,0.00315,-7.8966],[53,6.89898,3445911.25],[6,9.9589,4969342.0],[42,4.50224,2244174.75],[37,2.89467,1442834.25]],[[99,0.00207,-12.9157],[35,0.00256,-12.4417],[43,0.01913,-3.727],[27,0.01481,-7.2777],[82,656.56305,327952480.0],[34,2424.52197,1211017088.0],[95,587.32941,293368704.0],[66,360.68961,180143632.0]]],"lpe":[[[78,0.00015,-16.4095],[13,0.00015,-17.0193],[19,0.00189,-4.2832],[38,0.00132,-8.5787],[51,0.00013,-15.1293],[42,0.0001,-6.2658],[51,0.00017,-17.6158],[53,0.00022,-14.404]],[[68,0.00019,-15.171],[85,0.00013,-15.27],[73,0.00304,-4.1857],[69,0.0041,-7.7033],[53,6.89898,3445911.25],[6,9.9589,4969342.0],[42,4.50224,2244174.75],[37,2.89467,1442834.25]],[[21,0.00039,7.4252],[35,0.00256,-12.4417],[43,0.01913,-3.727],[40,0.00426,-6.5245],[82,656.56305,327952480.0],[34,2424.52197,1211017088.0],[95,587.32941,293368704.0],[66,360.68961,180143632.0]]]}}</script>
+<script>
+(function () {
+  var D = JSON.parse(document.getElementById('sel').textContent);
+  var F = ['L-GSF', 'U-GSF', 'L-AGSF', 'U-AGSF', 'BPF', 'APF', 'RPF', 'UPF'];
+  var RANK = ['best', 'median', 'worst'];
+  var A = [['0.5', 'a05'], ['0.05', 'a005']];
+  var S = [['2.5', '2.5', 'high'], ['0.025', '2.5 × 10<sup>−2</sup>', 'mid'], ['2.5e-05', '2.5 × 10<sup>−5</sup>', 'low']];
+  var state = { a: '0.5', s: '0.025', v: 'both', zoom: 'fit' };
+  try { var sv = localStorage.getItem('scatter-rank'); if (sv === 'mse' || sv === 'lpe' || sv === 'both') state.v = sv; var sz = localStorage.getItem('scatter-zoom'); if (sz) state.zoom = sz; } catch (e) {}
+
+  function fmt(x) {   // 3 significant digits; an exponent only for very large or very small magnitudes (LPE can be negative)
+    var ax = Math.abs(x);
+    if (ax >= 1e5 || (ax > 0 && ax < 0.001)) return x.toExponential(2).replace('e+', 'e');
+    if (ax >= 100) return x.toFixed(ax >= 1000 ? 0 : 1);
+    return String(Number(x.toPrecision(3)));
+  }
+  function hashOf(a, s) { var ai = A.find(function (r) { return r[0] === a; }); var si = S.find(function (r) { return r[0] === s; }); return ai[1] + '-' + si[2]; }
+  function fromHash() {
+    var h = (location.hash || '').slice(1);
+    A.forEach(function (ar) { S.forEach(function (sr) { if (ar[1] + '-' + sr[2] === h) { state.a = ar[0]; state.s = sr[0]; } }); });
+  }
+
+  var grid = document.getElementById('grid');
+  grid.appendChild(document.createElement('span'));
+  S.forEach(function (sr) { var h = document.createElement('span'); h.className = 'h'; h.innerHTML = 'σ² = ' + sr[1]; grid.appendChild(h); });
+  A.forEach(function (ar) {
+    var rh = document.createElement('span'); rh.className = 'rh'; rh.textContent = 'a = ' + ar[0]; grid.appendChild(rh);
+    S.forEach(function (sr) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'cell'; b.dataset.a = ar[0]; b.dataset.s = sr[0];
+      b.textContent = sr[2] + ' noise'; b.setAttribute('aria-label', 'a = ' + ar[0] + ', sigma2 = ' + sr[0]);
+      b.addEventListener('click', function () { state.a = ar[0]; state.s = sr[0]; history.replaceState(null, '', '#' + hashOf(ar[0], sr[0])); render(); });
+      grid.appendChild(b);
+    });
+  });
+  document.querySelectorAll('#seg button').forEach(function (b) {
+    b.addEventListener('click', function () { state.v = b.dataset.v; try { localStorage.setItem('scatter-rank', state.v); } catch (e) {} render(); });
+  });
+  var zoom = document.getElementById('zoom');
+  zoom.addEventListener('change', function () { state.zoom = zoom.value; try { localStorage.setItem('scatter-zoom', state.zoom); } catch (e) {} render(); });
+
+  function table(key, v) {
+    var d = D[key][v];   // rows: best, median, worst; each a list over F of [trial, mse, lpe]
+    var h = '<div class="tablebox"><table><thead><tr><th scope="col" style="text-align:left">Run (trial · ' + v.toUpperCase() + ')</th>';
+    F.forEach(function (f) { h += '<th scope="col">' + f + '</th>'; });
+    h += '</tr></thead><tbody>';
+    for (var r = 0; r < 3; r++) {
+      h += '<tr><th scope="row">' + RANK[r] + '</th>';
+      d[r].forEach(function (c) {
+        var val = v === 'mse' ? c[1] : c[2];
+        var extra = v === 'lpe' ? '<small> (MSE ' + fmt(c[1]) + ')</small>' : '';
+        h += '<td class="' + (c[1] > 10 ? 'lost' : '') + '"><small>' + c[0] + ' · </small>' + fmt(val) + extra + '</td>';
+      });
+      h += '</tr>';
+    }
+    return h + '</tbody></table></div>';
+  }
+  function block(key, v) {
+    var t = v === 'mse'
+      ? ['Ranked by MSE', 'mse', 'The rows are the trials with the lowest, median and highest MSE of each filter (the squared error of the weighted mean).']
+      : ['Ranked by LPE', 'lpe', 'The rows are the trials with the lowest, median and highest LPE of each filter (the negative log density of the true state under the posterior).'];
+    var src = 'figs/' + (v === 'mse' ? 'v1_' : 'v1_lpe_') + key + '.jpg';
+    return '<section class="version"><h2>' + t[0] + ' <span class="tag">' + t[1] + '</span></h2><p>' + t[2] + '</p>' +
+      '<div class="plate' + (state.zoom !== 'fit' ? ' zoom' : '') + '" style="--zoomw:' + (state.zoom === 'fit' ? 3000 : state.zoom) + 'px">' +
+      '<img src="' + src + '" alt="Scatter panels, ' + t[0].toLowerCase() + ', 8 filters by 3 runs" loading="lazy" width="6022" height="1822"></div>' + table(key, v) + '</section>';
+  }
+  function render() {
+    var key = 'a' + state.a + '_s' + state.s;
+    document.querySelectorAll('#grid .cell').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.a === state.a && b.dataset.s === state.s)); });
+    document.querySelectorAll('#seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === state.v)); });
+    zoom.value = state.zoom;
+    var sr = S.find(function (r) { return r[0] === state.s; });
+    document.getElementById('stitle').innerHTML = 'a = ' + state.a + ', σ² = ' + sr[1];
+    var vs = state.v === 'both' ? ['mse', 'lpe'] : [state.v];
+    var cols = document.getElementById('cols');
+    cols.innerHTML = vs.map(function (v) { return block(key, v); }).join('');
+    cols.querySelectorAll('.plate img').forEach(function (img) {
+      img.addEventListener('click', function () { var p = img.parentElement; if (p.classList.contains('zoom') && state.zoom === 'fit') p.classList.remove('zoom'); else if (!p.classList.contains('zoom')) p.classList.add('zoom'); else p.classList.remove('zoom'); });
+    });
+  }
+  fromHash();
+  window.addEventListener('hashchange', function () { fromHash(); render(); });
+  render();
+})();
+</script>
