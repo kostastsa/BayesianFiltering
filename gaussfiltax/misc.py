@@ -65,8 +65,10 @@ def get_simulator(sim_desc):
 
 
 def get_root():
-
-    return '/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync'
+    # GAUSSFILTAX_ROOT (optional): another root, e.g. for an exact repeat of table trials that must not touch the
+    # table folders (main.py trials --only). Without it, the root is data.nosync in the repository.
+    import os
+    return os.environ.get('GAUSSFILTAX_ROOT', '/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/data.nosync')
 
 
 def find_epsilon(sims_loader, obs_xs, acc_rate, show_hist=True):

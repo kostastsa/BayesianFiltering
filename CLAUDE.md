@@ -103,6 +103,8 @@ python tests/test_sinlin.py
 python test_sqrt_filter.py
 ```
 
+- `main.py trials --only <text>` runs only the experiments whose folder contains the text. It still splits the key for every experiment. Thus, with the seed and the files of the original call, a selected trial gets its original key and its original result.
+- `GAUSSFILTAX_ROOT=<folder>` changes the root of `misc.get_root()`. Use it with `--only` to repeat table trials without a change to the table folders (`scratch/scatter_panels/`).
 - Use `python gaussfiltax/main.py`. The command `python -m gaussfiltax.main` fails with `No module named 'util'` because the modules use bare imports.
 - Put quotes around file names. Some descriptor files have spaces and brackets in the name.
 - Trial numbers start at 1. The value 0 raises `ValueError`.
