@@ -1,6 +1,8 @@
-"""Write pageview/scatter_panels.md: the scatter panels as a pageview page (~/tools/pageview), with the same content as
-the claude.ai page (page/index.html): one tab for each setting, and in each one the tabs Both, MSE and LPE, with the
-figure and the table of the selected runs. The data: page/data.json. The images: page/figs/*.jpg.
+"""Write the scatter panels as pageview pages (~/tools/pageview), with the same content as the claude.ai page
+(page/index.html): one page for each setting. At the top of each page, a 2 x 3 table of the settings links to the other
+pages (the current setting is marked). Below it, the tabs Both, MSE and LPE, with the figure and the table of the
+selected runs. scatter_panels.md is the entry page (a = 0.5, sigma2 = 0.025); the other pages are
+scatter_a<a>_s<sigma2>.md. The data: page/data.json. The images: page/figs/*.jpg.
 
 Usage (repository root):  python scratch/scatter_panels/make_pageview.py   then   pageview scratch/scatter_panels/pageview/scatter_panels.md
 """
@@ -53,27 +55,46 @@ def block(key, m):
             ':::', ''] + table(key, m) + ['']
 
 
-L = ['---', 'title: Scatter panels of the eight filters',
-     'subtitle: Exp. A (mtt, wrapped bearing), table runs, task A12',
-     'date: 2026-11-05', 'tags: [6 settings, 8 filters, best / median / worst, 144 exact repeats per ranking]',
-     'view: page', 'toc: false', 'width: wide', '---', '',
-     'For each setting of Tables I and III: the true position track (red), the component means (gold) and posterior '
-     'samples or particles (black), for the best, median and worst table run of each filter, ranked by MSE or by LPE. '
-     'Columns: L-GSF and U-GSF with M = 100, L-AGSF and U-AGSF with M = 10 (N = L = 5), and the BPF, APF, RPF and UPF '
-     'with 1000 particles. Each filter has its own 100 trials, so each cell shows its own trajectory.', '',
-     '::::::: tabs']
+ENTRY = ('0.5', '0.025')
+
+
+def page_name(a, s):
+    return 'scatter_panels.md' if (a, s) == ENTRY else f'scatter_a{a}_s{s}.md'
+
+
+def grid(cur):
+    """The 2 x 3 table of the settings: a link to each page, the current setting in bold with a dot."""
+    cols = [x for x in SETTINGS if x[0] == '0.5']
+    out = ['::: {.table}', '| | ' + ' | '.join(f'σ² = {st}' for _, _, st, _ in cols) + ' |', '|---|' + ':-:|' * len(cols)]
+    for a in ('0.5', '0.05'):
+        cells = []
+        for _, s, _, lvl in cols:
+            cells.append(f'**● {lvl} noise**' if (a, s) == cur else f'[{lvl} noise]({page_name(a, s)})')
+        out.append(f'| **a = {a}** | ' + ' | '.join(cells) + ' |')
+    return out + ['', '**Setting.** Click a cell to open the page of that setting.', ':::', '']
+
+
+INTRO = ('For each setting of Tables I and III: the true position track (red), the component means (gold) and '
+         'posterior samples or particles (black), for the best, median and worst table run of each filter, ranked by '
+         'MSE or by LPE. Columns: L-GSF and U-GSF with M = 100, L-AGSF and U-AGSF with M = 10 (N = L = 5), and the '
+         'BPF, APF, RPF and UPF with 1000 particles. Each filter has its own 100 trials, so each cell shows its own '
+         'trajectory.')
+NOTE = ['::: {.callout .note title="About the runs"}',
+        'The figures show exact repeats of the table trials: each repeat gives the MSE and the LPE of the table. Lower '
+        'is better for both metrics, so "best" is the lowest value. The paper uses the MSE ranking (D-45). '
+        'Source: `scratch/scatter_panels/`.', ':::', '']
+os.makedirs(os.path.join(HERE, 'pageview'), exist_ok=True)
 for a, s, s_txt, lvl in SETTINGS:
     key = f'a{a}_s{s}'
-    L += [f':::::: {{.tab title="a = {a}, σ² = {s_txt} ({lvl} noise)"}}', '', f'### a = {a}, σ² = {s_txt}', '',
-          '::::: tabs', ':::: {.tab title="Both"}', ''] + block(key, 'mse') + block(key, 'lpe') + ['::::']
+    L = ['---', 'title: Scatter panels of the eight filters',
+         f'subtitle: a = {a}, σ² = {s_txt} ({lvl} noise). Exp. A (mtt, wrapped bearing), table runs, task A12',
+         'date: 2026-11-05', 'tags: [6 settings, 8 filters, best / median / worst, 144 exact repeats per ranking]',
+         'view: page', 'toc: false', 'width: wide', '---', '', INTRO, ''] + grid((a, s))
+    # The rank tabs Both, MSE and LPE (as the switch "Rank the runs by" of the claude.ai page)
+    L += [f'### a = {a}, σ² = {s_txt}', '', '::::: tabs', ':::: {.tab title="Both"}', ''] + block(key, 'mse') + block(key, 'lpe') + ['::::']
     for m in ('mse', 'lpe'):
         L += [f':::: {{.tab title="{m.upper()}"}}', ''] + block(key, m) + ['::::']
-    L += [':::::', '::::::']
-L += [':::::::', '',
-      '::: {.callout .note title="About the runs"}',
-      'The figures show exact repeats of the table trials: each repeat gives the MSE and the LPE of the table. Lower is '
-      'better for both metrics, so "best" is the lowest value. The paper uses the MSE ranking (D-45). '
-      'Source: `scratch/scatter_panels/`.', ':::', '']
-os.makedirs(os.path.join(HERE, 'pageview'), exist_ok=True)
-open(os.path.join(HERE, 'pageview', 'scatter_panels.md'), 'w').write('\n'.join(L))
-print('written', os.path.join(HERE, 'pageview', 'scatter_panels.md'), len(L), 'lines')
+    L += [':::::', ''] + NOTE
+    path = os.path.join(HERE, 'pageview', page_name(a, s))
+    open(path, 'w').write('\n'.join(L))
+    print('written', path, len(L), 'lines')
