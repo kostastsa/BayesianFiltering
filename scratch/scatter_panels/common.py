@@ -1,9 +1,8 @@
 """Scatter panels of Exp. A (side figure, CLAUDE.md rule 5): the settings, filters and folders that the scripts share.
 
 For each (a, sigma2) setting of Tables I and III: one figure, 8 columns (the filters at the middle sizes), 3 rows (the
-best, median and worst run by MSE).
-- Version 1 (v1): the table runs. Each filter has its own data, so each cell can show a different trajectory.
-- Version 2 (v2): all filters on the same 40 stored data sets (data block, source SRC). Each row shows one trajectory.
+best, median and worst table run of each filter, by MSE or by LPE). The table runs are not paired: each filter has its
+own data, so each cell can show a different trajectory. (A paired version was removed on 05-Nov-2026, D-44.)
 """
 import glob
 import os
@@ -16,9 +15,6 @@ sys.path.insert(0, os.path.join(ROOT, 'gaussfiltax'))
 SETTINGS = [(a, s) for a in ('0.5', '0.05') for s in ('2.5', '0.025', '2.5e-05')]
 TRIALS = 100
 REPRO_ROOT = os.path.join(ROOT, 'data.nosync', 'repro')      # GAUSSFILTAX_ROOT of the exact repeats of version 1
-SRC = 'gsf/ugsf/ncomps_1_iters_1_alpha_1.0_beta_0.0_kappa_0.0'  # data source of version 2 (the U-GSF row with M = 1)
-V2_SEED_BASE = 9500
-V2_TRIALS = 40   # the user chose 40 paired data sets (05-Nov-2026), not 100
 
 # (label, inference folder, group). Group: the name list and the SEED_BASE of the table runs (run_tables_I_III.zsh).
 FILTERS = [
@@ -45,10 +41,6 @@ def table_dir(a, s, inf):
     return os.path.join(ROOT, 'data.nosync', 'experiments', sim_dir(a, s), inf)
 
 
-def v2_dir(a, s, inf):
-    return os.path.join(ROOT, 'data.nosync', 'experiments', sim_dir(a, s), 'data_' + SRC.replace('/', '_'), inf)
-
-
 def group_files(group, a):
     """The descriptor files of one call of run_tables_I_III.zsh, in its order: for each name, the sigma2 folders in
     the sort order of the zsh glob."""
@@ -59,13 +51,22 @@ def group_files(group, a):
     return out
 
 
-def v2_file(a, s):
-    return os.path.join(HERE, 'descs', f'paired_a{a}_s{s}.txt')
-
-
 def mse_of(folder, t):
+    return metric_of(folder, t, 'mse')
+
+
+def metric_of(folder, t, metric):
+    """The saved value of a metric of 'main.py errors' (mse or lpe: the file <metric>.pkl, the mean over time)."""
     import util.io
-    return float(util.io.load(os.path.join(folder, str(t), 'mse'))[0])
+    return float(util.io.load(os.path.join(folder, str(t), metric))[0])
+
+
+METRICS = ('mse', 'lpe')
+
+
+def v1_selection_file(metric):
+    """out/v1_selection.json for the MSE (the first version), out/v1_selection_lpe.json for the LPE."""
+    return os.path.join(HERE, 'out', 'v1_selection.json' if metric == 'mse' else f'v1_selection_{metric}.json')
 
 
 def best_median_worst(values):
