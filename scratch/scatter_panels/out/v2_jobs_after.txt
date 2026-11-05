@@ -1,6 +1,0 @@
-/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/scratch/scatter_panels/descs/paired_a0.5_s2.5.txt 7 10 26
-/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/scratch/scatter_panels/descs/paired_a0.5_s0.025.txt 11 40 35
-/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/scratch/scatter_panels/descs/paired_a0.5_s2.5e-05.txt 38 4 22
-/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/scratch/scatter_panels/descs/paired_a0.05_s2.5.txt 17 36 20
-/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/scratch/scatter_panels/descs/paired_a0.05_s0.025.txt 32 11 7
-/Users/kostastsampourakis/Desktop/code/Python/projects/gaussfiltax/scratch/scatter_panels/descs/paired_a0.05_s2.5e-05.txt 14 27 15
